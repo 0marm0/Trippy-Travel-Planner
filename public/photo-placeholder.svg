@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 720" role="img" aria-label="TRIPPY photo placeholder">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#050706"/><stop offset=".55" stop-color="#11201b"/><stop offset="1" stop-color="#07100e"/></linearGradient>
+    <radialGradient id="glow"><stop stop-color="#8ff0cf" stop-opacity=".38"/><stop offset="1" stop-color="#8ff0cf" stop-opacity="0"/></radialGradient>
+  </defs>
+  <rect width="1200" height="720" fill="url(#bg)"/>
+  <circle cx="910" cy="180" r="340" fill="url(#glow)"/>
+  <path d="M90 550C260 430 360 500 510 350S780 310 1110 120" fill="none" stroke="#8ff0cf" stroke-opacity=".36" stroke-width="4" stroke-dasharray="11 15"/>
+  <g fill="#8ff0cf"><circle cx="90" cy="550" r="10"/><circle cx="510" cy="350" r="10"/><circle cx="1110" cy="120" r="10"/></g>
+  <text x="72" y="118" fill="#f5f8f7" font-family="system-ui,sans-serif" font-size="42" font-weight="700" letter-spacing="8">TRIPPY</text>
+  <text x="74" y="160" fill="#91a09a" font-family="system-ui,sans-serif" font-size="18" letter-spacing="4">TRAVEL OPTIMIZER</text>
+</svg>

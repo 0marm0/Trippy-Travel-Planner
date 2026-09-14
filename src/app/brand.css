@@ -1,0 +1,7 @@
+.trippy-brand-mark{display:block;width:100%;height:100%;object-fit:contain;object-position:center}
+.brand-orb.trippy-brand-frame,.logo-symbol.trippy-brand-frame{overflow:visible;background:transparent!important;border:0!important;border-radius:0;padding:0;box-shadow:none!important;flex-shrink:0;filter:drop-shadow(0 0 9px #369dff30)}
+.brand-orb.trippy-brand-frame{width:54px;height:48px}
+.logo-symbol.trippy-brand-frame{width:58px;height:52px}
+.trippy-brand-loader{width:64px;height:64px;margin:auto;filter:drop-shadow(0 8px 22px #4da5ff45)}
+.workspace-loading .trippy-brand-loader{width:42px;height:42px;margin:0}
+@media(max-width:760px){.brand-orb.trippy-brand-frame{width:45px;height:43px}.premium-shell .premium-header{padding-left:6px;gap:6px}}

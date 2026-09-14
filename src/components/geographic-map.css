@@ -1,0 +1,365 @@
+.vector-map.trippy-vector-map {
+  --map-glass: rgba(3, 8, 18, 0.86);
+  --map-glass-strong: rgba(2, 6, 15, 0.94);
+  --map-border: rgba(151, 197, 255, 0.24);
+  --map-blue: #77bfff;
+  --map-text: #f6f9ff;
+  --map-muted: #a8b9cf;
+  background: #07101f;
+}
+
+.vector-map.map-tone-bright .maplibregl-canvas,
+.vector-map.map-tone-liberty .maplibregl-canvas,
+.vector-map.map-tone-configured .maplibregl-canvas {
+  filter: saturate(.9) contrast(1.03) brightness(.96);
+}
+
+.vector-map.map-tone-fiord .maplibregl-canvas,
+.vector-map.map-tone-dark .maplibregl-canvas,
+.vector-map.map-tone-night .maplibregl-canvas {
+  filter: saturate(.88) contrast(1.06);
+}
+
+.vector-map .trippy-map-command-deck {
+  position: absolute;
+  z-index: 22;
+  top: 14px;
+  left: 14px;
+  display: flex;
+  align-items: flex-start;
+  gap: 7px;
+  max-width: calc(100% - 178px);
+  pointer-events: none;
+}
+
+.vector-map .trippy-style-control,
+.vector-map .trippy-layer-controls {
+  pointer-events: auto;
+  border: 1px solid var(--map-border);
+  background: linear-gradient(145deg, rgba(13, 26, 49, .92), var(--map-glass-strong));
+  box-shadow: inset 0 1px rgba(255, 255, 255, .08), 0 10px 28px rgba(0, 0, 0, .35);
+  backdrop-filter: blur(18px) saturate(1.2);
+}
+
+.vector-map .trippy-style-control {
+  position: relative;
+  display: grid;
+  grid-template-columns: auto auto;
+  align-items: center;
+  gap: 7px;
+  min-height: 34px;
+  padding: 0 9px;
+  border-radius: 10px;
+}
+
+.vector-map .trippy-style-control > span {
+  color: #79a9df;
+  font-size: 8px;
+  font-weight: 760;
+  letter-spacing: .12em;
+  text-transform: uppercase;
+}
+
+.vector-map .trippy-style-control select {
+  appearance: none;
+  min-width: 60px;
+  border: 0;
+  outline: 0;
+  padding: 0 13px 0 0;
+  background: linear-gradient(45deg, transparent 50%, #a9cfff 50%) right 2px center / 5px 5px no-repeat;
+  color: var(--map-text);
+  font: 650 10px/1 system-ui, sans-serif;
+  cursor: pointer;
+}
+
+.vector-map .trippy-style-control select:disabled { cursor: default; opacity: .72; }
+
+.vector-map .trippy-layer-controls {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 2px;
+  padding: 3px;
+  border-radius: 11px;
+}
+
+.vector-map .trippy-layer-controls button {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  min-height: 28px;
+  padding: 3px 7px 3px 4px;
+  border-radius: 8px;
+  color: #7589a6;
+  font-size: 8px;
+  font-weight: 650;
+  white-space: nowrap;
+  transition: color .18s ease, background .18s ease, box-shadow .18s ease;
+}
+
+.vector-map .trippy-layer-controls button.on {
+  color: #eaf4ff;
+  background: rgba(75, 143, 214, .2);
+  box-shadow: inset 0 0 0 1px rgba(126, 190, 255, .16);
+}
+
+.vector-map .trippy-control-icon {
+  width: 23px;
+  height: 23px;
+  overflow: hidden;
+  background-position: center;
+  background-repeat: no-repeat;
+  background-size: 37px 37px;
+  opacity: .54;
+}
+
+.vector-map .trippy-layer-controls button.on .trippy-control-icon { opacity: 1; }
+
+.geo-map-shell.vector-map > .trippy-map-tools {
+  position: absolute;
+  z-index: 23;
+  top: 14px;
+  right: 14px;
+  left: auto;
+  display: grid;
+  grid-template-columns: repeat(4, auto);
+  gap: 2px;
+  width: auto;
+  padding: 3px;
+  overflow: visible;
+  border: 1px solid var(--map-border);
+  border-radius: 11px;
+  background: linear-gradient(145deg, rgba(13, 26, 49, .92), var(--map-glass-strong));
+  box-shadow: inset 0 1px rgba(255, 255, 255, .08), 0 10px 28px rgba(0, 0, 0, .35);
+  backdrop-filter: blur(18px) saturate(1.2);
+}
+
+.geo-map-shell.vector-map > .trippy-map-tools button,
+.geo-map-shell.vector-map > .trippy-map-tools button:last-child {
+  width: auto;
+  min-width: 29px;
+  height: 28px;
+  padding: 0 7px;
+  border: 0;
+  border-radius: 8px;
+  background: transparent;
+  color: #dcecff;
+  font-size: 9px;
+  font-weight: 720;
+}
+
+.geo-map-shell.vector-map > .trippy-map-tools .map-zoom-readout {
+  display: grid;
+  place-items: center;
+  min-width: 35px;
+  padding: 0 7px;
+  border-right: 1px solid rgba(135, 190, 255, .16);
+  color: #6386ac;
+  font-size: 7px;
+  font-weight: 720;
+  letter-spacing: .06em;
+}
+
+.geo-map-shell.vector-map > .trippy-map-tools button:nth-last-child(-n+2) {
+  padding: 0;
+  font-size: 17px;
+}
+
+.geo-map-shell.vector-map > .trippy-map-tools button:hover,
+.geo-map-shell.vector-map > .trippy-map-tools button:focus-visible {
+  background: rgba(83, 151, 224, .22);
+  outline: none;
+}
+
+.vector-map .trippy-map-marker {
+  --marker-accent: #72b9ff;
+  position: relative;
+  width: 30px;
+  height: 37px;
+  padding: 0;
+  overflow: visible;
+  border: 0;
+  background: transparent;
+  color: #fff;
+  cursor: pointer;
+  filter: drop-shadow(0 5px 7px rgba(0, 0, 0, .55));
+}
+
+.vector-map .trippy-map-marker::after {
+  content: "";
+  position: absolute;
+  left: 13px;
+  bottom: 0;
+  width: 4px;
+  height: 4px;
+  border: 1px solid #06101e;
+  border-radius: 50%;
+  background: var(--marker-accent);
+  box-shadow: 0 0 0 2px rgba(255, 255, 255, .72);
+}
+
+.vector-map .trippy-marker-symbol {
+  position: absolute;
+  left: 1px;
+  bottom: 7px;
+  display: grid;
+  place-items: center;
+  width: 28px;
+  height: 28px;
+  overflow: hidden;
+  border: 1px solid color-mix(in srgb, var(--marker-accent) 76%, white);
+  border-radius: 9px;
+  background: linear-gradient(145deg, #0f213c, #030813);
+  box-shadow: inset 0 1px rgba(255, 255, 255, .12), 0 0 0 2px rgba(4, 10, 21, .76), 0 0 14px color-mix(in srgb, var(--marker-accent) 38%, transparent);
+  color: #eaf4ff;
+  font: 780 9px/1 system-ui, sans-serif;
+}
+
+.vector-map .trippy-marker-symbol img {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 43px;
+  height: 43px;
+  max-width: none;
+  transform: translate(-50%, -50%);
+  user-select: none;
+  pointer-events: none;
+}
+
+.vector-map .trippy-map-marker.activity,
+.vector-map .trippy-map-marker.activity-must,
+.vector-map .trippy-map-marker.activity-should,
+.vector-map .trippy-map-marker.activity-could {
+  width: 25px;
+  height: 32px;
+}
+
+.vector-map .trippy-map-marker.activity .trippy-marker-symbol,
+.vector-map .trippy-map-marker.activity-must .trippy-marker-symbol,
+.vector-map .trippy-map-marker.activity-should .trippy-marker-symbol,
+.vector-map .trippy-map-marker.activity-could .trippy-marker-symbol {
+  width: 23px;
+  height: 23px;
+  border-radius: 50%;
+}
+
+.vector-map .trippy-map-marker.activity .trippy-marker-symbol img,
+.vector-map .trippy-map-marker.activity-must .trippy-marker-symbol img,
+.vector-map .trippy-map-marker.activity-should .trippy-marker-symbol img,
+.vector-map .trippy-map-marker.activity-could .trippy-marker-symbol img { width: 36px; height: 36px; }
+
+.vector-map .trippy-map-marker.activity::after,
+.vector-map .trippy-map-marker.activity-must::after,
+.vector-map .trippy-map-marker.activity-should::after,
+.vector-map .trippy-map-marker.activity-could::after { left: 10px; }
+
+.vector-map .trippy-map-marker.hotel,
+.vector-map .trippy-map-marker.stay { --marker-accent: #5fd39d; }
+.vector-map .trippy-map-marker.station,
+.vector-map .trippy-map-marker.rail,
+.vector-map .trippy-map-marker.train { --marker-accent: #f0b85b; }
+.vector-map .trippy-map-marker.airport,
+.vector-map .trippy-map-marker.flight { --marker-accent: #65bfff; }
+.vector-map .trippy-map-marker.activity-must { --marker-accent: #ff668f; }
+.vector-map .trippy-map-marker.activity-should { --marker-accent: #f0b85b; }
+.vector-map .trippy-map-marker.activity-could { --marker-accent: #65bfff; }
+
+.vector-map .trippy-map-marker.selected { z-index: 4; }
+.vector-map .trippy-map-marker.selected .trippy-marker-symbol { transform: translateY(-2px) scale(1.12); box-shadow: inset 0 1px rgba(255, 255, 255, .18), 0 0 0 3px rgba(5, 12, 25, .82), 0 0 0 5px color-mix(in srgb, var(--marker-accent) 65%, transparent), 0 0 24px var(--marker-accent); }
+
+.vector-map .trippy-marker-label {
+  position: absolute;
+  left: 34px;
+  bottom: 8px;
+  max-width: 150px;
+  overflow: hidden;
+  padding: 4px 7px;
+  border: 1px solid rgba(149, 196, 255, .25);
+  border-radius: 6px;
+  background: rgba(2, 7, 17, .88);
+  box-shadow: 0 5px 18px rgba(0, 0, 0, .42);
+  color: #eef6ff;
+  font: 680 8px/1.2 system-ui, sans-serif;
+  letter-spacing: .01em;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  pointer-events: none;
+}
+
+.vector-map .maplibregl-popup-content {
+  padding: 8px 10px;
+  border: 1px solid rgba(143, 194, 255, .28);
+  border-radius: 8px;
+  background: rgba(3, 8, 18, .94);
+  color: #f4f8ff;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, .5);
+  font: 650 10px/1.35 system-ui, sans-serif;
+}
+
+.vector-map .maplibregl-popup-tip { border-top-color: rgba(3, 8, 18, .94); }
+.vector-map .maplibregl-ctrl-attrib { color: #9aabc0 !important; background: rgba(2, 7, 16, .84) !important; }
+.vector-map .maplibregl-ctrl-attrib a { color: #d2e5fb !important; }
+
+.map-empty-state {
+  position: absolute;
+  inset: 50% auto auto 50%;
+  z-index: 20;
+  display: grid;
+  justify-items: center;
+  width: min(260px, calc(100% - 40px));
+  padding: 18px;
+  border: 1px solid rgba(137, 192, 255, .22);
+  border-radius: 16px;
+  background: rgba(3, 9, 19, .86);
+  box-shadow: inset 0 1px rgba(225, 242, 255, .08), 0 18px 60px rgba(0, 0, 0, .46);
+  color: #d8eaff;
+  text-align: center;
+  transform: translate(-50%, -50%);
+  backdrop-filter: blur(22px);
+}
+
+.map-empty-state > span { display: grid; place-items: center; width: 38px; height: 38px; margin-bottom: 9px; border-radius: 12px; background: rgba(79, 157, 245, .12); color: #77b9f7; }
+.map-empty-state b { font-size: 11px; }
+.map-empty-state small { margin-top: 5px; color: #7088a3; font-size: 8px; line-height: 1.5; }
+
+/* The SVG atlas is used in several simultaneous research views. These rules
+   add dense context without allowing controls to compete with the route. */
+.route-atlas-shell::after { position: absolute; inset: 0; z-index: 1; background: radial-gradient(circle at 70% 40%, transparent 0 28%, rgba(1, 7, 14, .11) 75%), linear-gradient(180deg, rgba(101, 172, 255, .035), transparent 26%, rgba(0, 5, 12, .18)); content: ""; pointer-events: none; }
+.route-atlas-shell > svg { position: relative; z-index: 1; }
+.route-atlas-shell .atlas-route-lines path { filter: none; transition: opacity .2s ease, stroke-width .2s ease; }
+.route-atlas-shell .atlas-route-lines path.flight { animation: atlas-flow 4s linear infinite; }
+.route-atlas-shell .atlas-route-points g { transition: opacity .18s ease; }
+.route-atlas-shell .atlas-route-points g:hover .point-halo,.route-atlas-shell .atlas-route-points g:focus-visible .point-halo { animation: atlas-pulse 1.8s ease-in-out infinite; }
+.route-atlas-shell.is-interacting .atlas-route-points g:not(:hover) { opacity: .72; }
+.atlas-context { position: absolute; top: 14px; left: 61px; z-index: 8; display: flex; align-items: center; gap: 8px; min-height: 36px; padding: 0 11px; border: 1px solid rgba(126, 188, 255, .2); border-radius: 11px; background: rgba(3, 10, 20, .86); box-shadow: inset 0 1px rgba(217, 239, 255, .08), 0 10px 30px rgba(0, 0, 0, .32); color: #7291b1; backdrop-filter: blur(18px); }
+.atlas-context span { display: flex; align-items: center; gap: 6px; color: #8cbce8; font-size: 7px; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; }
+.atlas-context span i { width: 6px; height: 6px; border-radius: 50%; background: #64b8ff; box-shadow: 0 0 11px #64b8ff; }
+.atlas-context b { font-size: 8px; font-weight: 570; }
+.atlas-context em { padding: 3px 5px; border-radius: 5px; background: rgba(255, 146, 112, .1); color: #e89b85; font-size: 7px; font-style: normal; }
+.route-atlas-shell .atlas-controls { z-index: 9; }
+.route-atlas-shell .atlas-controls button { display: flex; align-items: center; justify-content: center; gap: 5px; }
+.route-atlas-shell .atlas-controls button:first-child { width: auto; padding: 0 9px; }
+.route-atlas-shell .atlas-controls button span { font-size: 8px; }
+.atlas-gesture-hint { position: absolute; right: 15px; top: 15px; z-index: 8; padding: 8px 10px; border: 1px solid rgba(135, 192, 255, .15); border-radius: 9px; background: rgba(3, 10, 20, .72); color: #557591; font-size: 7px; letter-spacing: .04em; backdrop-filter: blur(14px); }
+
+@keyframes atlas-flow { to { stroke-dashoffset: -36; } }
+@keyframes atlas-pulse { 50% { r: 29; opacity: .5; } }
+
+@media (max-width: 760px) {
+  .vector-map .trippy-map-command-deck { max-width: calc(100% - 18px); right: 9px; left: 9px; flex-wrap: wrap; }
+  .vector-map .trippy-layer-controls button > span:last-child { display: none; }
+  .geo-map-shell.vector-map > .trippy-map-tools { top: auto; right: 9px; bottom: 9px; }
+  .geo-map-shell.vector-map > .trippy-map-tools button { min-width: 27px; padding: 0 5px; }
+  .vector-map .trippy-marker-label { max-width: 104px; }
+  .geo-map-shell.vector-map > .trippy-map-tools .map-zoom-readout { display: none; }
+  .atlas-context { top: 10px; left: 53px; min-height: 34px; max-width: calc(100% - 106px); }
+  .atlas-context span,.atlas-context em { display: none; }
+  .atlas-context b { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .atlas-gesture-hint { display: none; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .route-atlas-shell .atlas-route-lines path.flight,
+  .route-atlas-shell .atlas-route-points g:hover .point-halo,
+  .route-atlas-shell .atlas-route-points g:focus-visible .point-halo { animation: none; }
+}

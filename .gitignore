@@ -1,0 +1,41 @@
+# Secrets and local overrides
+.env
+.env.*
+!.env.example
+credentials.json
+client_secret*.json
+token.json
+*.pem
+*.key
+
+# Personal trips, bookings, and connector data
+data/private/
+.private/
+data/imports/
+bookings/
+emails/
+calendar-private/
+*.eml
+*.mbox
+*.ics
+
+# Local MCP/agent configuration that may contain credentials
+.mcp.json
+mcp.local.json
+.claude/settings.local.json
+.codex/config.local.toml
+
+# Generated output and caches
+node_modules/
+.next/
+dist/
+build/
+coverage/
+.cache/
+.playwright-cli/
+output/
+.vercel/
+*.log
+*.tsbuildinfo
+.DS_Store
+.vercel

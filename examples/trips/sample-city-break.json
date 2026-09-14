@@ -1,0 +1,45 @@
+{
+  "schemaVersion": 1,
+  "id": "sample-city-break",
+  "name": "Sample city break",
+  "status": "planning",
+  "dateWindow": {
+    "earliestDeparture": "2027-04-10",
+    "latestReturn": "2027-04-18",
+    "flexDays": 2
+  },
+  "travelers": {
+    "adults": 2,
+    "childrenAges": []
+  },
+  "origins": [
+    {
+      "kind": "airport",
+      "code": "AAA"
+    }
+  ],
+  "destinations": [
+    {
+      "id": "sample-city",
+      "name": "Sample City",
+      "priority": "required",
+      "minimumNights": 3,
+      "maximumNights": 5
+    }
+  ],
+  "preferences": {
+    "pace": "balanced",
+    "directFlightBias": 0.7,
+    "hotelLocationBias": 0.8,
+    "activityThemes": [
+      "food",
+      "architecture",
+      "local-neighborhoods"
+    ],
+    "currency": "USD",
+    "pointValuations": {}
+  },
+  "anchors": [],
+  "routeCandidates": [],
+  "bookings": []
+}

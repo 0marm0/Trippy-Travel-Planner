@@ -1,0 +1,29 @@
+name: Feature proposal
+description: Suggest a privacy-conscious planning improvement.
+title: "[Feature]: "
+labels: [enhancement]
+body:
+  - type: markdown
+    attributes:
+      value: Never include real traveler data, API responses, email contents, confirmation numbers, or booking references.
+  - type: textarea
+    id: outcome
+    attributes:
+      label: Traveler outcome
+      description: What decision or planning task becomes easier?
+    validations:
+      required: true
+  - type: textarea
+    id: flow
+    attributes:
+      label: Proposed flow
+      description: Describe the smallest useful interaction and its manual fallback.
+    validations:
+      required: true
+  - type: checkboxes
+    id: privacy
+    attributes:
+      label: Privacy check
+      options:
+        - label: This report contains no secrets, personal data, confirmations, or booking references.
+          required: true

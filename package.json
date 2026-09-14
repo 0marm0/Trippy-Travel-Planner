@@ -1,0 +1,42 @@
+{
+  "name": "trippy-travel-optimizer",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "eslint . --max-warnings=0",
+    "typecheck": "tsc --noEmit",
+    "test": "node --experimental-strip-types --test tests/*.test.mjs",
+    "sample:build": "node scripts/build-public-sample.mjs",
+    "sample:reconcile": "node --experimental-strip-types scripts/reconcile-public-sample.mjs",
+    "sample:validate": "node scripts/validate-public-sample.mjs",
+    "privacy:check": "sh scripts/public-release-preflight.sh",
+    "history:check": "sh scripts/scan-git-history.sh",
+    "maps:prepare": "node scripts/prepare-map-data.mjs",
+    "postinstall": "npm run maps:prepare",
+    "check": "npm run lint && npm run typecheck && npm test && npm run sample:validate && npm run build && npm run privacy:check",
+    "release:check": "npm run check && npm run history:check"
+  },
+  "dependencies": {
+    "leaflet": "1.9.4",
+    "maplibre-gl": "^6.9.0",
+    "next": "16.3.5",
+    "pdf-lib": "^1.17.1",
+    "react": "19.3.0",
+    "react-dom": "19.3.0",
+    "sharp": "^0.35.4"
+  },
+  "devDependencies": {
+    "@types/leaflet": "1.9.22",
+    "@types/node": "22.20.2",
+    "@types/react": "19.3.0",
+    "@types/react-dom": "19.3.0",
+    "acorn": "8.18.0",
+    "eslint": "9.39.5",
+    "eslint-config-next": "16.3.5",
+    "typescript": "5.9.3"
+  }
+}

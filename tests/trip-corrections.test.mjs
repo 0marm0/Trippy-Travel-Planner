@@ -1,0 +1,40 @@
+import test from "node:test";
+import assert from "node:assert/strict";
+import { readFile } from "node:fs/promises";
+import { applyAuthoritative2026Corrections } from "../src/lib/authoritative-trip-corrections.ts";
+
+const cancelledPattern = /\b(?:SAS|SK676|SK1799|CPH|Copenhagen|KL1328)\b/i;
+const activeSurface = (trip) => JSON.stringify({ bookings: trip.$a, anchors: trip.Ta, plan: trip.Sa?.ring?.[2], arrivals: { wroclaw: trip.Aa?.wroclaw, krakow: trip.Aa?.krakow }, legs: { flight: trip._i?.["frankfurt-wroclaw"], sleeper: trip._i?.["amsterdam-berlin"] } });
+
+test("authoritative correction removes cancelled routes and restores reviewed active bookings", () => {
+  const stale = {
+    $a: [{ kind: "Flight", date: "Sep 24", title: "SAS SK676 + SK1799", detail: "FRA → CPH → KRK" }],
+    Ta: { "2026-09-24": [{ kind: "flight", label: "SAS SK676 + SK1799", detail: "via Copenhagen" }] },
+    Sa: { ring: [{}, {}, { blocks: [{ time: "Afternoon", title: "Fly via Copenhagen", note: "Confirmed SAS SK676 and SK1799" }] }] },
+    Aa: { krakow: [{ id: "krk-airport", detail: "Arrival on SK1799" }] },
+    _i: {
+      "frankfurt-wroclaw": { id: "frankfurt-wroclaw", recommend: "other", options: [] },
+      "amsterdam-berlin": { id: "amsterdam-berlin", recommend: "ic", options: [] },
+    },
+  };
+  const corrected = applyAuthoritative2026Corrections(stale);
+  assert.equal(stale.$a.length, 1, "input remains unchanged");
+  assert.equal(corrected.$a.find((item) => /LH1374/.test(item.title))?.status, "confirmed");
+  assert.equal(corrected.$a.find((item) => /European Sleeper/.test(item.title))?.status, "confirmed");
+  assert.equal(corrected.$a.find((item) => /Millou/.test(item.title))?.status, "conflict");
+  assert.equal(corrected._i["frankfurt-wroclaw"].recommend, "confirmed-lh1374");
+  assert.equal(corrected._i["amsterdam-berlin"].recommend, "confirmed-sleeper");
+  assert.match(corrected.Ta["2026-09-24"].find((item) => /LH1374/.test(item.label))?.detail || "", /12:35/);
+  assert.doesNotMatch(activeSurface(corrected), cancelledPattern);
+  assert.deepEqual(applyAuthoritative2026Corrections(corrected), corrected, "correction is idempotent");
+});
+
+test("the redacted public sample contains no active cancelled Copenhagen itinerary", async () => {
+  const sample = JSON.parse(await readFile(new URL("../examples/trips/2026-europe-sample.json", import.meta.url), "utf8"));
+  const corrected = applyAuthoritative2026Corrections(sample);
+  assert.doesNotMatch(activeSurface(corrected), cancelledPattern);
+  assert.equal(corrected._i["frankfurt-wroclaw"].recommend, "confirmed-lh1374");
+  assert.equal(corrected._i["amsterdam-berlin"].recommend, "confirmed-sleeper");
+  assert.equal(corrected.$a.filter((item) => item.status === "confirmed").length, 11);
+  assert.equal(corrected.$a.filter((item) => item.status === "conflict").length, 1);
+});

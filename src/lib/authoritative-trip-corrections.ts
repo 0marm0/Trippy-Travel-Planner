@@ -4,7 +4,7 @@
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 type RawRecord = Record<string, any>;
 
-const inactiveFlight = /\b(?:SAS|SK676|SK1799|CPH|Copenhagen|KL1328)\b|refunded/i;
+const inactiveFlight = /\b(?:SAS|SK676|SK1799|CPH|Copenhagen)\b|refunded/i;
 
 const reviewed = {
   inbound: { kind: "Flight", date: "Sep 21–22", title: "Condor DE2039 + JetBlue B61254", detail: "DCA → BOS → FRA · departs 13:15 Sep 21; arrives 05:45 Sep 22", status: "confirmed" },
@@ -16,6 +16,7 @@ const reviewed = {
   krakowHotel: { kind: "Hotel", date: "Sep 27–30", title: "Hotel M4 Boutique", detail: "Kraków · September 27–30 · Morsztynowska 4", status: "confirmed" },
   duplicateHotel: { kind: "Hotel", date: "Sep 27–30", title: "Millou Aparthotel · duplicate hold", detail: "Confirmed overlapping Kraków hold; choose or cancel against Hotel M4 Boutique", status: "conflict" },
   auschwitz: { kind: "Activity", date: "Sep 29 · 12:00", title: "Auschwitz-Birkenau guided tour", detail: "12:00 pickup at Hotel M4 Boutique", status: "confirmed" },
+  krakowFlight: { kind: "Flight", date: "Sep 30", title: "KLM KL1328 + onward connection", detail: "KRK 17:55 → AMS 19:55 → BRU · onward connection confirmed; second-segment timing not supplied", status: "confirmed" },
   brusselsStay: { kind: "Airbnb", date: "Sep 30–Oct 2", title: "Stylish studio with private balcony near Grand Place", detail: "Brussels · check-in after 16:00 · checkout by 10:00", status: "confirmed" },
   sleeper: { kind: "Train", date: "Oct 5–6", title: "European Sleeper · Amsterdam → Berlin", detail: "Amsterdam Centraal 21:34 → Berlin Gesundbrunnen 06:01", status: "confirmed" },
   returnFlight: { kind: "Flight", date: "Oct 12", title: "United UA109", detail: "MUC 12:00 → IAD 15:10", status: "confirmed" },
@@ -42,6 +43,14 @@ function confirmedSleeperOption() {
   };
 }
 
+function confirmedKrakowBrusselsOption() {
+  return {
+    id: "confirmed-kl1328", mode: "flight", name: "KLM KL1328 + onward connection · KRK → AMS → BRU",
+    ride: "KRK 17:55 → AMS 19:55 → BRU", door: "Planning allowance ≈6½h; onward segment timing was not supplied",
+    hours: 6.5, low: 0, high: 0, note: "Confirmed for September 30, 2026. Seat, booking class, price and private reference excluded.",
+  };
+}
+
 export function applyAuthoritative2026Corrections(source: RawRecord): RawRecord {
   const raw = { ...source };
   const sourceBookings = Array.isArray(source.$a) ? source.$a as RawRecord[] : [];
@@ -51,7 +60,7 @@ export function applyAuthoritative2026Corrections(source: RawRecord): RawRecord 
     [reviewed.ringDrive, /Driven[uü]rburg/i], [reviewed.polandFlight, /LH1374/i],
     [reviewed.wroclawTransfer, /WRO Airport.*Entre|taxi.*LH1374/i], [reviewed.wroclawHotel, /Entre Hotel/i],
     [reviewed.krakowHotel, /Hotel M4 Boutique/i], [reviewed.duplicateHotel, /Millou Aparthotel/i],
-    [reviewed.auschwitz, /Auschwitz-Birkenau/i], [reviewed.brusselsStay, /Grand Place|Rue du March/i],
+    [reviewed.auschwitz, /Auschwitz-Birkenau/i], [reviewed.krakowFlight, /KL1328|KRK.*AMS.*BRU/i], [reviewed.brusselsStay, /Grand Place|Rue du March/i],
     [reviewed.sleeper, /(?:Euro|European) Sleeper/i], [reviewed.returnFlight, /UA109/i],
   ];
   raw.$a = specifications.map(([record, pattern]) => mergeReviewed(bookings, record, pattern));
@@ -75,7 +84,7 @@ export function applyAuthoritative2026Corrections(source: RawRecord): RawRecord 
     ],
     "2026-09-29": [{ kind: "activity", label: "Auschwitz-Birkenau guided tour", detail: "Confirmed · 12:00 pickup at Hotel M4 Boutique" }],
     "2026-09-30": [
-      { kind: "missing", label: "Kraków → Brussels transport", detail: "Final carrier and departure time still need selection" },
+      { kind: "flight", label: "KLM KL1328 · Kraków → Amsterdam → Brussels", detail: "Confirmed · KRK 17:55 → AMS 19:55; onward Brussels connection confirmed, timing not supplied" },
       { kind: "hotel", label: "Stylish studio with private balcony near Grand Place", detail: "Confirmed Brussels stay through October 2 · check-in after 16:00" },
     ],
     "2026-10-02": [{ kind: "missing", label: "Brussels night · October 2", detail: "Current confirmed stay ends before this final Brussels night" }],
@@ -121,6 +130,21 @@ export function applyAuthoritative2026Corrections(source: RawRecord): RawRecord 
       ],
     };
   }
+  if (Array.isArray(plans.krakow) && plans.krakow[3]) {
+    plans.krakow = [...plans.krakow];
+    plans.krakow[3] = {
+      ...plans.krakow[3],
+      theme: "Podgórze and confirmed evening flight",
+      note: "Keep the day light enough to protect the confirmed KLM connection through Amsterdam.",
+      blocks: [
+        { time: "Morning", id: "schindler", note: "Timed ticket; pair geographically with Podgórze only if the reservation leaves a safe airport buffer." },
+        { time: "Late morning", id: "podgorze", note: "Ghetto Heroes Square and a short district walk." },
+        { time: "Afternoon", title: "Hotel → KRK Airport", note: "Collect luggage and preserve the airline check-in buffer." },
+        { time: "17:55", title: "KLM KL1328 · KRK → AMS", note: "Confirmed arrival at Amsterdam Schiphol at 19:55, then continue on the confirmed Brussels connection." },
+      ],
+      extras: ["rynek"],
+    };
+  }
   raw.Sa = plans;
 
   const places = { ...(source.Aa || {}) };
@@ -137,6 +161,10 @@ export function applyAuthoritative2026Corrections(source: RawRecord): RawRecord 
   if (transport["amsterdam-berlin"]) {
     const options = (transport["amsterdam-berlin"].options || []).filter((option: RawRecord) => option.id !== "confirmed-sleeper");
     transport["amsterdam-berlin"] = { ...transport["amsterdam-berlin"], recommend: "confirmed-sleeper", options: [confirmedSleeperOption(), ...options] };
+  }
+  if (transport["krakow-brussels"]) {
+    const options = (transport["krakow-brussels"].options || []).filter((option: RawRecord) => option.id !== "confirmed-kl1328");
+    transport["krakow-brussels"] = { ...transport["krakow-brussels"], recommend: "confirmed-kl1328", options: [confirmedKrakowBrusselsOption(), ...options] };
   }
   raw._i = transport;
   return raw;

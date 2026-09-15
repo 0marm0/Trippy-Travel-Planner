@@ -1,0 +1,107 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://example.invalid/trippy/trippy-update.schema.json",
+  "title": "TRIPPY workspace update bundle",
+  "description": "A bounded, privacy-safe proposal containing workspace decisions only. It cannot represent bookings, confirmations, contacts, credentials, provider payloads, HTML, or URLs.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["format", "version", "kind", "bundleId", "tripId", "createdAt", "changes"],
+  "properties": {
+    "format": { "const": "trippy-workspace-update" },
+    "version": { "const": 1 },
+    "kind": { "enum": ["update", "snapshot"] },
+    "bundleId": { "$ref": "#/$defs/id" },
+    "tripId": { "$ref": "#/$defs/id" },
+    "createdAt": { "type": "string", "format": "date-time", "maxLength": 40 },
+    "summary": { "type": "string", "minLength": 1, "maxLength": 600 },
+    "changes": {
+      "type": "object",
+      "additionalProperties": false,
+      "minProperties": 1,
+      "properties": {
+        "assignments": {
+          "type": "object",
+          "maxProperties": 160,
+          "propertyNames": { "format": "date" },
+          "additionalProperties": {
+            "type": "array",
+            "maxItems": 40,
+            "uniqueItems": true,
+            "items": { "$ref": "#/$defs/id" }
+          }
+        },
+        "activityPriority": {
+          "type": "object",
+          "maxProperties": 160,
+          "propertyNames": { "$ref": "#/$defs/id" },
+          "additionalProperties": {
+            "anyOf": [
+              { "enum": ["must", "should", "could"] },
+              { "type": "null" }
+            ]
+          }
+        },
+        "savedActivities": { "$ref": "#/$defs/idList" },
+        "selectedTransport": { "$ref": "#/$defs/selectionMap" },
+        "savedHotels": { "$ref": "#/$defs/idList" },
+        "selectedHotel": { "$ref": "#/$defs/selectionMap" },
+        "researchEvidence": {
+          "type": "array",
+          "maxItems": 120,
+          "items": { "$ref": "#/$defs/evidence" }
+        }
+      }
+    }
+  },
+  "$defs": {
+    "id": {
+      "type": "string",
+      "pattern": "^[a-z0-9][a-z0-9._:-]{0,79}$"
+    },
+    "idList": {
+      "type": "array",
+      "maxItems": 500,
+      "uniqueItems": true,
+      "items": { "$ref": "#/$defs/id" }
+    },
+    "selectionMap": {
+      "type": "object",
+      "maxProperties": 160,
+      "propertyNames": { "$ref": "#/$defs/id" },
+      "additionalProperties": {
+        "anyOf": [
+          { "$ref": "#/$defs/id" },
+          { "type": "null" }
+        ]
+      }
+    },
+    "safeText": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 600,
+      "not": {
+        "pattern": "(?:<[^>]*>|https?://|www\\.|[\\w.+-]+@[\\w.-]+\\.[A-Za-z]{2,})"
+      }
+    },
+    "evidence": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "subjectKind", "subjectId", "kind", "source", "checkedAt", "summary", "limitations"],
+      "properties": {
+        "id": { "$ref": "#/$defs/id" },
+        "subjectKind": { "enum": ["trip", "activity", "transport", "hotel"] },
+        "subjectId": { "$ref": "#/$defs/id" },
+        "kind": { "enum": ["fact", "quote", "estimate", "recommendation", "manual", "historic", "unavailable"] },
+        "source": { "allOf": [{ "$ref": "#/$defs/safeText" }, { "maxLength": 120 }] },
+        "checkedAt": { "type": "string", "format": "date-time", "maxLength": 40 },
+        "summary": { "$ref": "#/$defs/safeText" },
+        "limitations": {
+          "type": "array",
+          "maxItems": 8,
+          "uniqueItems": true,
+          "items": { "allOf": [{ "$ref": "#/$defs/safeText" }, { "maxLength": 200 }] }
+        }
+      }
+    }
+  }
+}

@@ -4814,8 +4814,19 @@
       "id": "krakow-brussels",
       "from": "krakow",
       "to": "brussels",
-      "recommend": "flight",
+      "recommend": "confirmed-kl1328",
       "options": [
+        {
+          "id": "confirmed-kl1328",
+          "mode": "flight",
+          "name": "KLM KL1328 + onward connection · KRK → AMS → BRU",
+          "ride": "KRK 17:55 → AMS 19:55 → BRU",
+          "door": "Planning allowance ≈6½h; onward segment timing was not supplied",
+          "hours": 6.5,
+          "low": 0,
+          "high": 0,
+          "note": "Confirmed for September 30, 2026. Seat, booking class, price and private reference excluded."
+        },
         {
           "id": "flight",
           "mode": "flight",
@@ -10949,13 +10960,13 @@
         ]
       },
       {
-        "theme": "Podgórze, museum and airport",
-        "note": "Use only what fits your actual flight time; do not risk the Kraków → Brussels departure.",
+        "theme": "Podgórze and confirmed evening flight",
+        "note": "Keep the day light enough to protect the confirmed KLM connection through Amsterdam.",
         "blocks": [
           {
             "time": "Morning",
             "id": "schindler",
-            "note": "Timed ticket; pair geographically with Podgórze."
+            "note": "Timed ticket; pair geographically with Podgórze only if the reservation leaves a safe airport buffer."
           },
           {
             "time": "Late morning",
@@ -10963,9 +10974,14 @@
             "note": "Ghetto Heroes Square and a short district walk."
           },
           {
-            "time": "Departure",
+            "time": "Afternoon",
             "title": "Hotel → KRK Airport",
-            "note": "Preserve airline check-in and airport-transfer time."
+            "note": "Collect luggage and preserve the airline check-in buffer."
+          },
+          {
+            "time": "17:55",
+            "title": "KLM KL1328 · KRK → AMS",
+            "note": "Confirmed arrival at Amsterdam Schiphol at 19:55, then continue on the confirmed Brussels connection."
           }
         ],
         "extras": [
@@ -11394,9 +11410,9 @@
     ],
     "2026-09-30": [
       {
-        "kind": "missing",
-        "label": "Kraków → Brussels transport",
-        "detail": "Final carrier and departure time still need selection"
+        "kind": "flight",
+        "label": "KLM KL1328 · Kraków → Amsterdam → Brussels",
+        "detail": "Confirmed · KRK 17:55 → AMS 19:55; onward Brussels connection confirmed, timing not supplied"
       },
       {
         "kind": "hotel",
@@ -11693,6 +11709,14 @@
       "detail": "12:00 pickup at Hotel M4 Boutique",
       "ref": "Confirmed · private reference removed",
       "href": "",
+      "status": "confirmed"
+    },
+    {
+      "href": "",
+      "kind": "Flight",
+      "date": "Sep 30",
+      "title": "KLM KL1328 + onward connection",
+      "detail": "KRK 17:55 → AMS 19:55 → BRU · onward connection confirmed; second-segment timing not supplied",
       "status": "confirmed"
     },
     {

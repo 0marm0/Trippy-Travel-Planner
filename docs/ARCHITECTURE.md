@@ -33,6 +33,14 @@ Browser (Next.js UI)
 
 Client components may handle local interaction and rendering. Server components/routes/actions own validation, private provider calls, OAuth token use, rate limits, and persistent writes. A browser never receives a provider secret, raw Gmail body, OAuth refresh token, or unreviewed booking payload.
 
+## Deployment and persistence boundary
+
+Today, the interactive planner persists trip working state in browser local storage. The app has no authenticated user model, durable trip database, shared workspace, or cross-device synchronization. A Vercel deployment is therefore an independently operated website instance, not a hosted private-trip account: each browser retains its own state, and serverless execution must not be treated as trip storage or recovery.
+
+MCPs and host connectors live with the chosen agent host. They are neither bundled into the Next.js deployment nor reachable by its visitors. Deployment-environment credentials are a separate boundary: they are server-side values used only for the site's direct implemented provider calls. No configured value proves a connector is available or provider coverage is live.
+
+The public sample and private planning remain separate artifacts. Hosted deployments keep private-local import gates disabled and may serve only reviewed redacted material. The planned transition to hosted private trips requires authenticated identity/authorization, encrypted durable normalized storage, per-user secret handling, durable review/audit/retention controls for imports, sync conflict handling, and independent privacy/security review; it is not implemented by the current runtime. See [deployment modes](DEPLOYMENT_MODES.md).
+
 Private itinerary-file adapters are disabled in production. Live provider adapters are optional and server-only; production quota is locked behind a signed private session even when credentials are configured. Development access uses a loopback bypass for local testing. A `Host` header alone is not treated as authorization, and the public 2026 endpoint always defaults to the redacted sample.
 
 ## Route and view model

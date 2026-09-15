@@ -23,6 +23,7 @@ const paths: Record<string, string> = {
   external: "M14 3h7v7M21 3l-11 11M11 3H3v18h18v-8", download: "M12 3v12m-5-5 5 5 5-5M4 16v5h16v-5",
   globe: "M12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20ZM2 12h20M12 2c6 6 6 14 0 20-6-6-6-14 0-20Z",
   clock: "M12 8v5l3 2M12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20Z",
+  shield: "M12 3 20 6v5c0 5.2-3.2 8.5-8 10-4.8-1.5-8-4.8-8-10V6l8-3Zm-3 9 2 2 4-5",
 };
 export function Icon({ name, ...props }: SVGProps<SVGSVGElement> & { name: string }) {
   const artwork = travelArtwork[name];

@@ -11,8 +11,13 @@ import { Icon } from "./planner-icon";
 import TripOverview, { LogisticsIcon } from "./trip-overview";
 import IntegrationCenter, { type ProviderSearchSeed } from "./integration-center";
 import ResearchOptimizer from "./research-optimizer";
+import DecisionMode, { type DecisionModeItem } from "./decision-mode";
+import TravelMode from "./travel-mode";
+import DeploymentCenter, { type WorkspaceMode } from "./deployment-center";
+import UpdateInbox from "./update-inbox";
+import type { TrippyBundleScope, TrippyWorkspaceState } from "@/lib/trippy-bundle";
 import { buildTripLogistics, logisticsItemsForDate, transportLegStatus, type LogisticsItem, type LogisticsKind } from "@/lib/trip-logistics";
-import { downloadTripExport, type TripExportKind } from "@/lib/trip-exports";
+import { downloadTripExport, type TripExportKind, type TripExportPrivacy } from "@/lib/trip-exports";
 import "./premium.css";
 import "./release.css";
 import "./elevation.css";
@@ -24,6 +29,7 @@ const GeographicMap = dynamic(() => import("./geographic-map"), { ssr: false, lo
 const LegacyTripWorkspace = dynamic(() => import("./legacy-trip-workspace"), { ssr: false });
 
 type View = "route" | "transport" | "cities" | "itinerary" | "hotels" | "activities" | "research";
+type ExperienceMode = "plan" | "decide" | "travel";
 type Priority = TripActivity["priority"];
 type WorkspaceState = {
   assignments: Record<string, string[]>;
@@ -32,6 +38,7 @@ type WorkspaceState = {
   selectedTransport: Record<string, string>;
   savedHotels: string[];
   selectedHotel: Record<string, string>;
+  researchEvidence?: TrippyWorkspaceState["researchEvidence"];
 };
 type SetupProfile = {
   origin: string;
@@ -48,6 +55,8 @@ type SetupProfile = {
 
 const storageKey = "trippy.europe-2026.v1";
 const setupKey = "trippy.europe-2026.setup.v1";
+const experienceKey = "trippy.europe-2026.experience.v1";
+const workspaceModeKey = "trippy.workspace-mode.v1";
 const emptyState: WorkspaceState = { assignments: {}, activityPriority: {}, savedActivities: [], selectedTransport: {}, savedHotels: [], selectedHotel: {} };
 const defaultSetup: SetupProfile = { origin: "Washington area", adults: 1, rooms: 1, pace: "balanced", dealPriority: "overall", dateFlexibility: "fixed", cityFlexibility: "fixed", groundModes: ["flight", "train"], reprice: true, privateImports: false };
 const routeCityIds = ["ring", "krakow", "wroclaw", "brussels", "amsterdam", "berlin", "munich"];
@@ -94,6 +103,7 @@ function Trip2026Workspace({ setTrip }: { setTrip: (value: "2026" | "2025") => v
   const [data, setData] = useState<Trip2026Payload | null>(null);
   const [error, setError] = useState("");
   const [view, setView] = useState<View>("route");
+  const [experience, setExperience] = useState<ExperienceMode>("plan");
   const [city, setCity] = useState("ring");
   const [state, setState] = useState<WorkspaceState>(emptyState);
   const [hydrated, setHydrated] = useState(false);
@@ -103,14 +113,25 @@ function Trip2026Workspace({ setTrip }: { setTrip: (value: "2026" | "2025") => v
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [connectionsOpen, setConnectionsOpen] = useState(false);
   const [commandOpen, setCommandOpen] = useState(false);
+  const [deploymentOpen, setDeploymentOpen] = useState(false);
+  const [inboxOpen, setInboxOpen] = useState(false);
+  const [workspaceMode, setWorkspaceMode] = useState<WorkspaceMode>("agent");
+  const [travelDate, setTravelDate] = useState<string | undefined>();
+  const [offlineReady, setOfflineReady] = useState(false);
   const [searchSeed, setSearchSeed] = useState<ProviderSearchSeed | undefined>();
   const [theme, setTheme] = useState<"black" | "blue">("black");
   const [itineraryDate, setItineraryDate] = useState<string | undefined>();
   const [setup, setSetup] = useState<SetupProfile>(defaultSetup);
 
   const switchView = (next: View) => {
+    setExperience("plan");
     setView(next);
     window.history.replaceState(null, "", `${window.location.pathname}${window.location.search}#${next}`);
+  };
+  const switchExperience = (next: ExperienceMode) => {
+    setExperience(next);
+    localStorage.setItem(experienceKey, next);
+    window.history.replaceState(null, "", `${window.location.pathname}${window.location.search}#${next === "plan" ? view : next}`);
   };
 
   useEffect(() => {
@@ -124,6 +145,10 @@ function Trip2026Workspace({ setTrip }: { setTrip: (value: "2026" | "2025") => v
         const saved = localStorage.getItem(storageKey);
         const savedSetup = localStorage.getItem(setupKey);
         setTheme(localStorage.getItem("trippy.appearance.v1") === "blue" ? "blue" : "black");
+        const savedExperience = localStorage.getItem(experienceKey);
+        if (savedExperience === "decide" || savedExperience === "travel") setExperience(savedExperience);
+        const savedWorkspaceMode = localStorage.getItem(workspaceModeKey);
+        if (["agent", "local", "cloud", "sample"].includes(savedWorkspaceMode || "")) setWorkspaceMode(savedWorkspaceMode as WorkspaceMode);
         setState(saved ? { ...emptyState, ...JSON.parse(saved) } : { ...emptyState, assignments: defaultAssignments(payload) });
         if (savedSetup) setSetup({ ...defaultSetup, ...JSON.parse(savedSetup) });
       }
@@ -145,8 +170,9 @@ function Trip2026Workspace({ setTrip }: { setTrip: (value: "2026" | "2025") => v
   }, []);
   useEffect(() => {
     const syncViewFromHash = () => {
-      const requested = window.location.hash.slice(1) as View;
-      if (tabs.some((tab) => tab.id === requested)) setView(requested);
+      const requested = window.location.hash.slice(1);
+      if (requested === "decide" || requested === "travel") setExperience(requested);
+      else if (tabs.some((tab) => tab.id === requested)) { setExperience("plan"); setView(requested as View); }
     };
     syncViewFromHash();
     window.addEventListener("hashchange", syncViewFromHash);
@@ -160,6 +186,13 @@ function Trip2026Workspace({ setTrip }: { setTrip: (value: "2026" | "2025") => v
   const transportLow = selectedOptions.reduce((sum, option) => sum + (option?.low || 0), 0);
   const transportHigh = selectedOptions.reduce((sum, option) => sum + (option?.high || 0), 0);
   const transportHours = selectedOptions.reduce((sum, option) => sum + (option?.hours || 0), 0);
+  const bundleScope = useMemo<TrippyBundleScope>(() => ({
+    tripId: data?.id || "europe-2026",
+    dates: data ? isoDays(data.start, Math.floor((Date.parse(`${data.end}T12:00:00Z`) - Date.parse(`${data.start}T12:00:00Z`)) / 86400000) + 1) : [],
+    activityIds: data?.activities.map((activity) => activity.id) || [],
+    transportOptions: Object.fromEntries(data?.transport.map((leg) => [leg.id, leg.options.map((option) => option.id)]) || []),
+    hotelOptions: Object.fromEntries(data?.stops.map((stop) => [stop.id, data.hotels.filter((hotel) => hotel.city === stop.id).map((hotel) => hotel.id)]) || []),
+  }), [data]);
 
   const toggleSavedActivity = (id: string) => setState((current) => ({ ...current, savedActivities: current.savedActivities.includes(id) ? current.savedActivities.filter((item) => item !== id) : [...current.savedActivities, id] }));
   const addToDate = (id: string, date: string) => setState((current) => ({ ...current, assignments: { ...Object.fromEntries(Object.entries(current.assignments).map(([key, ids]) => [key, ids.filter((item) => item !== id)])), [date]: [...(current.assignments[date] || []).filter((item) => item !== id), id] } }));
@@ -172,39 +205,64 @@ function Trip2026Workspace({ setTrip }: { setTrip: (value: "2026" | "2025") => v
   if (error) return <main className="fatal-state"><h1>2026 Europe Trip</h1><p>{error}</p><p>Run the private importer, then reload this workspace.</p></main>;
   if (!data) return <main className="loading-workspace"><BrandMark alt="TRIPPY" className="trippy-brand-loader" />Loading the 2026 atlas…</main>;
 
-  return <div className="premium-shell" data-theme={theme}>
+  const openDecision = (decision: DecisionModeItem) => {
+    if (decision.kind === "stay") switchView("hotels");
+    else switchView("transport");
+  };
+
+  return <div className="premium-shell" data-theme={theme} data-experience={experience}>
     <header className="premium-header glass">
       <div className="brand-lockup"><span className="brand-orb trippy-brand-frame"><BrandMark /></span><div><strong>TRIPPY</strong><small>Travel intelligence</small></div></div>
       <TripEraSwitch value="2026" onChange={setTrip} />
-      <div className="header-trip-context"><span><Icon name="calendar" /><small>Travel window</small><b>{formatDate(data.start)}–{formatDate(data.end)}</b></span><span className="header-route-anchor"><Icon name="route" /><small>Route</small><b>🇩🇪 Frankfurt <i>→</i> 🇩🇪 Munich</b></span><span className="header-alert"><Icon name="flight" /><small>Open booking</small><b>KRK → BRU</b></span></div>
-      <div className="header-actions"><button className="quiet-button command-trigger" aria-label="Open trip commands" aria-haspopup="dialog" onClick={() => setCommandOpen(true)}><Icon name="search" /><span>Jump</span><kbd>⌘K</kbd></button><button className="quiet-button connection-trigger" aria-label="Open Connections" aria-haspopup="dialog" onClick={() => openConnections()}><span className="connection-pulse" /><Icon name="globe" /><span>Connections</span></button><button className="quiet-button setup-trigger" onClick={() => { setSetupOpen(true); setSettingsOpen(false); setExportOpen(false); }}><Icon name="settings" /><span>Trip setup</span></button><div className="settings-wrap"><button className="quiet-button icon-button" aria-label="Appearance settings" aria-expanded={settingsOpen} onClick={() => { setSettingsOpen(!settingsOpen); setExportOpen(false); }}><Icon name="globe" /></button>{settingsOpen && <div className="settings-menu glass" onKeyDown={(event) => event.key === "Escape" && setSettingsOpen(false)}><div className="menu-label">Appearance</div><div className="theme-options">{(["black", "blue"] as const).map((value) => <button key={value} aria-pressed={theme === value} className={theme === value ? "active" : ""} onClick={() => { setTheme(value); localStorage.setItem("trippy.appearance.v1", value); }}><i className={value} /><span>{value === "black" ? "Obsidian" : "Midnight blue"}</span>{theme === value && <span>✓</span>}</button>)}</div><div className="settings-divider" /><button className="settings-setup" onClick={() => { setSettingsOpen(false); setSetupOpen(true); }}><Icon name="settings" /><span>Trip setup & preferences</span><Icon name="arrow" width="14" /></button><small>{setup.adults} traveler{setup.adults === 1 ? "" : "s"} · {setup.pace} pace · {setup.origin}</small></div>}</div><div className="export-wrap"><button className="quiet-button export-trigger" aria-label="Export trip" aria-expanded={exportOpen} onClick={() => { setExportOpen(!exportOpen); setSettingsOpen(false); }}><Icon name="download" /><span>Export</span><Icon name="chevron" width="13" /></button>{exportOpen && <ExportMenu data={data} state={state} close={() => setExportOpen(false)} />}</div></div>
+      <div className="header-trip-context"><span><Icon name="calendar" /><small>Travel window</small><b>{formatDate(data.start)}–{formatDate(data.end)}</b></span><span className="header-route-anchor"><Icon name="route" /><small>Route</small><b>🇩🇪 Frankfurt <i>→</i> 🇩🇪 Munich</b></span><span className="header-alert"><Icon name="train" /><small>Open booking</small><b>BRU → AMS rail</b></span></div>
+      <div className="header-actions">
+        <button className="quiet-button command-trigger" aria-label="Open trip commands" aria-haspopup="dialog" onClick={() => setCommandOpen(true)}><Icon name="search" /><span>Jump</span><kbd>⌘K</kbd></button>
+        <button className="quiet-button connection-trigger" aria-label="Open Connections" aria-haspopup="dialog" onClick={() => openConnections()}><span className="connection-pulse" /><Icon name="globe" /><span>Connections</span></button>
+        <button className="quiet-button setup-trigger" onClick={() => { setDeploymentOpen(true); setSettingsOpen(false); setExportOpen(false); }}><Icon name="shield" /><span>Launch</span></button>
+        <div className="settings-wrap"><button className="quiet-button icon-button" aria-label="Appearance settings" aria-expanded={settingsOpen} onClick={() => { setSettingsOpen(!settingsOpen); setExportOpen(false); }}><Icon name="globe" /></button>{settingsOpen && <div className="settings-menu glass" onKeyDown={(event) => event.key === "Escape" && setSettingsOpen(false)}><div className="menu-label">Appearance</div><div className="theme-options">{(["black", "blue"] as const).map((value) => <button key={value} aria-pressed={theme === value} className={theme === value ? "active" : ""} onClick={() => { setTheme(value); localStorage.setItem("trippy.appearance.v1", value); }}><i className={value} /><span>{value === "black" ? "Obsidian" : "Midnight blue"}</span>{theme === value && <span>✓</span>}</button>)}</div><div className="settings-divider" /><button className="settings-setup" onClick={() => { setSettingsOpen(false); setSetupOpen(true); }}><Icon name="settings" /><span>Trip setup & preferences</span><Icon name="arrow" width="14" /></button><button className="settings-setup" onClick={() => { setSettingsOpen(false); setDeploymentOpen(true); }}><Icon name="shield" /><span>Deployment & privacy</span><Icon name="arrow" width="14" /></button><small>{setup.adults} traveler{setup.adults === 1 ? "" : "s"} · {setup.pace} pace · {setup.origin}</small></div>}</div>
+        <div className="export-wrap"><button className="quiet-button export-trigger" aria-label="Export trip" aria-expanded={exportOpen} onClick={() => { setExportOpen(!exportOpen); setSettingsOpen(false); }}><Icon name="download" /><span>Export</span><Icon name="chevron" width="13" /></button>{exportOpen && <ExportMenu data={data} state={state} close={() => setExportOpen(false)} />}</div>
+      </div>
     </header>
-    <nav className="workspace-tabs glass" aria-label="Trip planning sections">{tabs.map((tab) => <button key={tab.id} className={view === tab.id ? "active" : ""} aria-current={view === tab.id ? "page" : undefined} onClick={() => { switchView(tab.id); setSettingsOpen(false); setExportOpen(false); }}><Icon name={tab.icon} /><span>{tab.label}</span>{tab.id === "activities" ? <em>{data.activities.length}</em> : null}</button>)}</nav>
+    <ExperienceBar experience={experience} switchExperience={switchExperience} />
+    {experience === "plan" && <nav className="workspace-tabs glass" aria-label="Trip planning sections">{tabs.map((tab) => <button key={tab.id} className={view === tab.id ? "active" : ""} aria-current={view === tab.id ? "page" : undefined} onClick={() => { switchView(tab.id); setSettingsOpen(false); setExportOpen(false); }}><Icon name={tab.icon} /><span>{tab.label}</span>{tab.id === "activities" ? <em>{data.activities.length}</em> : null}</button>)}</nav>}
     <main className="workspace-main">
-      {view === "route" && <RouteView data={data} state={state} openDay={(date) => { setItineraryDate(date); switchView("itinerary"); }} low={transportLow} high={transportHigh} hours={transportHours} assigned={assignedIds.size} openTransport={() => switchView("transport")} openCity={(id) => { setCity(id); switchView("cities"); }} setCarPanel={setCarPanel} />}
-      {view === "transport" && <TransportView data={data} state={state} setState={setState} low={transportLow} high={transportHigh} hours={transportHours} />}
-      {view === "cities" && <CitiesView data={data} city={city} setCity={setCity} state={state} toggleSaved={toggleSavedActivity} addToDate={addToDate} />}
-      {view === "itinerary" && <ItineraryView initialDate={itineraryDate} data={data} state={state} activityById={activityById} addToDate={addToDate} removeFromDate={removeFromDate} moveWithinDate={moveWithinDate} setPriority={setPriority} toggleSaved={toggleSavedActivity} reset={() => setState((current) => ({ ...current, assignments: defaultAssignments(data), activityPriority: {} }))} />}
-      {view === "hotels" && <HotelsView data={data} state={state} setup={setup} setState={setState} />}
-      {view === "activities" && <AllActivitiesView data={data} state={state} toggleSaved={toggleSavedActivity} addToDate={addToDate} />}
-      {view === "research" && <ResearchView data={data} state={state} openConnections={openConnections} />}
+      {experience === "plan" && view === "route" && <RouteView data={data} state={state} openDay={(date) => { setItineraryDate(date); switchView("itinerary"); }} low={transportLow} high={transportHigh} hours={transportHours} assigned={assignedIds.size} openTransport={() => switchView("transport")} openCity={(id) => { setCity(id); switchView("cities"); }} setCarPanel={setCarPanel} />}
+      {experience === "plan" && view === "transport" && <TransportView data={data} state={state} setState={setState} low={transportLow} high={transportHigh} hours={transportHours} />}
+      {experience === "plan" && view === "cities" && <CitiesView data={data} city={city} setCity={setCity} state={state} toggleSaved={toggleSavedActivity} addToDate={addToDate} />}
+      {experience === "plan" && view === "itinerary" && <ItineraryView initialDate={itineraryDate} data={data} state={state} activityById={activityById} addToDate={addToDate} removeFromDate={removeFromDate} moveWithinDate={moveWithinDate} setPriority={setPriority} toggleSaved={toggleSavedActivity} reset={() => setState((current) => ({ ...current, assignments: defaultAssignments(data), activityPriority: {} }))} />}
+      {experience === "plan" && view === "hotels" && <HotelsView data={data} state={state} setup={setup} setState={setState} />}
+      {experience === "plan" && view === "activities" && <AllActivitiesView data={data} state={state} toggleSaved={toggleSavedActivity} addToDate={addToDate} />}
+      {experience === "plan" && view === "research" && <ResearchView data={data} state={state} openConnections={openConnections} />}
+      {experience === "decide" && <DecisionMode data={data} state={{ selectedTransport: state.selectedTransport, selectedHotels: state.selectedHotel }} onOpenDecision={openDecision} onOpenTransport={() => switchView("transport")} onOpenStay={(id) => { if (id) setCity(id); switchView("hotels"); }} onRefreshData={() => openConnections()} />}
+      {experience === "travel" && <TravelMode data={data} state={{ today: new Date().toISOString().slice(0, 10), selectedDate: travelDate, selectedCity: city, selectedTransport: state.selectedTransport, offlineReady }} onSelectDate={setTravelDate} onSelectCity={setCity} onOpenMap={({ date, cityId }) => { setTravelDate(date); setItineraryDate(date); if (cityId) setCity(cityId); switchView("itinerary"); }} onExport={() => setExportOpen(true)} onPrepareOffline={() => setOfflineReady(true)} onOpenDecisionMode={() => switchExperience("decide")} onOpenEmergencyCard={() => setExportOpen(true)} />}
     </main>
     <footer className="premium-footer"><span>TRIPPY · 2026 Europe Trip</span><span className={`data-mode ${data.dataMode}`}>{data.dataMode === "private" ? "Private local workspace · confirmations stay local" : "Redacted public sample · no booking references or secrets"}</span></footer>
-    <MobileDock view={view} navigate={switchView} more={() => setCommandOpen(true)} />
-    {commandOpen && <CommandPalette current={view} navigate={(next) => { switchView(next); setCommandOpen(false); }} setup={() => { setCommandOpen(false); setSetupOpen(true); }} connections={() => { setCommandOpen(false); openConnections(); }} close={() => setCommandOpen(false)} />}
-    {setupOpen && <SetupWizard data={data} initial={setup} save={(next) => { saveSetup(next); setSetupOpen(false); }} close={() => setSetupOpen(false)} />}{carPanel && <CarPanel kind={carPanel} data={data} close={() => setCarPanel(null)} />}{connectionsOpen && <IntegrationCenter open onClose={() => setConnectionsOpen(false)} seed={searchSeed} />}
+    <MobileDock experience={experience} view={view} switchExperience={switchExperience} navigate={switchView} more={() => setCommandOpen(true)} />
+    {commandOpen && <CommandPalette current={view} experience={experience} navigate={(next) => { switchView(next); setCommandOpen(false); }} switchExperience={(next) => { switchExperience(next); setCommandOpen(false); }} setup={() => { setCommandOpen(false); setSetupOpen(true); }} connections={() => { setCommandOpen(false); openConnections(); }} deploy={() => { setCommandOpen(false); setDeploymentOpen(true); }} inbox={() => { setCommandOpen(false); setInboxOpen(true); }} close={() => setCommandOpen(false)} />}
+    {setupOpen && <SetupWizard data={data} initial={setup} save={(next) => { saveSetup(next); setSetupOpen(false); }} close={() => setSetupOpen(false)} />}
+    {deploymentOpen && <DeploymentCenter current={workspaceMode} onChoose={(next) => { setWorkspaceMode(next); localStorage.setItem(workspaceModeKey, next); setDeploymentOpen(false); }} onOpenInbox={() => { setDeploymentOpen(false); setInboxOpen(true); }} onClose={() => setDeploymentOpen(false)} />}
+    {inboxOpen && <div className="inbox-backdrop" onMouseDown={(event) => event.target === event.currentTarget && setInboxOpen(false)}><div className="inbox-dialog glass"><button className="drawer-close" onClick={() => setInboxOpen(false)} aria-label="Close update inbox"><Icon name="close" /></button><UpdateInbox currentState={state} scope={bundleScope} onAccept={(next) => setState(next as WorkspaceState)} /></div></div>}
+    {carPanel && <CarPanel kind={carPanel} data={data} close={() => setCarPanel(null)} />}{connectionsOpen && <IntegrationCenter open onClose={() => setConnectionsOpen(false)} seed={searchSeed} />}
   </div>;
 }
 
-function MobileDock({ view, navigate, more }: { view: View; navigate: (view: View) => void; more: () => void }) {
-  const primary: View[] = ["route", "cities", "itinerary", "hotels", "research"];
-  return <nav className="mobile-dock glass" aria-label="Mobile trip navigation">{primary.map((id) => { const tab = tabs.find((item) => item.id === id)!; return <button key={id} className={view === id ? "active" : ""} aria-current={view === id ? "page" : undefined} onClick={() => navigate(id)}><Icon name={tab.icon} /><span>{id === "itinerary" ? "Days" : id === "research" ? "Research" : tab.label.split(" ")[0]}</span></button>; })}<button onClick={more} aria-label="Open all trip tools"><Icon name="settings" /><span>More</span></button></nav>;
+function ExperienceBar({ experience, switchExperience }: { experience: ExperienceMode; switchExperience: (mode: ExperienceMode) => void }) {
+  const modes: Array<{ id: ExperienceMode; label: string; note: string; icon: string }> = [
+    { id: "plan", label: "Plan", note: "Build & research", icon: "route" },
+    { id: "decide", label: "Decide", note: "Resolve what matters", icon: "check" },
+    { id: "travel", label: "Travel", note: "Use it on the road", icon: "pin" },
+  ];
+  return <nav className="experience-bar glass" aria-label="TRIPPY experience mode">{modes.map((mode) => <button key={mode.id} className={experience === mode.id ? "active" : ""} aria-current={experience === mode.id ? "page" : undefined} onClick={() => switchExperience(mode.id)}><span><Icon name={mode.icon} /></span><div><b>{mode.label}</b><small>{mode.note}</small></div></button>)}</nav>;
 }
 
-function CommandPalette({ current, navigate, setup, connections, close }: { current: View; navigate: (view: View) => void; setup: () => void; connections: () => void; close: () => void }) {
+function MobileDock({ experience, view, switchExperience, navigate, more }: { experience: ExperienceMode; view: View; switchExperience: (mode: ExperienceMode) => void; navigate: (view: View) => void; more: () => void }) {
+  return <nav className="mobile-dock glass" aria-label="Mobile trip navigation"><button className={experience === "plan" && view === "route" ? "active" : ""} onClick={() => navigate("route")}><Icon name="route" /><span>Plan</span></button><button className={experience === "plan" && view === "itinerary" ? "active" : ""} onClick={() => navigate("itinerary")}><Icon name="itinerary" /><span>Days</span></button><button className={experience === "decide" ? "active" : ""} onClick={() => switchExperience("decide")}><Icon name="check" /><span>Decide</span></button><button className={experience === "travel" ? "active" : ""} onClick={() => switchExperience("travel")}><Icon name="pin" /><span>Travel</span></button><button onClick={more} aria-label="Open all trip tools"><Icon name="settings" /><span>More</span></button></nav>;
+}
+
+function CommandPalette({ current, experience, navigate, switchExperience, setup, connections, deploy, inbox, close }: { current: View; experience: ExperienceMode; navigate: (view: View) => void; switchExperience: (mode: ExperienceMode) => void; setup: () => void; connections: () => void; deploy: () => void; inbox: () => void; close: () => void }) {
   const [query, setQuery] = useState("");
   const visible = tabs.filter((tab) => `${tab.label} ${tab.id}`.toLowerCase().includes(query.trim().toLowerCase()));
-  return <div className="command-backdrop" onMouseDown={(event) => event.target === event.currentTarget && close()}><section className="command-palette glass" role="dialog" aria-modal="true" aria-labelledby="command-title"><header><span><Icon name="search" /></span><input autoFocus id="command-title" aria-label="Search trip sections" value={query} onChange={(event) => setQuery(event.target.value)} onKeyDown={(event) => { if (event.key === "Enter" && visible[0]) navigate(visible[0].id); }} placeholder="Jump to a trip workspace…" /><kbd>ESC</kbd></header><div className="command-list"><small>Workspaces</small>{visible.map((tab) => <button key={tab.id} className={current === tab.id ? "active" : ""} onClick={() => navigate(tab.id)}><span><Icon name={tab.icon} /></span><b>{tab.label}</b>{current === tab.id ? <em>Current</em> : <Icon name="arrow" />}</button>)}{!visible.length ? <p>No matching workspace</p> : null}</div><footer><button onClick={setup}><Icon name="settings" />Trip setup</button><button onClick={connections}><Icon name="globe" />Connections</button><span><kbd>⌘</kbd><kbd>K</kbd> anywhere</span></footer></section></div>;
+  return <div className="command-backdrop" onMouseDown={(event) => event.target === event.currentTarget && close()}><section className="command-palette glass" role="dialog" aria-modal="true" aria-labelledby="command-title"><header><span><Icon name="search" /></span><input autoFocus id="command-title" aria-label="Search trip sections" value={query} onChange={(event) => setQuery(event.target.value)} onKeyDown={(event) => { if (event.key === "Enter" && visible[0]) navigate(visible[0].id); }} placeholder="Jump to a trip workspace…" /><kbd>ESC</kbd></header><div className="command-list"><small>Modes</small>{(["plan", "decide", "travel"] as ExperienceMode[]).map((mode) => <button key={mode} className={experience === mode ? "active" : ""} onClick={() => switchExperience(mode)}><span><Icon name={mode === "plan" ? "route" : mode === "decide" ? "check" : "pin"} /></span><b>{displayCity(mode)} mode</b>{experience === mode ? <em>Current</em> : <Icon name="arrow" />}</button>)}<small>Planning workspaces</small>{visible.map((tab) => <button key={tab.id} className={experience === "plan" && current === tab.id ? "active" : ""} onClick={() => navigate(tab.id)}><span><Icon name={tab.icon} /></span><b>{tab.label}</b>{experience === "plan" && current === tab.id ? <em>Current</em> : <Icon name="arrow" />}</button>)}{!visible.length ? <p>No matching workspace</p> : null}</div><footer><button onClick={setup}><Icon name="settings" />Trip setup</button><button onClick={connections}><Icon name="globe" />Connections</button><button onClick={inbox}><Icon name="activities" />Update inbox</button><button onClick={deploy}><Icon name="shield" />Deploy</button></footer></section></div>;
 }
 
 function SetupWizard({ data, initial, save, close }: { data: Trip2026Payload; initial: SetupProfile; save: (profile: SetupProfile) => void; close: () => void }) {
@@ -225,17 +283,17 @@ function RouteView({ data, state, openDay, low, high, hours, assigned, openTrans
   const points: Point[] = useMemo(() => [{ id: "frankfurt", name: "🇩🇪 Frankfurt Airport", lat: 50.0379, lng: 8.5622, category: "airport", number: 1 }, ...data.stops.map((stop, index) => ({ id: stop.id, name: `${stop.flag} ${stop.name}`, lat: stop.lat, lng: stop.lng, category: "city", number: index + 2 }))], [data.stops]);
   const logistics = useMemo(() => buildTripLogistics(data, state.selectedTransport), [data, state.selectedTransport]);
   const segments: MapSegment[] = useMemo(() => data.transport.map((leg): MapSegment => { const mode = (leg.options.find((option) => option.id === state.selectedTransport[leg.id]) || leg.options.find((option) => option.id === leg.recommend))?.mode; return { from: leg.from, to: leg.to, kind: mode === "car" ? "drive" : mode === "flight" ? "flight" : "train", status: transportLegStatus(logistics, leg, data.stops) }; }).filter((segment) => segment.kind !== "other" && layers[segment.kind]), [data.transport, data.stops, state.selectedTransport, layers, logistics]);
-  return <><section className="hero-map glass"><div className="map-hero-heading"><div><span className="eyebrow">Europe · 21 days · 7 stops</span><h1>Your 2026 route</h1></div><button className="map-open-booking" onClick={openTransport}><i /><span><small>Needs booking</small><b>KRK → Brussels · 30 Sep</b></span><Icon name="arrow" /></button></div><div className="layer-controls" aria-label="Route map layers">{(["flight", "train", "drive", "cities"] as const).map((layer) => <button key={layer} className={layers[layer] ? "on" : ""} aria-pressed={layers[layer]} onClick={() => setLayers((current) => ({ ...current, [layer]: !current[layer] }))}><Icon name={layer === "drive" ? "car" : layer === "cities" ? "pin" : layer} />{layer === "drive" ? "Car" : layer === "cities" ? "City stops" : displayCity(layer)}</button>)}</div><GeographicMap points={layers.cities ? points : points.filter((point) => point.category === "airport")} connect segments={segments} label="2026 Europe route" onSelect={(id) => routeCityIds.includes(id) && openCity(id)} fitKey={JSON.stringify(layers)} /></section>
+  return <><section className="hero-map glass"><div className="map-hero-heading"><div><span className="eyebrow">Europe · 21 days · 7 stops</span><h1>Your 2026 route</h1></div><button className="map-open-booking" onClick={openTransport}><i /><span><small>Needs booking</small><b>Brussels → Amsterdam rail · 3 Oct</b></span><Icon name="arrow" /></button></div><div className="layer-controls" aria-label="Route map layers">{(["flight", "train", "drive", "cities"] as const).map((layer) => <button key={layer} className={layers[layer] ? "on" : ""} aria-pressed={layers[layer]} onClick={() => setLayers((current) => ({ ...current, [layer]: !current[layer] }))}><Icon name={layer === "drive" ? "car" : layer === "cities" ? "pin" : layer} />{layer === "drive" ? "Car" : layer === "cities" ? "City stops" : displayCity(layer)}</button>)}</div><GeographicMap points={layers.cities ? points : points.filter((point) => point.category === "airport")} connect segments={segments} label="2026 Europe route" onSelect={(id) => routeCityIds.includes(id) && openCity(id)} fitKey={JSON.stringify(layers)} /></section>
     <section className="metric-row"><article className="glass"><span>Selected transport</span><strong>{money(low)}–{money(high)}</strong><small>Planning allowance · live fares to verify</small></article><article className="glass"><span>Estimated transit</span><strong>≈ {Math.round(hours)} hours</strong><small>Practical hotel-to-hotel time</small></article><article className="glass"><span>Activities placed</span><strong>{assigned}</strong><small>Across the working daily plan</small></article></section>
     <section className="route-ribbon glass">{data.stops.map((stop, index) => <button key={stop.id} onClick={() => openCity(stop.id)}><span>{String(index + 1).padStart(2, "0")}</span><b>{stop.flag} {stop.name}</b><small>{formatDate(stop.checkIn)}–{formatDate(stop.checkOut)} · {stop.nights}n</small></button>)}</section>
     <TripOverview data={data} assignments={state.assignments} priorities={state.activityPriority} selectedTransport={state.selectedTransport} selectedHotels={state.selectedHotel} onDay={openDay} />
-    <details className="route-notes glass"><summary>Route notes <Icon name="chevron" width="14" /></summary><div><p><b>30 September · KRK → Brussels</b> Final flight and arrival timing still need booking.</p><p>European Sleeper is confirmed for 5 October; preserve the Berlin arrival buffer.</p><button className="text-button" onClick={openTransport}>Compare transport <Icon name="arrow" width="14" /></button></div></details>
+    <details className="route-notes glass"><summary>Route notes <Icon name="chevron" width="14" /></summary><div><p><b>30 September · KRK → AMS → Brussels</b> KLM KL1328 and the onward connection are confirmed; second-segment timing is not in the share-safe record.</p><p><b>3 October · Brussels → Amsterdam</b> Direct rail still needs booking. European Sleeper is confirmed for 5 October; preserve the Berlin arrival buffer.</p><button className="text-button" onClick={openTransport}>Compare transport <Icon name="arrow" width="14" /></button></div></details>
     <section className="addon-row"><span>Automotive add-ons</span><button onClick={() => setCarPanel("rentals")}><Icon name="car" />Autobahn & rentals</button><button onClick={() => setCarPanel("ring")}><Icon name="activities" />Ring driving</button><button onClick={() => setCarPanel("museums")}><Icon name="cities" />Car museums</button></section><BookingsStrip data={data} /></>;
 }
 
 function TransportView({ data, state, setState, low, high, hours }: { data: Trip2026Payload; state: WorkspaceState; setState: React.Dispatch<React.SetStateAction<WorkspaceState>>; low: number; high: number; hours: number }) {
   const logistics = useMemo(() => buildTripLogistics(data, state.selectedTransport), [data, state.selectedTransport]);
-  return <section className="view-stack"><header className="page-heading"><h2>Compare transport</h2><p>Confirmed bookings and open route decisions</p></header><div className="transport-summary glass"><span><small>Selected allowance</small><strong>{money(low)}–{money(high)}</strong></span><span><small>Practical time</small><strong>≈ {Math.round(hours)}h</strong></span><span><small>Unbooked hinge</small><strong>KRK → BRU</strong></span></div><div className="transport-list">{data.transport.map((leg, index) => <TransportLegCard key={leg.id} leg={leg} index={index} status={transportLegStatus(logistics, leg, data.stops)} selected={state.selectedTransport[leg.id] || leg.recommend} choose={(id) => setState((current) => ({ ...current, selectedTransport: { ...current.selectedTransport, [leg.id]: id } }))} />)}</div></section>;
+  return <section className="view-stack"><header className="page-heading"><h2>Compare transport</h2><p>Confirmed bookings and open route decisions</p></header><div className="transport-summary glass"><span><small>Selected allowance</small><strong>{money(low)}–{money(high)}</strong></span><span><small>Practical time</small><strong>≈ {Math.round(hours)}h</strong></span><span><small>Unbooked hinge</small><strong>BRU → AMS rail</strong></span></div><div className="transport-list">{data.transport.map((leg, index) => <TransportLegCard key={leg.id} leg={leg} index={index} status={transportLegStatus(logistics, leg, data.stops)} selected={state.selectedTransport[leg.id] || leg.recommend} choose={(id) => setState((current) => ({ ...current, selectedTransport: { ...current.selectedTransport, [leg.id]: id } }))} />)}</div></section>;
 }
 function TransportLegCard({ leg, index, selected, status, choose }: { leg: TransportLeg; index: number; selected: string; status: LogisticsItem["status"]; choose: (id: string) => void }) {
   const statusText = status === "confirmed" ? "Confirmed record" : status === "missing" ? "Needs booking" : status === "conflict" ? "Conflict" : "TBC";
@@ -360,16 +418,16 @@ function ResearchView({ data, state, openConnections }: { data: Trip2026Payload;
     { id: "brussels", name: "Brussels", lat: 50.9014, lng: 4.4844, category: "airport" as const },
   ];
   return <section className="view-stack">
-    <header className="page-heading research-heading"><div><span className="eyebrow">Research & optimization</span><h2>Turn uncertainty into a decision.</h2><p>Compare route, date and mode scenarios without blurring estimates, live quotes or confirmed bookings.</p></div><button className="research-connection-button" onClick={() => openConnections({ kind: "cash-flights", origin: "KRK", destination: "BRU", date: "2026-09-30" })}><span className="connection-pulse" /><Icon name="globe" />Open Connections</button></header>
+    <header className="page-heading research-heading"><div><span className="eyebrow">Research & optimization</span><h2>Turn uncertainty into a decision.</h2><p>Compare route, date and mode scenarios without blurring estimates, live quotes or confirmed bookings.</p></div><button className="research-connection-button" onClick={() => openConnections({ kind: "hotels", query: "Amsterdam", date: "2026-10-03" })}><span className="connection-pulse" /><Icon name="globe" />Open Connections</button></header>
     <ResearchOptimizer data={data} selectedTransport={state.selectedTransport} onSearch={openConnections} />
     <div className="flight-builder-grid">
-      <article className="glass status-missing"><span className="eyebrow">Open priority</span><h3>Book KRK → Brussels · September 30</h3><p>The refunded KLM itinerary is inactive. Compare a Brussels Airport arrival with sensible one-stop alternatives.</p><div className="provider-links"><a href="https://www.google.com/travel/flights?q=one%20way%20KRK%20to%20BRU%20on%202026-09-30%201%20adult%20economy" target="_blank" rel="noreferrer">Google Flights ↗</a><a href="https://seats.aero" target="_blank" rel="noreferrer">Seats.aero ↗</a></div></article>
+      <article className="glass status-confirmed"><span className="eyebrow">Confirmed route</span><h3>KLM KL1328 + onward Brussels connection · September 30</h3><p>KRK 17:55 → AMS 19:55 is confirmed, followed by the confirmed Brussels connection. The second-segment timing remains private or was not supplied to the share-safe record.</p></article>
       <article className="glass"><span className="eyebrow">Confirmed Poland arrival</span><h3>FRA → WRO · LH1374</h3><p>September 24 · 12:35–14:00.</p></article>
       <article className="glass"><span className="eyebrow">Confirmed overnight rail</span><h3>Amsterdam → Berlin · European Sleeper</h3><p>October 5 · 21:34–06:01 · couchette.</p></article>
       <article className="glass"><span className="eyebrow">Confirmed return</span><h3>MUC → IAD · UA109</h3><p>October 12 · 12:00–15:10 · economy.</p></article>
     </div>
     <FlightValueWorkbench />
-    <div className="flight-map glass"><header><span className="eyebrow">Flight builder map</span><h3>Confirmed flight and open departure</h3></header><GeographicMap connect points={airports} segments={[{ from: "frankfurt", to: "wroclaw", kind: "flight", status: "confirmed" }, { from: "krakow", to: "brussels", kind: "flight", status: "missing" }]} label="2026 flight routes" /></div>
+    <div className="flight-map glass"><header><span className="eyebrow">Flight builder map</span><h3>Confirmed flight path</h3></header><GeographicMap connect points={airports} segments={[{ from: "frankfurt", to: "wroclaw", kind: "flight", status: "confirmed" }, { from: "krakow", to: "brussels", kind: "flight", status: "confirmed" }]} label="2026 flight routes" /></div>
     <h3 className="subsection-title">Flight-capable alternatives by leg</h3>
     <div className="research-list">{flights.map((leg) => <article className="glass" key={leg.id}><header><b>{countryFlag[leg.from]} {displayCity(leg.from)} → {countryFlag[leg.to]} {displayCity(leg.to)}</b><span>{formatDate(leg.date)}</span></header>{leg.options.filter((option) => option.mode === "flight").map((option) => <div key={option.id}><strong>{option.name}</strong><span>{option.low || option.high ? `${money(option.low)}–${money(option.high)}` : "Booked / price private"} · {option.door}</span><p>{option.note}</p></div>)}</article>)}</div>
     <BookingsStrip data={data} />
@@ -402,11 +460,11 @@ function CarPanel({ kind, data, close }: { kind: "rentals" | "ring" | "museums";
 function ExportMenu({ data, state, close }: { data: Trip2026Payload; state: WorkspaceState; close: () => void }) {
   const [busy, setBusy] = useState<TripExportKind | null>(null);
   const [failure, setFailure] = useState("");
-  async function run(kind: TripExportKind) {
+  async function run(kind: TripExportKind, privacy: TripExportPrivacy = "share-safe") {
     setBusy(kind); setFailure("");
-    try { await downloadTripExport(data, state, kind); setBusy(null); close(); }
+    try { await downloadTripExport(data, state, kind, privacy); setBusy(null); close(); }
     catch (error) { setFailure(error instanceof Error ? error.message : "Export failed. Please try again."); setBusy(null); }
   }
   const options: Array<[TripExportKind, string, string]> = [["pdf-light", "Operational PDF", "Light"], ["pdf-dark", "Operational PDF", "Dark"], ["pdf-visual", "Visual dossier", "PDF"], ["html", "Visual dossier", "HTML"], ["csv", "Working itinerary", "CSV"]];
-  return <div className="export-menu glass" onKeyDown={(event) => event.key === "Escape" && !busy && close()}><span>Download itinerary</span>{options.map(([kind, label, format]) => <button key={kind} disabled={!!busy} onClick={() => run(kind)}><Icon name="download" /><span>{busy === kind ? "Preparing…" : label}</span><em>{format}</em></button>)}{busy && <p className="export-status" role="status">Preparing your itinerary{busy === "pdf-visual" ? " and photos" : ""}…</p>}{failure && <p className="export-error" role="alert">{failure}</p>}</div>;
+  return <div className="export-menu glass" onKeyDown={(event) => event.key === "Escape" && !busy && close()}><span>Share-safe itinerary</span>{options.map(([kind, label, format]) => <button key={kind} disabled={!!busy} onClick={() => run(kind)}><Icon name="download" /><span>{busy === kind ? "Preparing…" : label}</span><em>{format}</em></button>)}{data.dataMode === "private" && <><span className="export-private-label"><Icon name="shield" /> Private operational copy</span><button disabled={!!busy} onClick={() => run("html", "private-operational")}><Icon name="download" /><span>Private itinerary · printable</span><em>HTML</em></button><button disabled={!!busy} onClick={() => run("csv", "private-operational")}><Icon name="download" /><span>Private working data</span><em>CSV</em></button><small className="export-private-note">Includes private booking details and references from this local workspace. Never share or commit these files.</small></>}{busy && <p className="export-status" role="status">Preparing your itinerary{busy === "pdf-visual" ? " and photos" : ""}…</p>}{failure && <p className="export-error" role="alert">{failure}</p>}</div>;
 }

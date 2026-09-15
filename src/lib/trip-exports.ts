@@ -12,6 +12,7 @@ export type TripExportState = {
 
 export type TripExportTheme = "light" | "dark";
 export type TripExportKind = "csv" | "html" | "pdf-light" | "pdf-dark" | "pdf-visual";
+export type TripExportPrivacy = "share-safe" | "private-operational";
 export type TripPdfIcon = "flight" | "train" | "car" | "hotel" | "activity";
 
 type ExportActivity = {
@@ -112,7 +113,9 @@ function number(value: unknown, min = 0, max = 1_000_000): number {
   return Number.isFinite(parsed) ? Math.max(min, Math.min(max, parsed)) : 0;
 }
 
-export function buildTripExportSnapshot(data: Trip2026Payload, state: TripExportState): TripExportSnapshot {
+export function buildTripExportSnapshot(data: Trip2026Payload, state: TripExportState, privacy: TripExportPrivacy = "share-safe"): TripExportSnapshot {
+  const privateOperational = privacy === "private-operational" && data.dataMode === "private";
+  const bookingText = (value: unknown) => privateOperational ? cleanText(value) : redactPrivateExportText(value);
   const logistics = buildTripLogistics(data, state.selectedTransport);
   const dates = calendarDates(logistics);
   const activityById = new Map(data.activities.map((activity) => [activity.id, activity]));
@@ -190,9 +193,9 @@ export function buildTripExportSnapshot(data: Trip2026Payload, state: TripExport
     bookings: data.bookings.slice(0, 100).map((booking, index) => {
       const item = logistics.items.find((candidate) => candidate.id.startsWith(`booking:${index}:`));
       return {
-      kind: redactPrivateExportText(booking.kind), date: cleanText(booking.date, 40),
+      kind: bookingText(booking.kind), date: cleanText(booking.date, 40),
       dateIso: cleanText(item?.date, 10), endDate: cleanText(item?.endDate, 10),
-      title: redactPrivateExportText(booking.title), detail: redactPrivateExportText(booking.detail),
+      title: bookingText(booking.title), detail: bookingText(`${booking.detail}${privateOperational && booking.ref ? ` · Reference: ${booking.ref}` : ""}`),
       status: booking.status === "confirmed" || booking.status === "missing" || booking.status === "conflict" ? booking.status : "tbc",
       };
     }),
@@ -236,8 +239,8 @@ export function renderTripCsv(snapshot: TripExportSnapshot): string {
   return `\uFEFF${rows.map((row) => row.map(csvCell).join(",")).join("\r\n")}\r\n`;
 }
 
-export function renderTripHtml(snapshot: TripExportSnapshot, { theme = "dark", visual = true }: { theme?: TripExportTheme; visual?: boolean } = {}): string {
-  return renderTripHtmlReplica(sanitizeTripExportSnapshot(snapshot), { theme, visual });
+export function renderTripHtml(snapshot: TripExportSnapshot, { theme = "dark", visual = true, privacy = "share-safe" }: { theme?: TripExportTheme; visual?: boolean; privacy?: TripExportPrivacy } = {}): string {
+  return renderTripHtmlReplica(privacy === "private-operational" ? snapshot : sanitizeTripExportSnapshot(snapshot), { theme, visual });
 }
 
 export async function createTripPdf(snapshotInput: TripExportSnapshot, options: TripPdfOptions): Promise<Uint8Array> {
@@ -255,10 +258,12 @@ function saveBlob(blob: Blob, filename: string) {
 }
 
 /** Client integration: one call per menu action; every format uses the same snapshot. */
-export async function downloadTripExport(data: Trip2026Payload, state: TripExportState, kind: TripExportKind): Promise<void> {
-  const snapshot = buildTripExportSnapshot(data, state);
-  if (kind === "csv") return saveBlob(new Blob([renderTripCsv(snapshot)], { type: "text/csv;charset=utf-8" }), tripExportFilename(kind));
-  if (kind === "html") return saveBlob(new Blob([renderTripHtml(snapshot)], { type: "text/html;charset=utf-8" }), tripExportFilename(kind));
+export async function downloadTripExport(data: Trip2026Payload, state: TripExportState, kind: TripExportKind, privacy: TripExportPrivacy = "share-safe"): Promise<void> {
+  const effectivePrivacy = privacy === "private-operational" && data.dataMode === "private" ? privacy : "share-safe";
+  const snapshot = buildTripExportSnapshot(data, state, effectivePrivacy);
+  const privateName = effectivePrivacy === "private-operational" ? `trippy-2026-private-operational.${kind === "csv" ? "csv" : "html"}` : tripExportFilename(kind);
+  if (kind === "csv") return saveBlob(new Blob([renderTripCsv(snapshot)], { type: "text/csv;charset=utf-8" }), privateName);
+  if (kind === "html") return saveBlob(new Blob([renderTripHtml(snapshot, { privacy: effectivePrivacy })], { type: "text/html;charset=utf-8" }), privateName);
   const response = await fetch("/api/exports/trip-pdf", {
     method: "POST", headers: { "Content-Type": "application/json" }, cache: "no-store",
     body: JSON.stringify({ snapshot, theme: kind === "pdf-dark" ? "dark" : "light", visual: kind === "pdf-visual" }),

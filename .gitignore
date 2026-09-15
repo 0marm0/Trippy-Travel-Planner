@@ -8,7 +8,9 @@ token.json
 *.pem
 *.key
 
-# Personal trips, bookings, and connector data
+# Personal trips, bookings, connector data, and imported chat/email archives.
+# The tracked trips/ tree is deliberately share-safe; all raw/private material
+# belongs under .private/trips/<trip-id>/ and is ignored by this first rule.
 data/private/
 .private/
 data/imports/

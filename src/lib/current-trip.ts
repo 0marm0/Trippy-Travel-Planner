@@ -55,7 +55,9 @@ export async function loadCurrentTrip({ allowPrivate = false }: { allowPrivate?:
   const configuredPath = process.env.TRIPPY_2026_DATA_PATH;
   const publicSample = join(process.cwd(), "examples", "trips", "2026-europe-sample.json");
   const candidates = allowPrivate
-    ? configuredPath ? [configuredPath, publicSample] : [join(process.cwd(), ".private", "2026-trip.json"), publicSample]
+    ? configuredPath
+      ? [configuredPath, publicSample]
+      : [join(process.cwd(), ".private", "trips", "europe-2026", "trip.json"), join(process.cwd(), ".private", "2026-trip.json"), publicSample]
     : [publicSample];
   let source = "";
   let dataMode: Trip2026Payload["dataMode"] = "sample";

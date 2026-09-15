@@ -103,15 +103,19 @@ NEXT_PUBLIC_CITY_MAP_STYLE_URL=https://your-map-provider.example/style.json
 
 ## Vercel deployment
 
-Vercel deployment is optional and does not change the public-release gate.
+Vercel deployment is optional and does not change the public-release gate. It creates an independent website instance; it does not turn the current browser-local app into an authenticated or synchronized private-trip service. See [deployment modes](DEPLOYMENT_MODES.md) for the local-private, agent-connected, personal-cloud, and public-sample boundary.
 
 1. Verify demo/manual mode on a clean checkout.
-2. Add only needed values in Vercel Project Settings → Environment Variables; never upload `.env.local` or paste secrets into chat. Scope values deliberately to Production, Preview, and/or Development.
+2. Add only needed values in Vercel Project Settings → Environment Variables; never upload `.env.local` or paste secrets into chat. Scope values deliberately to Production, Preview, and/or Development. These server-side values support only the deployed website's direct implemented adapter calls. They cannot provide a visitor access to an MCP or connector installed in a local ChatGPT, Codex, Claude, or other agent host.
 3. Keep `TRIPPY_ALLOW_PRIVATE_LOCAL=false` and do not configure a private itinerary path.
 4. Restrict any browser map key to the deployment domains; use server-side secret storage for private provider keys.
 5. Redeploy after environment-variable changes. Run `npm run check`, then complete the [public release checklist](PUBLIC_RELEASE_CHECKLIST.md) before any source publication.
 
-The deployment must degrade to manual/sample mode when optional providers are unavailable. It must not expose debug errors, account identifiers, raw provider responses, or private imports.
+The deployment must degrade to manual/sample mode when optional providers are unavailable. It must not expose debug errors, account identifiers, raw provider responses, or private imports. Browser edits remain in that browser's local storage: there is no account, durable trip database, cross-device sync, or server-side recovery. Do not use a hosted instance for private itinerary, raw mail, booking-document, or confirmation data.
+
+### Optional post-publication deploy link
+
+Leave `NEXT_PUBLIC_TRIPPY_REPOSITORY_URL` empty while the repository is pre-release. Only after the public source candidate has passed the release checklist and publication is explicitly authorized may it contain the exact public repository URL. It is a public URL used to gate optional deploy-link copy; it is not a secret, does not publish source, and does not configure a provider. A one-click deployment still creates a separate instance whose operator must configure and review its own environment.
 
 ## Refresh a public sample
 

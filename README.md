@@ -67,9 +67,11 @@ npm run privacy:check
 
 The checks are valuable but not proof that a public release is safe; they do not replace a clean-history review and independent artifact review. Read [security and privacy](docs/SECURITY.md) and the [public release checklist](docs/PUBLIC_RELEASE_CHECKLIST.md).
 
-## Local and Vercel deployment
+## Choose a deployment mode
 
-Local development should use `localhost` and untracked `.env.local`. For a Vercel deployment, use Vercel’s project/environment secret settings rather than files, leave private-trip gates disabled, and deploy only the redacted/public artifact after the release gate has passed. Deployment is a separate, explicitly authorized decision. Full instructions: [setup](docs/SETUP.md#vercel-deployment).
+Start with local-private: run TRIPPY on `localhost`, keep private data and host connectors on your own computer, and let the browser retain its own working state. An agent-connected session may use only connectors installed in that agent host and explicitly authorized by you; those credentials do not travel with the app.
+
+You may run your own independent Vercel instance for direct website calls, but it has no accounts, database, or cross-device sync today. Each browser has separate local state. Keep private-trip gates disabled, use Vercel’s secret settings only for that website’s direct adapters, and deploy only a reviewed redacted sample. A public clone/deploy link remains disabled until the repository is authorized for publication. See [deployment modes](docs/DEPLOYMENT_MODES.md) and [setup](docs/SETUP.md#vercel-deployment).
 
 ## Verify a change
 
@@ -84,6 +86,7 @@ For the exact staged source candidate, including reachable Git history, run `npm
 ## Documentation
 
 - [Local and Vercel setup](docs/SETUP.md)
+- [Deployment modes and future sync](docs/DEPLOYMENT_MODES.md)
 - [Integrations, coverage, cost, freshness, and fallbacks](docs/INTEGRATIONS.md)
 - [Implemented versus planned capabilities](docs/IMPLEMENTATION_STATUS.md)
 - [Publication candidate](docs/RELEASE_CANDIDATE.md)

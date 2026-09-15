@@ -4,6 +4,12 @@
 
 Onboarding turns an ambiguous trip idea into a constraint ledger and a small route frontier. It does not claim a booking, collect credentials by default, or make the traveler answer every possible question before seeing useful alternatives. Manual/sample mode is first-class; researched and private-local modes are opt-in.
 
+## First-run boundary
+
+Begin with one short choice: **local-private, agent-connected, personal cloud, or public sample**. Recommend local-private for any real trip. Explain that the current planner saves working edits in the current browser's local storage, not in an account or database; a different browser or device will not have that trip.
+
+An agent-connected session may use only connectors installed in that agent host and explicitly approved by the traveler. Those host-local credentials never become website configuration. A personal-cloud deployment is a separate website instance; its environment secrets may support direct website adapter calls only. Public-sample mode contains only redacted material and must not imply that a provider or connector is live. See [deployment modes](DEPLOYMENT_MODES.md).
+
 ## The staged conversation
 
 ### 1. Frame the trip

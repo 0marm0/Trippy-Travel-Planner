@@ -82,6 +82,19 @@ test('CSV and HTML render the same complete sanitized snapshot', () => {
   assert.match(lightDossier, /html\[data-theme="light"\]/);
 });
 
+test('private operational HTML preserves local booking details while share-safe exports stay redacted', () => {
+  const privateSnapshot = buildTripExportSnapshot(trip, state, 'private-operational');
+  assert.match(privateSnapshot.bookings[0].detail, /ABC123/);
+  assert.match(privateSnapshot.bookings[0].detail, /person@example\.com/);
+  const privateHtml = renderTripHtml(privateSnapshot, { privacy: 'private-operational' });
+  assert.match(privateHtml, /ABC123/);
+  assert.match(privateHtml, /person@example\.com/);
+
+  const publicData = { ...trip, dataMode: 'sample' };
+  const forcedPrivate = buildTripExportSnapshot(publicData, state, 'private-operational');
+  assert.doesNotMatch(JSON.stringify(forcedPrivate), /ABC123|person@example\.com/);
+});
+
 test('untrusted export snapshots are bounded and sanitized again at the PDF boundary', () => {
   const snapshot = sanitizeTripExportSnapshot({ title: 'Trip', start: '2026-01-01', end: '2026-01-02', bookings: [{ title: 'PNR Z9X8Q7', detail: 'person@example.com' }], days: [{ activities: [{ priority: 'admin', image: 'https://tracker.example/private/asset' }, { priority: 'must', image: 'https://images.unsplash.com/photo.jpg?token=secret' }] }], catalogue: [{ city: 'Berlin', title: 'Guide card', priority: 'must', image: 'https://tracker.example/private/asset' }] });
   assert.equal(snapshot.bookings[0].title.includes('Z9X8Q7'), false);

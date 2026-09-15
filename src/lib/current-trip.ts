@@ -4,6 +4,8 @@ import { readFile } from "node:fs/promises";
 import { join } from "node:path";
 import type { BookingRecord, CityDayPlan, HotelOffer, MapPlace, TransportLeg, TransportOption, Trip2026Payload, TripActivity, TripHotel, TripStop } from "./trip-model";
 import { applyAuthoritative2026Corrections } from "./authoritative-trip-corrections";
+import { reviewedCoordinateForActivity } from "./activity-map-coordinates";
+import { canonicalCityKey } from "./city-key";
 
 /* The importer reads the historical site's trusted, generated data bundle. Its
    shape is intentionally flexible because the upstream site is not typed. */
@@ -81,19 +83,21 @@ export async function loadCurrentTrip({ allowPrivate = false }: { allowPrivate?:
   }));
   const activities: TripActivity[] = [...(raw.oi || []), ...(raw.si || []), ...originalActivities].map((activity: AnyRecord) => {
     const override = imageOverrides[activity.id] || {};
+    const city = canonicalCityKey(String(activity.city || ""));
+    const coordinate = reviewedCoordinateForActivity(String(activity.id), city);
     return {
       id: activity.id,
-      city: activity.city,
+      city,
       title: activity.title,
       description: activity.description || "",
       details: activity.details || "",
       url: activity.url || "",
       category: activity.category || "Explore",
       priority: priority(activity.priority || "Could do"),
-      image: absoluteImage(override.image || activity.image || "", activity.city),
+      image: absoluteImage(override.image || activity.image || "", city),
       status: activity.status || "Planning option",
-      lat: activity.lat,
-      lng: activity.lon,
+      lat: activity.lat ?? coordinate?.lat,
+      lng: activity.lon ?? activity.lng ?? coordinate?.lng,
       closed: Boolean(activity.closed),
       fit: activity.fit,
       access: activity.access,
@@ -108,16 +112,17 @@ export async function loadCurrentTrip({ allowPrivate = false }: { allowPrivate?:
   const offerByName = raw.Ii || {};
   const ratings = raw.Fi || {};
   const hotels: TripHotel[] = (raw.yi as AnyRecord[]).map((hotel) => {
+    const city = canonicalCityKey(String(hotel.city || ""));
     const base = baseByName.get(hotel.name) || {};
     const provider = providerBySlug[slug(hotel.name)] || {};
     const details = offerByName[hotel.name] || {};
     const rating = ratings[hotel.name] || [];
-    const published = raw.Pi?.[hotel.city]?.[hotel.name];
+    const published = raw.Pi?.[city]?.[hotel.name] ?? raw.Pi?.[hotel.city]?.[hotel.name];
     const offers: HotelOffer[] = [...(details.offers || [])];
     if (!offers.length && published) offers.push({ provider: "Booking.com", total: published, currency: "EUR", checkIn: "", checkOut: "", adults: 1, rooms: 1, checked: raw.X || "2026-09-07", url: provider.booking || "" });
     return {
-      id: `${hotel.city}-${slug(hotel.name)}`,
-      city: hotel.city,
+      id: `${city}-${slug(hotel.name)}`,
+      city,
       name: hotel.name,
       tier: hotel.tier,
       neighborhood: hotel.neighborhood,
@@ -132,7 +137,7 @@ export async function loadCurrentTrip({ allowPrivate = false }: { allowPrivate?:
       reviews: rating[1] ?? provider.reviews,
       lat: details.lat ?? provider.lat ?? base.lat,
       lng: details.lon ?? provider.lon ?? base.lon,
-      images: (details.images?.length ? details.images : provider.image ? [provider.image] : [cityFallbacks[hotel.city]]).map((image: string) => absoluteImage(image, hotel.city)),
+      images: (details.images?.length ? details.images : provider.image ? [provider.image] : [cityFallbacks[city]]).map((image: string) => absoluteImage(image, city)),
       offers,
       official: hotel.official || base.official,
     };
@@ -180,7 +185,7 @@ export async function loadCurrentTrip({ allowPrivate = false }: { allowPrivate?:
     transport,
     cityPlans: raw.Sa as Record<string, CityDayPlan[]>,
     dayAnchors: raw.Ta,
-    mapPlaces: Object.fromEntries(Object.entries(raw.Aa as AnyRecord).map(([city, places]) => [city, (places as AnyRecord[]).map((place): MapPlace => ({
+    mapPlaces: Object.fromEntries(Object.entries(raw.Aa as AnyRecord).map(([city, places]) => [canonicalCityKey(city), (places as AnyRecord[]).map((place): MapPlace => ({
       id: String(place.id),
       title: String(place.title),
       detail: String(place.detail || ""),

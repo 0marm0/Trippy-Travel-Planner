@@ -172,7 +172,10 @@
 
 .vector-map .trippy-map-marker {
   --marker-accent: #72b9ff;
-  position: relative;
+  position: absolute;
+  top: 0;
+  left: 0;
+  will-change: transform;
   width: 30px;
   height: 37px;
   padding: 0;

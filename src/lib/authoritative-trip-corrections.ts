@@ -78,6 +78,36 @@ function confirmedCarOption(direction: "pickup" | "return") {
   };
 }
 
+function recommendedWroclawKrakowOption() {
+  return {
+    id: "recommended-pkp-midmorning",
+    mode: "train",
+    name: "PKP Intercity · direct mid-morning target",
+    ride: "Target 10:10 → 13:03 · direct · recheck Sunday timetable",
+    door: "~3½–4h hotel-to-hotel including checkout and station buffers",
+    hours: 2.9,
+    low: 15,
+    high: 45,
+    note: "Recommended window for Sunday September 27: use a direct Wrocław Główny → Kraków Główny IC/EIP service. This is a planning target, not a ticket or guaranteed schedule; confirm the exact Sunday departure before purchase.",
+    source: "https://www.intercity.pl/en/",
+  };
+}
+
+function recommendedBerlinMunichOption() {
+  return {
+    id: "recommended-ice-midmorning",
+    mode: "train",
+    name: "DB ICE · direct mid-morning target",
+    ride: "Target 09:36 → 13:43 · direct ICE · recheck Friday timetable",
+    door: "~5h hotel-to-hotel including checkout, station and Munich transfer buffers",
+    hours: 4.12,
+    low: 70,
+    high: 140,
+    note: "Recommended window for Friday October 9: take a direct Berlin Hbf → München Hbf ICE and reserve seats when buying. This is a planning target, not a ticket or guaranteed schedule; confirm the exact Friday service before purchase.",
+    source: "https://int.bahn.de/en",
+  };
+}
+
 export function applyAuthoritative2026Corrections(source: RawRecord, { privateMode = false }: { privateMode?: boolean } = {}): RawRecord {
   const raw = { ...source };
   const sourceBookings = Array.isArray(source.$a) ? source.$a as RawRecord[] : [];
@@ -106,7 +136,7 @@ export function applyAuthoritative2026Corrections(source: RawRecord, { privateMo
       { kind: "hotel", label: "Entre Hotel by Zdrojowa", detail: "Confirmed Wrocław stay · September 24–27" },
     ],
     "2026-09-27": [
-      { kind: "missing", label: "Wrocław → Kraków train", detail: "Direct PKP Intercity still to book" },
+      { kind: "missing", label: "Wrocław → Kraków train", detail: "Direct PKP Intercity still to book · recommended mid-morning Wrocław Główny → Kraków Główny target" },
       { kind: "hotel", label: "Hotel M4 Boutique", detail: "Confirmed Kraków stay · September 27–30" },
     ],
     "2026-09-29": [{ kind: "activity", label: "Auschwitz-Birkenau guided tour", detail: "Confirmed · 12:00 pickup at Hotel M4 Boutique" }],
@@ -122,7 +152,7 @@ export function applyAuthoritative2026Corrections(source: RawRecord, { privateMo
     "2026-10-05": [{ kind: "train", label: "European Sleeper · Amsterdam → Berlin", detail: "Confirmed · Amsterdam Centraal 21:34 → Berlin Gesundbrunnen 06:01" }],
     "2026-10-06": [{ kind: "missing", label: "Berlin hotel", detail: "Stay after the overnight train through October 9 still to book" }],
     "2026-10-09": [
-      { kind: "missing", label: "Berlin → Munich train", detail: "Direct ICE still to book" },
+      { kind: "missing", label: "Berlin → Munich train", detail: "Direct ICE still to book · recommended ~09:36–13:43 Berlin Hbf → München Hbf target; reserve seats" },
       { kind: "missing", label: "Munich hotel", detail: "Stay for October 9–12 still to book" },
     ],
     "2026-10-12": [
@@ -200,6 +230,14 @@ export function applyAuthoritative2026Corrections(source: RawRecord, { privateMo
   if (transport["ring-frankfurt"]) {
     const options = (transport["ring-frankfurt"].options || []).filter((option: RawRecord) => option.id !== "confirmed-carvia-return");
     transport["ring-frankfurt"] = { ...transport["ring-frankfurt"], recommend: "confirmed-carvia-return", options: [confirmedCarOption("return"), ...options] };
+  }
+  if (transport["wroclaw-krakow"]) {
+    const options = (transport["wroclaw-krakow"].options || []).filter((option: RawRecord) => option.id !== "recommended-pkp-midmorning");
+    transport["wroclaw-krakow"] = { ...transport["wroclaw-krakow"], recommend: "recommended-pkp-midmorning", options: [recommendedWroclawKrakowOption(), ...options] };
+  }
+  if (transport["berlin-munich"]) {
+    const options = (transport["berlin-munich"].options || []).filter((option: RawRecord) => option.id !== "recommended-ice-midmorning");
+    transport["berlin-munich"] = { ...transport["berlin-munich"], recommend: "recommended-ice-midmorning", options: [recommendedBerlinMunichOption(), ...options] };
   }
   raw._i = transport;
   return raw;

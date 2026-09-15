@@ -15,9 +15,11 @@ test("authoritative correction removes cancelled routes and restores reviewed ac
     _i: {
       "frankfurt-ring": { id: "frankfurt-ring", recommend: "car", options: [] },
       "ring-frankfurt": { id: "ring-frankfurt", recommend: "car", options: [] },
+      "wroclaw-krakow": { id: "wroclaw-krakow", recommend: "ic", options: [] },
       "frankfurt-wroclaw": { id: "frankfurt-wroclaw", recommend: "other", options: [] },
       "krakow-brussels": { id: "krakow-brussels", recommend: "other", options: [] },
       "amsterdam-berlin": { id: "amsterdam-berlin", recommend: "ic", options: [] },
+      "berlin-munich": { id: "berlin-munich", recommend: "ice", options: [] },
     },
   };
   const corrected = applyAuthoritative2026Corrections(stale);
@@ -31,6 +33,8 @@ test("authoritative correction removes cancelled routes and restores reviewed ac
   assert.equal(corrected._i["krakow-brussels"].recommend, "confirmed-kl1328");
   assert.equal(corrected._i["frankfurt-ring"]?.recommend, "confirmed-carvia-pickup");
   assert.equal(corrected._i["ring-frankfurt"]?.recommend, "confirmed-carvia-return");
+  assert.equal(corrected._i["wroclaw-krakow"].recommend, "recommended-pkp-midmorning");
+  assert.equal(corrected._i["berlin-munich"].recommend, "recommended-ice-midmorning");
   assert.equal(corrected.$a.find((item) => /CarVia.*Audi RS6/i.test(item.title))?.status, "confirmed");
   assert.match(corrected.Ta["2026-09-30"].find((item) => /KL1328/.test(item.label))?.detail || "", /17:55.*19:55/);
   assert.match(corrected.Ta["2026-09-24"].find((item) => /LH1374/.test(item.label))?.detail || "", /12:35/);

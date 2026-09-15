@@ -56,11 +56,11 @@ type SetupProfile = {
 };
 
 const storageKey = "trippy.europe-2026.v1";
-const setupKey = "trippy.europe-2026.setup.v1";
+const setupKey = "trippy.europe-2026.setup.v2";
 const experienceKey = "trippy.europe-2026.experience.v1";
 const workspaceModeKey = "trippy.workspace-mode.v1";
 const emptyState: WorkspaceState = { assignments: {}, activityPriority: {}, savedActivities: [], selectedTransport: {}, savedHotels: [], selectedHotel: {} };
-const defaultSetup: SetupProfile = { origin: "Washington area", adults: 1, rooms: 1, pace: "balanced", dealPriority: "overall", dateFlexibility: "fixed", cityFlexibility: "fixed", groundModes: ["flight", "train"], reprice: true, privateImports: false };
+const defaultSetup: SetupProfile = { origin: "Washington area", adults: 2, rooms: 1, pace: "balanced", dealPriority: "overall", dateFlexibility: "fixed", cityFlexibility: "fixed", groundModes: ["flight", "train"], reprice: true, privateImports: false };
 const routeCityIds = ["ring", "krakow", "wroclaw", "brussels", "amsterdam", "berlin", "munich"];
 const countryFlag: Record<string, string> = { frankfurt: "🇩🇪", ring: "🇩🇪", krakow: "🇵🇱", wroclaw: "🇵🇱", brussels: "🇧🇪", amsterdam: "🇳🇱", berlin: "🇩🇪", munich: "🇩🇪" };
 
@@ -446,8 +446,8 @@ function HotelsView({ data, state, setup, setState }: { data: Trip2026Payload; s
 
 function hotelPhotos(hotel: TripHotel): HotelPhoto[] {
   const firstClass = (hotel.photos || []).filter((photo) => Boolean(photo.src));
-  if (firstClass.length) return firstClass.slice(0, 4);
-  return hotel.images.filter(Boolean).slice(0, 4).map((src, index) => ({
+  if (firstClass.length) return firstClass.slice(0, 6);
+  return hotel.images.filter(Boolean).slice(0, 6).map((src, index) => ({
     src,
     alt: `${hotel.name} hotel ${index === 0 ? "photograph" : `photograph ${index + 1}`}`,
     kind: index === 0 ? "exterior" : "other",
@@ -469,7 +469,7 @@ function HotelGallery({ hotel, rateLabel, rateLive, saved, save }: { hotel: Trip
   const kindLabel = (kind: HotelPhoto["kind"]) => kind === "other" ? "Hotel" : kind.charAt(0).toUpperCase() + kind.slice(1);
   return <div className={`hotel-gallery ${photos.length === 1 ? "single" : ""}`}>
     <div className="hotel-gallery-hero"><TripImage src={selectedPhoto.src} alt={selectedPhoto.alt || `${hotel.name} ${kindLabel(selectedPhoto.kind).toLowerCase()} photo`} /><span className={rateLive ? "live" : "recheck"}>{rateLabel}</span><button type="button" className={`hotel-save-photo ${saved ? "saved" : ""}`} onClick={save} aria-label={saved ? `Remove ${hotel.name} from saved hotels` : `Save ${hotel.name}`}>♡</button><small className="hotel-photo-kind">{kindLabel(selectedPhoto.kind)}{selectedPhoto.verified === false ? " · unverified" : ""}</small>{selectedPhoto.sourceUrl ? <a className="hotel-photo-credit" href={selectedPhoto.sourceUrl} target="_blank" rel="noreferrer">Photo: {photoCredit(selectedPhoto)} ↗</a> : <small className="hotel-photo-credit">Photo: {photoCredit(selectedPhoto)}</small>}</div>
-    {photos.length > 1 && <div className="hotel-gallery-thumbs" aria-label={`${hotel.name} photo gallery`}>{photos.filter((_, index) => index !== active).slice(0, 3).map((photo) => { const index = photos.indexOf(photo); return <button type="button" key={`${photo.src}-${index}`} className={index === active ? "active" : ""} onClick={() => setActive(index)} aria-label={`Show ${kindLabel(photo.kind).toLowerCase()} photo of ${hotel.name}`}><TripImage src={photo.src} alt="" /><span>{kindLabel(photo.kind)}</span></button>; })}</div>}
+    {photos.length > 1 && <div className="hotel-gallery-thumbs" aria-label={`${hotel.name} photo gallery`}>{photos.filter((_, index) => index !== active).slice(0, 5).map((photo) => { const index = photos.indexOf(photo); return <button type="button" key={`${photo.src}-${index}`} className={index === active ? "active" : ""} onClick={() => setActive(index)} aria-label={`Show ${kindLabel(photo.kind).toLowerCase()} photo of ${hotel.name}`}><TripImage src={photo.src} alt="" /><span>{kindLabel(photo.kind)}</span></button>; })}</div>}
   </div>;
 }
 

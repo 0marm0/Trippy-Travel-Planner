@@ -7,6 +7,7 @@ import { applyAuthoritative2026Corrections } from "./authoritative-trip-correcti
 import { reviewedCoordinateForActivity } from "./activity-map-coordinates";
 import { canonicalCityKey } from "./city-key";
 import { hotelEnrichmentFor } from "./hotel-enrichment";
+import { hotelProviderMediaFor } from "./hotel-provider-media.generated";
 
 /* The importer reads the historical site's trusted, generated data bundle. Its
    shape is intentionally flexible because the upstream site is not typed. */
@@ -119,6 +120,7 @@ export async function loadCurrentTrip({ allowPrivate = false }: { allowPrivate?:
     const details = offerByName[hotel.name] || {};
     const rating = ratings[hotel.name] || [];
     const enrichment = hotelEnrichmentFor(hotel.name);
+    const providerMedia = hotelProviderMediaFor(hotel.name);
     const propertyRating = rating[0] ?? provider.rating;
     const propertyReviews = rating[1] ?? provider.reviews;
     const published = raw.Pi?.[city]?.[hotel.name] ?? raw.Pi?.[hotel.city]?.[hotel.name];
@@ -139,25 +141,33 @@ export async function loadCurrentTrip({ allowPrivate = false }: { allowPrivate?:
       tradeoff: base.tradeoff || "Compare exact transit time and cancellation terms before booking.",
       rating: propertyRating,
       reviews: propertyReviews,
-      ratings: enrichment?.ratings ?? (propertyRating !== undefined ? [{
+      ratings: [
+        ...(enrichment?.ratings || []),
+        ...(providerMedia?.ratings || []),
+        ...(propertyRating !== undefined ? [{
         provider: provider.liveProvider || "Booking.com snapshot",
         score: propertyRating,
         scale: 10,
         reviewCount: propertyReviews,
         checkedAt: raw.X || "2026-09-07",
         sourceUrl: provider.booking || offers.find((offer) => /^booking(?:\.com)?$/i.test(offer.provider))?.url,
-      }] : undefined),
-      lat: details.lat ?? provider.lat ?? base.lat,
-      lng: details.lon ?? provider.lon ?? base.lon,
-      images: (details.images?.length ? details.images : provider.image ? [provider.image] : []).map((image: string) => absoluteImage(image, city)),
-      photos: enrichment?.photos || (details.images?.length ? details.images : provider.image ? [provider.image] : []).map((image: string, index: number) => ({
+      }] : []),
+      ].filter((rating, index, all) => all.findIndex((candidate) => candidate.provider === rating.provider && candidate.score === rating.score) === index),
+      lat: details.lat ?? provider.lat ?? base.lat ?? providerMedia?.lat,
+      lng: details.lon ?? provider.lon ?? base.lon ?? providerMedia?.lng,
+      images: (details.images?.length ? details.images : provider.image ? [provider.image] : providerMedia?.photos?.map((photo) => photo.src) || []).map((image: string) => absoluteImage(image, city)),
+      photos: [
+        ...(enrichment?.photos || []),
+        ...(providerMedia?.photos || []),
+        ...((details.images?.length ? details.images : provider.image ? [provider.image] : []).map((image: string, index: number) => ({
         src: absoluteImage(image, city),
         alt: `${hotel.name} ${index === 0 ? "hotel" : `hotel photo ${index + 1}`}`,
         kind: index === 0 ? "exterior" : "other",
         source: "Travel provider snapshot",
         sourceUrl: offers[0]?.url || provider.booking,
         verified: true,
-      })),
+      }))),
+      ].filter((photo, index, all) => all.findIndex((candidate) => candidate.src === photo.src) === index),
       facts: enrichment?.facts,
       pros: enrichment?.pros,
       tradeoffs: enrichment?.tradeoffs,

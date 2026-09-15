@@ -6,6 +6,7 @@ import type { BookingRecord, CityDayPlan, HotelOffer, MapPlace, TransportLeg, Tr
 import { applyAuthoritative2026Corrections } from "./authoritative-trip-corrections";
 import { reviewedCoordinateForActivity } from "./activity-map-coordinates";
 import { canonicalCityKey } from "./city-key";
+import { hotelEnrichmentFor } from "./hotel-enrichment";
 
 /* The importer reads the historical site's trusted, generated data bundle. Its
    shape is intentionally flexible because the upstream site is not typed. */
@@ -117,6 +118,9 @@ export async function loadCurrentTrip({ allowPrivate = false }: { allowPrivate?:
     const provider = providerBySlug[slug(hotel.name)] || {};
     const details = offerByName[hotel.name] || {};
     const rating = ratings[hotel.name] || [];
+    const enrichment = hotelEnrichmentFor(hotel.name);
+    const propertyRating = rating[0] ?? provider.rating;
+    const propertyReviews = rating[1] ?? provider.reviews;
     const published = raw.Pi?.[city]?.[hotel.name] ?? raw.Pi?.[hotel.city]?.[hotel.name];
     const offers: HotelOffer[] = [...(details.offers || [])];
     if (!offers.length && published) offers.push({ provider: "Booking.com", total: published, currency: "EUR", checkIn: "", checkOut: "", adults: 1, rooms: 1, checked: raw.X || "2026-09-07", url: provider.booking || "" });
@@ -133,13 +137,32 @@ export async function loadCurrentTrip({ allowPrivate = false }: { allowPrivate?:
       amenities: hotel.amenities || [],
       why: base.why || `${hotel.neighborhood}. A distinct full-hotel option for this itinerary.`,
       tradeoff: base.tradeoff || "Compare exact transit time and cancellation terms before booking.",
-      rating: rating[0] ?? provider.rating,
-      reviews: rating[1] ?? provider.reviews,
+      rating: propertyRating,
+      reviews: propertyReviews,
+      ratings: enrichment?.ratings ?? (propertyRating !== undefined ? [{
+        provider: provider.liveProvider || "Booking.com snapshot",
+        score: propertyRating,
+        scale: 10,
+        reviewCount: propertyReviews,
+        checkedAt: raw.X || "2026-09-07",
+        sourceUrl: provider.booking || offers.find((offer) => /^booking(?:\.com)?$/i.test(offer.provider))?.url,
+      }] : undefined),
       lat: details.lat ?? provider.lat ?? base.lat,
       lng: details.lon ?? provider.lon ?? base.lon,
-      images: (details.images?.length ? details.images : provider.image ? [provider.image] : [cityFallbacks[city]]).map((image: string) => absoluteImage(image, city)),
+      images: (details.images?.length ? details.images : provider.image ? [provider.image] : []).map((image: string) => absoluteImage(image, city)),
+      photos: enrichment?.photos || (details.images?.length ? details.images : provider.image ? [provider.image] : []).map((image: string, index: number) => ({
+        src: absoluteImage(image, city),
+        alt: `${hotel.name} ${index === 0 ? "hotel" : `hotel photo ${index + 1}`}`,
+        kind: index === 0 ? "exterior" : "other",
+        source: "Travel provider snapshot",
+        sourceUrl: offers[0]?.url || provider.booking,
+        verified: true,
+      })),
+      facts: enrichment?.facts,
+      pros: enrichment?.pros,
+      tradeoffs: enrichment?.tradeoffs,
       offers,
-      official: hotel.official || base.official,
+      official: enrichment?.official || hotel.official || base.official,
     };
   });
 

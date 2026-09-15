@@ -48,6 +48,33 @@ export type HotelOffer = {
   cancellation?: string;
 };
 
+export type HotelPhoto = {
+  src: string;
+  alt: string;
+  kind: "exterior" | "room" | "suite" | "bathroom" | "lobby" | "amenity" | "dining" | "view" | "other";
+  source?: string;
+  credit?: string;
+  sourceUrl?: string;
+  verified?: boolean;
+};
+
+export type HotelRating = {
+  provider: string;
+  score: number;
+  scale: number;
+  reviewCount?: number;
+  checkedAt?: string;
+  sourceUrl?: string;
+};
+
+export type HotelFact = {
+  kind: "breakfast" | "room" | "stay" | "policy" | "location" | "amenity" | "other";
+  label: string;
+  value: string;
+  source?: string;
+  checkedAt?: string;
+};
+
 export type TripHotel = {
   id: string;
   city: string;
@@ -66,6 +93,11 @@ export type TripHotel = {
   lat?: number;
   lng?: number;
   images: string[];
+  photos?: HotelPhoto[];
+  ratings?: HotelRating[];
+  facts?: HotelFact[];
+  pros?: string[];
+  tradeoffs?: string[];
   offers: HotelOffer[];
   official?: string;
 };

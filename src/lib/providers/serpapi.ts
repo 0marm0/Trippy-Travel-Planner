@@ -123,6 +123,7 @@ function addHotelParams(url: URL, request: HotelSearch): void {
   url.searchParams.set("check_in_date", request.checkIn);
   url.searchParams.set("check_out_date", request.checkOut);
   url.searchParams.set("adults", String(request.adults));
+  url.searchParams.set("rooms", String(request.rooms));
   url.searchParams.set("currency", request.currency);
 }
 
@@ -200,6 +201,8 @@ function normalizeHotels(root: Record<string, unknown>, currency: string, forbid
     const coordinates = isRecord(property.gps_coordinates) ? property.gps_coordinates : undefined;
     const lat = number(coordinates?.latitude);
     const lng = number(coordinates?.longitude);
+    const imageCandidates = [property.thumbnail, ...(Array.isArray(property.images) ? property.images.map((image) => isRecord(image) ? image.original_image ?? image.thumbnail : image) : [])];
+    const photoUrls = [...new Set(imageCandidates.map((image) => safeProviderUrl(image, forbiddenValues)).filter((image): image is string => Boolean(image)))].slice(0, 8);
     return compactResult({
       id: stableResultId("serpapi", "hotel", index, property.property_token ?? property.name),
       kind: "hotel",
@@ -213,6 +216,8 @@ function normalizeHotels(root: Record<string, unknown>, currency: string, forbid
       reviewCount: integer(property.reviews),
       coordinates: lat !== undefined && lng !== undefined ? { lat, lng } : undefined,
       details: {
+        ratingSource: "Google Hotels",
+        ...(photoUrls.length ? { photoUrls, photoSource: "Google Hotels" } : {}),
         ...(Array.isArray(property.amenities)
           ? { amenities: property.amenities.map((item) => text(item, 80)).filter((item): item is string => Boolean(item)).slice(0, 12) }
           : {}),

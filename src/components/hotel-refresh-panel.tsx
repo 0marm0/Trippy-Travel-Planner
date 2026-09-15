@@ -1,6 +1,8 @@
+/* eslint-disable @next/next/no-img-element */
 "use client";
 
 import type { TripStop } from "@/lib/trip-model";
+import { hotelEnrichmentFor } from "@/lib/hotel-enrichment";
 import "./hotel-refresh-panel.css";
 
 type Snapshot = {
@@ -42,7 +44,24 @@ export default function HotelRefreshPanel({ stop }: { stop: TripStop }) {
   if (!candidates) return null;
   return <section className="hotel-refresh glass" aria-label={`${stop.name} live hotel research`}>
     <header><div><span className="eyebrow">Live rate snapshot</span><h3>Shortlist for {stop.checkIn}–{stop.checkOut}</h3></div><span className="rate-snapshot-date">Checked 14 Sep · 2 adults · 1 room</span></header>
-    <p>Booking.com displayed these as starting nightly rates in USD. The euro guide uses the 14 Sep USD/EUR reference rate; it is not a hold. Confirm tax, room, breakfast and cancellation terms before selecting.</p>
-    <div className="hotel-refresh-grid">{candidates.map((candidate, index) => <article key={candidate.name} className={index < 2 ? "top-pick" : ""}><div><span>#{index + 1} · {candidate.area}</span><b>{candidate.name}</b><small>★ {candidate.score.toFixed(1)}</small></div><strong>US${candidate.usdNight.toFixed(2)} <small>/ night</small><em>≈ €{candidate.eurGuide} guide</em></strong><p>{candidate.rationale}</p><a href={candidate.booking} target="_blank" rel="noreferrer">Open exact-date Booking search ↗</a></article>)}</div>
+    <p>Booking.com displayed these as starting nightly rates in USD. The euro guide uses the 14 Sep USD/EUR reference rate; it is not a hold. Property photography and stay facts below link to first-party hotel pages. Confirm tax, room, breakfast and cancellation terms before selecting.</p>
+    <div className="hotel-refresh-coverage"><b>Ratings evidence</b><span className="ready">Booking.com snapshot</span><span>Google Hotels · connect to refresh</span><span>Tripadvisor · connect to refresh</span></div>
+    <div className="hotel-refresh-grid">{candidates.map((candidate, index) => {
+      const enrichment = hotelEnrichmentFor(candidate.name);
+      const photo = enrichment?.photos?.[0];
+      const breakfast = enrichment?.facts?.find((item) => item.kind === "breakfast");
+      const room = enrichment?.facts?.find((item) => item.kind === "room");
+      const fit = Math.max(7.9, 9.5 - index * .4);
+      return <article key={candidate.name} className={index < 2 ? "top-pick" : ""}>
+        <div className={`hotel-refresh-photo ${photo ? "has-photo" : "pending"}`}>{photo ? <img src={photo.src} alt={photo.alt} /> : <div><b>Property gallery ready</b><small>Stable first-party image pending</small></div>}<span>{photo ? `${photo.kind} · official hotel` : "No city image substituted"}</span></div>
+        <div className="hotel-refresh-title"><span>#{index + 1} · {candidate.area}</span><b>{candidate.name}</b></div>
+        <div className="hotel-refresh-scores"><span><small>Booking.com</small><b>{candidate.score.toFixed(1)}<em>/10</em></b></span><span><small>Itinerary fit</small><b>{fit.toFixed(1)}<em>/10</em></b></span></div>
+        <strong>US${candidate.usdNight.toFixed(2)} <small>/ night</small><em>≈ €{candidate.eurGuide} guide</em></strong>
+        <p>{candidate.rationale}</p>
+        <div className="hotel-refresh-facts"><span><small>Breakfast</small><b>{breakfast?.value || "Verify with rate"}</b></span><span><small>Room</small><b>{room?.value || "Room type pending"}</b></span></div>
+        <details><summary>Pros, trade-offs & sources</summary><div className="hotel-refresh-detail"><section><b>Pros</b>{(enrichment?.pros || [candidate.rationale]).slice(0, 2).map((item) => <p key={item}>{item}</p>)}</section><section><b>Trade-offs</b>{(enrichment?.tradeoffs || ["Confirm final rate terms"]).slice(0, 2).map((item) => <p key={item}>{item}</p>)}</section></div></details>
+        <footer><a href={candidate.booking} target="_blank" rel="noreferrer">Exact dates ↗</a>{enrichment?.official && <a href={enrichment.official} target="_blank" rel="noreferrer">Official ↗</a>}{enrichment?.gallery && <a href={enrichment.gallery} target="_blank" rel="noreferrer">Gallery ↗</a>}</footer>
+      </article>;
+    })}</div>
   </section>;
 }

@@ -94,6 +94,45 @@ test("SerpAPI cash-flight success is normalized and upstream credential URLs nev
   assert.doesNotMatch(JSON.stringify(adapter.health()), /super-secret-serp-key/);
 });
 
+test("SerpAPI hotel results retain Google rating, amenities, coordinates, and safe property photos", async () => {
+  let observed;
+  const adapter = createSerpApiAdapter({
+    apiKey: "hotel-serp-secret",
+    fetchImpl: async (input) => {
+      observed = new URL(String(input));
+      return jsonResponse({
+        properties: [{
+          property_token: "hotel-1",
+          name: "Hotel Example",
+          type: "Hotel",
+          overall_rating: 4.7,
+          reviews: 812,
+          thumbnail: "https://images.example/hotel-exterior.jpg",
+          images: [
+            { original_image: "https://images.example/hotel-room.jpg" },
+            { thumbnail: "https://images.example/hotel-breakfast.jpg" },
+            { original_image: "https://images.example/unsafe.jpg?api_key=hotel-serp-secret" },
+          ],
+          amenities: ["Breakfast", "Fitness center"],
+          gps_coordinates: { latitude: 52.5, longitude: 13.4 },
+          rate_per_night: { extracted_lowest: 221, lowest: "$221" },
+          link: "https://www.google.com/travel/hotels/entity/hotel-1",
+        }],
+      });
+    },
+  });
+
+  const result = await adapter.search({ kind: "hotel", destination: "Berlin", checkIn: "2026-10-05", checkOut: "2026-10-09", adults: 2, rooms: 1, currency: "USD" });
+  assert.equal(observed.searchParams.get("rooms"), "1");
+  assert.equal(result.results[0].rating, 4.7);
+  assert.equal(result.results[0].reviewCount, 812);
+  assert.deepEqual(result.results[0].coordinates, { lat: 52.5, lng: 13.4 });
+  assert.deepEqual(result.results[0].details.amenities, ["Breakfast", "Fitness center"]);
+  assert.deepEqual(result.results[0].details.photoUrls, ["https://images.example/hotel-exterior.jpg", "https://images.example/hotel-room.jpg", "https://images.example/hotel-breakfast.jpg"]);
+  assert.equal(result.results[0].details.ratingSource, "Google Hotels");
+  assert.doesNotMatch(JSON.stringify(result), /hotel-serp-secret/);
+});
+
 test("Seats.aero defaults to Pro-compatible Cached Search and keeps summary data distinct from trips", async () => {
   let observed;
   const adapter = createSeatsAeroAdapter({

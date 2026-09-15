@@ -24,7 +24,7 @@ import "./release.css";
 import "./elevation.css";
 import type { MapSegment } from "./geographic-map";
 import type { Point } from "@/lib/planner";
-import type { BookingRecord, CityDayPlan, TransportLeg, Trip2026Payload, TripActivity, TripHotel, TripStop } from "@/lib/trip-model";
+import type { BookingRecord, CityDayPlan, HotelFact, HotelPhoto, HotelRating, TransportLeg, Trip2026Payload, TripActivity, TripHotel, TripStop } from "@/lib/trip-model";
 import { canonicalCityKey } from "@/lib/city-key";
 
 const GeographicMap = dynamic(() => import("./geographic-map"), { ssr: false, loading: () => <div className="map-skeleton">Opening the atlas…</div> });
@@ -362,8 +362,20 @@ function DayColumn({ tripStart, date, stop, plan, ids, logistics, activityById, 
 
 type HotelSort = "fit" | "exact-price" | "range-low" | "range-high" | "rating" | "name";
 
+function hotelRatings(hotel: TripHotel): HotelRating[] {
+  const ratings = (hotel.ratings || []).filter((rating) => Number.isFinite(rating.score) && Number.isFinite(rating.scale) && rating.scale > 0 && rating.score >= 0 && rating.score <= rating.scale);
+  if (ratings.length) return ratings;
+  return hotel.rating === undefined ? [] : [{ provider: "Guest rating", score: hotel.rating, scale: 10, reviewCount: hotel.reviews }];
+}
+
+function hotelRatingScore(hotel: TripHotel) {
+  const ratings = hotelRatings(hotel);
+  return ratings.length ? ratings.reduce((total, rating) => total + rating.score / rating.scale * 10, 0) / ratings.length : 0;
+}
+
 function itineraryFit(hotel: TripHotel) {
-  return Math.min(9.6, 6.2 + (hotel.flags.includes("best-location") ? 1.4 : 0) + (hotel.flags.includes("recommended") ? .7 : 0) + (hotel.rating ? Math.max(0, hotel.rating - 8) * .35 : 0));
+  const rating = hotelRatingScore(hotel);
+  return Math.min(9.6, 6.2 + (hotel.flags.includes("best-location") ? 1.4 : 0) + (hotel.flags.includes("recommended") ? .7 : 0) + (rating ? Math.max(0, rating - 8) * .35 : 0));
 }
 
 function exactHotelOffer(hotel: TripHotel, stop: TripStop, adults: number, rooms: number) {
@@ -392,10 +404,10 @@ function HotelsView({ data, state, setup, setState }: { data: Trip2026Payload; s
     const exact = exactHotelOffer(hotel, stop, setup.adults, setup.rooms);
     const nightlyBasis = exact?.currency === "EUR" ? exact.nightly || exact.total / stop.nights : hotel.high;
     const matchesCategory = filter === "all" || filter === "saved" && state.savedHotels.includes(hotel.id) || filter === "selected" && state.selectedHotel[cityKey] === hotel.id || hotel.flags.includes(filter) || hotel.tier.toLowerCase().replaceAll(" ", "-") === filter;
-    return `${hotel.name} ${hotel.neighborhood} ${hotel.why} ${hotel.tradeoff}`.toLowerCase().includes(query.toLowerCase()) && matchesCategory && (!mappedOnly || Boolean(hotel.lat && hotel.lng)) && (hotel.rating || 0) >= ratingFloor && nightlyBasis <= ceiling;
+    return `${hotel.name} ${hotel.neighborhood} ${hotel.pros?.join(" ") || hotel.why} ${hotel.tradeoffs?.join(" ") || hotel.tradeoff}`.toLowerCase().includes(query.toLowerCase()) && matchesCategory && (!mappedOnly || Boolean(hotel.lat && hotel.lng)) && hotelRatingScore(hotel) >= ratingFloor && nightlyBasis <= ceiling;
   }).sort((left, right) => {
     if (sort === "fit") return itineraryFit(right) - itineraryFit(left) || left.name.localeCompare(right.name);
-    if (sort === "rating") return (right.rating || -1) - (left.rating || -1) || left.name.localeCompare(right.name);
+    if (sort === "rating") return hotelRatingScore(right) - hotelRatingScore(left) || left.name.localeCompare(right.name);
     if (sort === "range-low") return left.low - right.low || left.name.localeCompare(right.name);
     if (sort === "range-high") return left.high - right.high || left.name.localeCompare(right.name);
     if (sort === "name") return left.name.localeCompare(right.name);
@@ -432,6 +444,46 @@ function HotelsView({ data, state, setup, setState }: { data: Trip2026Payload; s
   </section>;
 }
 
+function hotelPhotos(hotel: TripHotel): HotelPhoto[] {
+  const firstClass = (hotel.photos || []).filter((photo) => Boolean(photo.src));
+  if (firstClass.length) return firstClass.slice(0, 4);
+  return hotel.images.filter(Boolean).slice(0, 4).map((src, index) => ({
+    src,
+    alt: `${hotel.name} hotel ${index === 0 ? "photograph" : `photograph ${index + 1}`}`,
+    kind: index === 0 ? "exterior" : "other",
+  }));
+}
+
+function photoCredit(photo: HotelPhoto) {
+  if (photo.credit && photo.source) return `${photo.credit} · ${photo.source}`;
+  if (photo.credit || photo.source) return photo.credit || photo.source;
+  try { return new URL(photo.src).hostname.replace(/^www\./, ""); }
+  catch { return "Trip research"; }
+}
+
+function HotelGallery({ hotel, rateLabel, rateLive, saved, save }: { hotel: TripHotel; rateLabel: string; rateLive: boolean; saved: boolean; save: () => void }) {
+  const photos = hotelPhotos(hotel);
+  const [active, setActive] = useState(0);
+  const selectedPhoto = photos[Math.min(active, Math.max(photos.length - 1, 0))];
+  if (!selectedPhoto) return <div className="hotel-gallery hotel-gallery-pending"><span className={rateLive ? "live" : "recheck"}>{rateLabel}</span><button type="button" className={`hotel-save-photo ${saved ? "saved" : ""}`} onClick={save} aria-label={saved ? `Remove ${hotel.name} from saved hotels` : `Save ${hotel.name}`}>♡</button><div><Icon name="stays" /><b>Verified hotel photography pending</b><small>No city or destination image is substituted for this property.</small></div></div>;
+  const kindLabel = (kind: HotelPhoto["kind"]) => kind === "other" ? "Hotel" : kind.charAt(0).toUpperCase() + kind.slice(1);
+  return <div className={`hotel-gallery ${photos.length === 1 ? "single" : ""}`}>
+    <div className="hotel-gallery-hero"><TripImage src={selectedPhoto.src} alt={selectedPhoto.alt || `${hotel.name} ${kindLabel(selectedPhoto.kind).toLowerCase()} photo`} /><span className={rateLive ? "live" : "recheck"}>{rateLabel}</span><button type="button" className={`hotel-save-photo ${saved ? "saved" : ""}`} onClick={save} aria-label={saved ? `Remove ${hotel.name} from saved hotels` : `Save ${hotel.name}`}>♡</button><small className="hotel-photo-kind">{kindLabel(selectedPhoto.kind)}{selectedPhoto.verified === false ? " · unverified" : ""}</small>{selectedPhoto.sourceUrl ? <a className="hotel-photo-credit" href={selectedPhoto.sourceUrl} target="_blank" rel="noreferrer">Photo: {photoCredit(selectedPhoto)} ↗</a> : <small className="hotel-photo-credit">Photo: {photoCredit(selectedPhoto)}</small>}</div>
+    {photos.length > 1 && <div className="hotel-gallery-thumbs" aria-label={`${hotel.name} photo gallery`}>{photos.filter((_, index) => index !== active).slice(0, 3).map((photo) => { const index = photos.indexOf(photo); return <button type="button" key={`${photo.src}-${index}`} className={index === active ? "active" : ""} onClick={() => setActive(index)} aria-label={`Show ${kindLabel(photo.kind).toLowerCase()} photo of ${hotel.name}`}><TripImage src={photo.src} alt="" /><span>{kindLabel(photo.kind)}</span></button>; })}</div>}
+  </div>;
+}
+
+function factForKind(facts: HotelFact[], kind: HotelFact["kind"]) {
+  return facts.find((fact) => fact.kind === kind);
+}
+
+function RatingChip({ rating }: { rating: HotelRating }) {
+  const score = Number.isInteger(rating.score) ? rating.score.toFixed(0) : rating.score.toFixed(1);
+  const scale = Number.isInteger(rating.scale) ? rating.scale.toFixed(0) : rating.scale.toFixed(1);
+  const content = <><small>{rating.provider}</small><b>{score}<span>/{scale}</span></b>{rating.reviewCount !== undefined && <em>{rating.reviewCount.toLocaleString()} reviews</em>}</>;
+  return rating.sourceUrl ? <a href={rating.sourceUrl} target="_blank" rel="noreferrer" className="hotel-rating-chip">{content}</a> : <span className="hotel-rating-chip">{content}</span>;
+}
+
 function HotelCard({ hotel, stop, adults, rooms, selected, saved, select, save }: { hotel: TripHotel; stop: TripStop; adults: number; rooms: number; selected: boolean; saved: boolean; select: () => void; save: () => void }) {
   const exactOffer = exactHotelOffer(hotel, stop, adults, rooms);
   const offer = exactOffer || [...hotel.offers].sort((a, b) => a.total - b.total)[0];
@@ -440,8 +492,15 @@ function HotelCard({ hotel, stop, adults, rooms, selected, saved, select, save }
   const bookingOffer = exactProviderOffer(/^booking(?:\.com)?$/i);
   const vioOffer = exactProviderOffer(/^vio$/i);
   const trivagoOffer = exactProviderOffer(/^trivago$/i);
+  const ratings = hotelRatings(hotel);
+  const facts = hotel.facts || [];
+  const breakfast = exactOffer?.breakfast ? { label: "Breakfast", value: exactOffer.breakfast, source: exactOffer.provider } : factForKind(facts, "breakfast") || { label: "Breakfast", value: "Not stated in saved offer" };
+  const room = exactOffer?.roomName ? { label: "Room", value: exactOffer.roomName, source: exactOffer.provider } : factForKind(facts, "room") || { label: "Room", value: "Room type not specified" };
+  const stay = factForKind(facts, "stay") || { label: "Stay", value: `${stop.nights} nights · ${adults} ${adults === 1 ? "adult" : "adults"} · ${rooms} ${rooms === 1 ? "room" : "rooms"}`, source: "Trip parameters" };
+  const pros = (hotel.pros?.length ? hotel.pros : [hotel.why]).filter(Boolean).slice(0, 3);
+  const tradeoffs = (hotel.tradeoffs?.length ? hotel.tradeoffs : [hotel.tradeoff]).filter(Boolean).slice(0, 3);
   const links = [["Booking", bookingOffer?.url || `https://www.booking.com/searchresults.html?ss=${encodeURIComponent(`${hotel.name} ${stop.name}`)}&checkin=${stop.checkIn}&checkout=${stop.checkOut}&group_adults=${adults}&no_rooms=${rooms}`], ["Vio handoff", vioOffer?.url || `https://www.vio.com/search?q=${encodeURIComponent(`${hotel.name} ${stop.name}`)}`], ["trivago handoff", trivagoOffer?.url || `https://www.trivago.com/en-US/srl?search=${encodeURIComponent(`${hotel.name} ${stop.name}`)}`], ["Priceline", `https://www.priceline.com/stay/search/hotels/${encodeURIComponent(hotel.name)}?check-in=${stop.checkIn}&check-out=${stop.checkOut}&adults=${adults}&rooms=${rooms}`], ["Expedia", `https://www.expedia.com/Hotel-Search?destination=${encodeURIComponent(`${hotel.name} ${stop.name}`)}&startDate=${stop.checkIn}&endDate=${stop.checkOut}&adults=${adults}&rooms=${rooms}`], ["Direct", hotel.official || `https://www.google.com/search?q=${encodeURIComponent(`${hotel.name} official hotel`)}`], ["Map", `https://www.google.com/maps/search/?api=1&query=${hotel.lat && hotel.lng ? `${hotel.lat},${hotel.lng}` : encodeURIComponent(`${hotel.name} ${stop.name}`)}`]];
-  return <article id={`hotel-${hotel.id}`} className={`hotel-card glass ${selected ? "selected" : ""}`}><div className="hotel-photo"><TripImage src={hotel.images[0]} fallback={stop.hero} alt="" /><span className={exactOffer ? "live" : "recheck"}>{exactOffer ? `Exact dates · ${exactOffer.provider}` : "Recheck rate"}</span><button className={saved ? "saved" : ""} onClick={save} aria-label={saved ? "Remove saved hotel" : "Save hotel"}>♡</button></div><div className="hotel-body"><span className="card-kicker">{stop.flag} {stop.name} · {hotel.neighborhood}</span><div className="rating-line"><h3>{hotel.name}</h3>{hotel.rating && <b>★ {hotel.rating.toFixed(1)} · {hotel.reviews?.toLocaleString()} reviews</b>}</div><div className="amenity-row"><span>{hotel.stars}★</span>{hotel.amenities.slice(0, 5).map((amenity) => <span key={amenity}>{amenity}</span>)}</div><div className="hotel-fit-summary"><span><small>Itinerary fit</small><strong>{fit.toFixed(1)}/10</strong></span><em>{hotel.lat && hotel.lng ? "Mapped" : "Neighborhood only"}</em></div><div className="hotel-pros-cons"><p><b>Pro</b><span>{hotel.why}</span></p><p><b>Trade-off</b><span>{hotel.tradeoff}</span></p></div><details className="hotel-details"><summary>More location context</summary><div className="fit-box"><span><small>Location basis</small><strong>{hotel.flags.includes("best-location") ? "Best-location flag" : hotel.neighborhood}</strong></span><ul><li>{hotel.lat ? "Exact hotel coordinate present" : "Neighborhood assessed"}</li><li>Fit uses existing flags and guest rating</li><li>Compare cancellation and final transit</li></ul></div></details><div className="stay-proof"><b>{formatDate(stop.checkIn)}–{formatDate(stop.checkOut)}</b><small>{stop.nights} nights · {adults} {adults === 1 ? "adult" : "adults"} · {rooms} {rooms === 1 ? "room" : "rooms"}</small></div><div className="price-line"><span><small>{exactOffer ? "Exact trip total" : offer ? "Historical snapshot" : "Researched range"}</small><strong>{offer ? money(offer.total, offer.currency) : `${money(hotel.low)}–${money(hotel.high)} / night`}</strong></span>{offer && <span><small>Per-night</small><strong>{money(offer.nightly || offer.total / stop.nights, offer.currency)}</strong></span>}</div><div className="hotel-actions"><button className={selected ? "selected" : ""} onClick={select}>{selected ? "Selected stay" : "Select stay"}</button><button onClick={save}>{saved ? "Saved" : "Save"}</button></div><div className="provider-links">{links.map(([label, href]) => <a key={label} href={href} target="_blank" rel="noreferrer">{label} ↗</a>)}</div></div></article>;
+  return <article id={`hotel-${hotel.id}`} className={`hotel-card glass ${selected ? "selected" : ""}`}><HotelGallery hotel={hotel} rateLabel={exactOffer ? `Exact dates · ${exactOffer.provider}` : "Recheck rate"} rateLive={Boolean(exactOffer)} saved={saved} save={save} /><div className="hotel-body"><span className="card-kicker">{stop.flag} {stop.name} · {hotel.neighborhood}</span><div className="rating-line"><h3>{hotel.name}</h3><span>{hotel.stars}★ hotel</span></div>{ratings.length > 0 && <div className="hotel-rating-chips" aria-label="Source-labelled guest ratings">{ratings.map((rating, index) => <RatingChip key={`${rating.provider}-${index}`} rating={rating} />)}</div>}<div className="amenity-row">{hotel.amenities.slice(0, 5).map((amenity) => <span key={amenity}>{amenity}</span>)}</div><div className="hotel-fit-summary"><span><small>Itinerary fit</small><strong>{fit.toFixed(1)}/10</strong></span><em>{hotel.lat && hotel.lng ? "Mapped" : "Neighborhood only"}</em></div><div className="hotel-stay-facts">{[breakfast, room, stay].map((fact) => <span key={fact.label}><small>{fact.label}</small><b>{fact.value}</b>{fact.source && <em>{fact.source}</em>}</span>)}</div><div className="hotel-pros-cons"><section><b>Pros</b><ul>{pros.map((pro) => <li key={pro}>{pro}</li>)}</ul></section><section><b>Trade-offs</b><ul>{tradeoffs.map((tradeoff) => <li key={tradeoff}>{tradeoff}</li>)}</ul></section></div>{facts.some((fact) => !["breakfast", "room", "stay"].includes(fact.kind)) && <details className="hotel-details"><summary>More verified hotel facts</summary><div className="hotel-extra-facts">{facts.filter((fact) => !["breakfast", "room", "stay"].includes(fact.kind)).map((fact, index) => <span key={`${fact.kind}-${fact.label}-${index}`}><small>{fact.label}</small><b>{fact.value}</b>{fact.source && <em>{fact.source}</em>}</span>)}</div></details>}<details className="hotel-details"><summary>More location context</summary><div className="fit-box"><span><small>Location basis</small><strong>{hotel.flags.includes("best-location") ? "Best-location flag" : hotel.neighborhood}</strong></span><ul><li>{hotel.lat ? "Exact hotel coordinate present" : "Neighborhood assessed"}</li><li>Fit uses existing flags and source-labelled guest ratings</li><li>Compare cancellation and final transit</li></ul></div></details><div className="stay-proof"><b>{formatDate(stop.checkIn)}–{formatDate(stop.checkOut)}</b><small>{stop.nights} nights · {adults} {adults === 1 ? "adult" : "adults"} · {rooms} {rooms === 1 ? "room" : "rooms"}</small></div><div className="price-line"><span><small>{exactOffer ? "Exact trip total" : offer ? "Historical snapshot" : "Researched range"}</small><strong>{offer ? money(offer.total, offer.currency) : `${money(hotel.low)}–${money(hotel.high)} / night`}</strong></span>{offer && <span><small>Per-night</small><strong>{money(offer.nightly || offer.total / stop.nights, offer.currency)}</strong></span>}</div><div className="hotel-actions"><button className={selected ? "selected" : ""} onClick={select}>{selected ? "Selected stay" : "Select stay"}</button><button onClick={save}>{saved ? "Saved" : "Save"}</button></div><div className="provider-links">{links.map(([label, href]) => <a key={label} href={href} target="_blank" rel="noreferrer">{label} ↗</a>)}</div></div></article>;
 }
 
 function AllActivitiesView({ data, state, toggleSaved, addToDate }: { data: Trip2026Payload; state: WorkspaceState; toggleSaved: (id: string) => void; addToDate: (id: string, date: string) => void }) {

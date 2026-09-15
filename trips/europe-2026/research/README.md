@@ -2,6 +2,8 @@
 
 All prices are stale until a dated provider response proves otherwise. The application currently has optional adapters and manual provider handoffs, but no live provider credential is configured in this workspace.
 
+The dated no-booking rate snapshot and shortlist are in [HOTEL_REFRESH_2026-09-14.md](HOTEL_REFRESH_2026-09-14.md). It is a live Booking search snapshot, not a hold or confirmation.
+
 ## Hotel refresh matrix
 
 | Priority | City | Stay | State | Required comparison |

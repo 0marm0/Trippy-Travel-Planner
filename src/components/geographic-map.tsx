@@ -28,6 +28,7 @@ type Props = {
   styleVariant?: StyleVariant;
   showLegend?: boolean;
   cityCenter?: { lat: number; lng: number };
+  initialFit?: "city" | "all";
 };
 
 const openFreeMapStyles: Record<OpenFreeMapStyle, string> = {
@@ -149,7 +150,7 @@ export default function GeographicMap(props: Props) {
   return <TiledGeographicMap {...props} />;
 }
 
-function TiledGeographicMap({ points, connect = false, segments = emptySegments, focus, onSelect, onPlace, fitKey = "", label = "Trip map", basemap = "city", styleVariant, showLegend = connect, cityCenter }: Props) {
+function TiledGeographicMap({ points, connect = false, segments = emptySegments, focus, onSelect, onPlace, fitKey = "", label = "Trip map", basemap = "city", styleVariant, showLegend = connect, cityCenter, initialFit = "city" }: Props) {
   const container = useRef<HTMLDivElement>(null);
   const mapRef = useRef<MapLibreMap | null>(null);
   const markersRef = useRef<MapLibreMarker[]>([]);
@@ -370,12 +371,12 @@ function TiledGeographicMap({ points, connect = false, segments = emptySegments,
 
   useEffect(() => {
     if (!ready || !points.length) return;
-    const autoFitIdentity = `${fitKey}\u0000${styleEpoch}\u0000${connect ? "connected" : "city"}`;
+    const autoFitIdentity = `${fitKey}\u0000${styleEpoch}\u0000${connect ? "connected" : initialFit}`;
     if (lastAutoFitRef.current === autoFitIdentity) return;
     lastAutoFitRef.current = autoFitIdentity;
-    if (connect) fitAll(false);
+    if (connect || initialFit === "all") fitAll(false);
     else fitCity(false);
-  }, [fitKey, ready, connect, focus, fitAll, fitCity, points, styleEpoch, cityCenter]);
+  }, [fitKey, ready, connect, focus, fitAll, fitCity, points, styleEpoch, cityCenter, initialFit]);
 
   const chooseStyle = (choice: MapStyleChoice) => {
     if (explicitStyle) return;

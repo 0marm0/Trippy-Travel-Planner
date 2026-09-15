@@ -22,6 +22,18 @@ const reviewed = {
   returnFlight: { kind: "Flight", date: "Oct 12", title: "United UA109", detail: "MUC 12:00 → IAD 15:10", status: "confirmed" },
 } satisfies Record<string, RawRecord>;
 
+function reviewedCarRental(privateMode: boolean): RawRecord {
+  return {
+    kind: "Car",
+    date: "Sep 22–24",
+    title: "CarVia · Audi RS6 rental",
+    detail: privateMode
+      ? "Frankfurt Downtown · pickup 10:00 Sep 22 · return 10:00 Sep 24 · Audi RS6 · 500 km included · €569.45 incl. VAT · €1,750 deductible · confirmed"
+      : "Frankfurt Downtown · pickup 10:00 Sep 22 · return 10:00 Sep 24 · Audi RS6 · 500 km included · confirmed",
+    status: "confirmed",
+  };
+}
+
 function mergeReviewed(existing: RawRecord[], record: RawRecord, pattern: RegExp) {
   const prior = existing.find((item) => pattern.test(`${item.title || ""} ${item.detail || ""}`));
   return { ...(prior || { href: "" }), ...record };
@@ -51,12 +63,27 @@ function confirmedKrakowBrusselsOption() {
   };
 }
 
-export function applyAuthoritative2026Corrections(source: RawRecord): RawRecord {
+function confirmedCarOption(direction: "pickup" | "return") {
+  const pickup = direction === "pickup";
+  return {
+    id: `confirmed-carvia-${direction}`,
+    mode: "car",
+    name: pickup ? "CarVia · Audi RS6 · Frankfurt Downtown pickup" : "CarVia · Audi RS6 · Frankfurt Downtown return",
+    ride: "~163 km · 1h45–2h30",
+    door: pickup ? "Collect after FRA arrival; allow pickup, rest and traffic buffer" : "Refuel, return downtown and preserve the FRA check-in buffer",
+    hours: pickup ? 3.75 : 2.9,
+    low: 0,
+    high: 0,
+    note: "Confirmed September 22–24, 2026. Private confirmation and financial details are excluded from the share-safe record.",
+  };
+}
+
+export function applyAuthoritative2026Corrections(source: RawRecord, { privateMode = false }: { privateMode?: boolean } = {}): RawRecord {
   const raw = { ...source };
   const sourceBookings = Array.isArray(source.$a) ? source.$a as RawRecord[] : [];
   const bookings = sourceBookings.filter((item) => !inactiveFlight.test(`${item.title || ""} ${item.detail || ""}`) && !/WRO\s*→\s*AMS replacement/i.test(item.title || ""));
   const specifications: Array<[RawRecord, RegExp]> = [
-    [reviewed.inbound, /DE2039|B61254/i], [reviewed.ringHotel, /Hotel an der Nordschleife/i],
+    [reviewed.inbound, /DE2039|B61254/i], [reviewed.ringHotel, /Hotel an der Nordschleife/i], [reviewedCarRental(privateMode), /CarVia|Audi RS6/i],
     [reviewed.ringDrive, /Driven[uü]rburg/i], [reviewed.polandFlight, /LH1374/i],
     [reviewed.wroclawTransfer, /WRO Airport.*Entre|taxi.*LH1374/i], [reviewed.wroclawHotel, /Entre Hotel/i],
     [reviewed.krakowHotel, /Hotel M4 Boutique/i], [reviewed.duplicateHotel, /Millou Aparthotel/i],
@@ -68,12 +95,12 @@ export function applyAuthoritative2026Corrections(source: RawRecord): RawRecord 
   raw.Ta = {
     "2026-09-22": [
       { kind: "flight", label: "Arrive FRA 05:45", detail: "Condor DE2039 via Boston" },
-      { kind: "missing", label: "FRA rental car", detail: "Frankfurt Airport → Nürburgring · collect after landing; return before LH1374 on September 24" },
+      { kind: "car", label: "CarVia · Audi RS6 pickup", detail: "Confirmed · Frankfurt Downtown 10:00 · 500 km included" },
       { kind: "hotel", label: "Hotel an der Nordschleife", detail: "Confirmed September 22–24" },
     ],
     "2026-09-23": [{ kind: "activity", label: "Drivenürburg BMW 120i", detail: "Confirmed session · arrive 15:30–16:00 · track opens 17:00" }],
     "2026-09-24": [
-      { kind: "missing", label: "Ring → FRA rental return", detail: "Nürburgring → Frankfurt Airport · return with sufficient LH1374 check-in buffer" },
+      { kind: "car", label: "CarVia · Audi RS6 return", detail: "Confirmed · Frankfurt Downtown by 10:00; refuel and preserve the LH1374 check-in buffer" },
       { kind: "flight", label: "LH1374 · FRA → WRO", detail: "Confirmed · 12:35–14:00" },
       { kind: "car", label: "WRO Airport → Entre Hotel transfer", detail: "Confirmed taxi after arrival" },
       { kind: "hotel", label: "Entre Hotel by Zdrojowa", detail: "Confirmed Wrocław stay · September 24–27" },
@@ -165,6 +192,14 @@ export function applyAuthoritative2026Corrections(source: RawRecord): RawRecord 
   if (transport["krakow-brussels"]) {
     const options = (transport["krakow-brussels"].options || []).filter((option: RawRecord) => option.id !== "confirmed-kl1328");
     transport["krakow-brussels"] = { ...transport["krakow-brussels"], recommend: "confirmed-kl1328", options: [confirmedKrakowBrusselsOption(), ...options] };
+  }
+  if (transport["frankfurt-ring"]) {
+    const options = (transport["frankfurt-ring"].options || []).filter((option: RawRecord) => option.id !== "confirmed-carvia-pickup");
+    transport["frankfurt-ring"] = { ...transport["frankfurt-ring"], recommend: "confirmed-carvia-pickup", options: [confirmedCarOption("pickup"), ...options] };
+  }
+  if (transport["ring-frankfurt"]) {
+    const options = (transport["ring-frankfurt"].options || []).filter((option: RawRecord) => option.id !== "confirmed-carvia-return");
+    transport["ring-frankfurt"] = { ...transport["ring-frankfurt"], recommend: "confirmed-carvia-return", options: [confirmedCarOption("return"), ...options] };
   }
   raw._i = transport;
   return raw;

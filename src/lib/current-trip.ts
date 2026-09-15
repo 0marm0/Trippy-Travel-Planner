@@ -75,7 +75,7 @@ export async function loadCurrentTrip({ allowPrivate = false }: { allowPrivate?:
     }
   }
   if (!source) throw new Error("The 2026 trip dataset is unavailable.");
-  const raw = applyAuthoritative2026Corrections(JSON.parse(source) as AnyRecord);
+  const raw = applyAuthoritative2026Corrections(JSON.parse(source) as AnyRecord, { privateMode: dataMode === "private" });
   const guide = raw.$r as AnyRecord;
   const imageOverrides = { ...(raw.ci || {}), ...(raw.li || {}) } as AnyRecord;
   const originalActivities = (guide.activities as AnyRecord[]).map((activity) => ({

@@ -13,6 +13,8 @@ test("authoritative correction removes cancelled routes and restores reviewed ac
     Sa: { ring: [{}, {}, { blocks: [{ time: "Afternoon", title: "Fly via Copenhagen", note: "Confirmed SAS SK676 and SK1799" }] }] },
     Aa: { krakow: [{ id: "krk-airport", detail: "Arrival on SK1799" }] },
     _i: {
+      "frankfurt-ring": { id: "frankfurt-ring", recommend: "car", options: [] },
+      "ring-frankfurt": { id: "ring-frankfurt", recommend: "car", options: [] },
       "frankfurt-wroclaw": { id: "frankfurt-wroclaw", recommend: "other", options: [] },
       "krakow-brussels": { id: "krakow-brussels", recommend: "other", options: [] },
       "amsterdam-berlin": { id: "amsterdam-berlin", recommend: "ic", options: [] },
@@ -27,6 +29,9 @@ test("authoritative correction removes cancelled routes and restores reviewed ac
   assert.equal(corrected._i["frankfurt-wroclaw"].recommend, "confirmed-lh1374");
   assert.equal(corrected._i["amsterdam-berlin"].recommend, "confirmed-sleeper");
   assert.equal(corrected._i["krakow-brussels"].recommend, "confirmed-kl1328");
+  assert.equal(corrected._i["frankfurt-ring"]?.recommend, "confirmed-carvia-pickup");
+  assert.equal(corrected._i["ring-frankfurt"]?.recommend, "confirmed-carvia-return");
+  assert.equal(corrected.$a.find((item) => /CarVia.*Audi RS6/i.test(item.title))?.status, "confirmed");
   assert.match(corrected.Ta["2026-09-30"].find((item) => /KL1328/.test(item.label))?.detail || "", /17:55.*19:55/);
   assert.match(corrected.Ta["2026-09-24"].find((item) => /LH1374/.test(item.label))?.detail || "", /12:35/);
   assert.doesNotMatch(activeSurface(corrected), cancelledPattern);
@@ -40,6 +45,9 @@ test("the redacted public sample contains no active cancelled Copenhagen itinera
   assert.equal(corrected._i["frankfurt-wroclaw"].recommend, "confirmed-lh1374");
   assert.equal(corrected._i["amsterdam-berlin"].recommend, "confirmed-sleeper");
   assert.equal(corrected._i["krakow-brussels"].recommend, "confirmed-kl1328");
-  assert.equal(corrected.$a.filter((item) => item.status === "confirmed").length, 12);
+  assert.equal(corrected.$a.filter((item) => item.status === "confirmed").length, 13);
   assert.equal(corrected.$a.filter((item) => item.status === "conflict").length, 1);
+  const rental = corrected.$a.find((item) => /CarVia.*Audi RS6/i.test(item.title));
+  assert.match(rental?.detail || "", /Frankfurt Downtown.*confirmed/i);
+  assert.doesNotMatch(JSON.stringify(rental), /46286|569\.45|1,750/);
 });

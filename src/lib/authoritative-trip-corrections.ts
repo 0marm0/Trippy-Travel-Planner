@@ -13,12 +13,17 @@ const reviewed = {
   polandFlight: { kind: "Flight", date: "Sep 24", title: "United / Air Dolomiti LH1374", detail: "FRA 12:35 → WRO 14:00", status: "confirmed" },
   wroclawTransfer: { kind: "Car", date: "Sep 24", title: "WRO Airport → Entre Hotel transfer", detail: "Confirmed taxi transfer after LH1374 arrival", status: "confirmed" },
   wroclawHotel: { kind: "Hotel", date: "Sep 24–27", title: "Entre Hotel by Zdrojowa", detail: "Wrocław Old Town · September 24–27", status: "confirmed" },
-  krakowHotel: { kind: "Hotel", date: "Sep 27–30", title: "Hotel M4 Boutique", detail: "Kraków · September 27–30 · Morsztynowska 4", status: "confirmed" },
-  duplicateHotel: { kind: "Hotel", date: "Sep 27–30", title: "Millou Aparthotel · duplicate hold", detail: "Confirmed overlapping Kraków hold; choose or cancel against Hotel M4 Boutique", status: "conflict" },
+  krakowHotel: { kind: "Hotel", date: "Sep 27–30", title: "Hotel M4 Boutique · active overlap", detail: "Kraków · September 27–30 · active overlapping stay; choose or cancel before arrival", status: "conflict" },
+  duplicateHotel: { kind: "Hotel", date: "Sep 27–30", title: "Millou Aparthotel · active overlap", detail: "Kraków · September 27–30 · active overlapping stay; choose or cancel before arrival", status: "conflict" },
+  academiaHotel: { kind: "Hotel", date: "Sep 27–30", title: "Academia Apartments · active overlap", detail: "Kraków · September 27–30 · active overlapping stay; choose or cancel before arrival", status: "conflict" },
   auschwitz: { kind: "Activity", date: "Sep 29 · 12:00", title: "Auschwitz-Birkenau guided tour", detail: "12:00 pickup at Hotel M4 Boutique", status: "confirmed" },
   krakowFlight: { kind: "Flight", date: "Sep 30", title: "KLM KL1328 + onward connection", detail: "KRK 17:55 → AMS 19:55 → BRU · onward connection confirmed; second-segment timing not supplied", status: "confirmed" },
-  brusselsStay: { kind: "Airbnb", date: "Sep 30–Oct 2", title: "Stylish studio with private balcony near Grand Place", detail: "Brussels · check-in after 16:00 · checkout by 10:00", status: "confirmed" },
+  brusselsStay: { kind: "Airbnb", date: "Sep 30–Oct 2", title: "Former Brussels Airbnb stay", detail: "Brussels · prior Sep 30–Oct 2 reservation was canceled and refunded", status: "missing" },
+  amsterdamHotel: { kind: "Hotel", date: "Oct 2–3", title: "Room Mate Aitana", detail: "Amsterdam · October 2–3 · one confirmed night", status: "confirmed" },
   sleeper: { kind: "Train", date: "Oct 5–6", title: "European Sleeper · Amsterdam → Berlin", detail: "Amsterdam Centraal 21:34 → Berlin Gesundbrunnen 06:01", status: "confirmed" },
+  berlinHotel: { kind: "Airbnb", date: "Oct 6–9", title: "SANA Berlin Residence · two-bedroom apartment", detail: "Berlin · October 6–9 · confirmed stay", status: "confirmed" },
+  berlinMunichTrain: { kind: "Train", date: "Oct 9", title: "Deutsche Bahn · Berlin Hbf → München Hbf", detail: "Confirmed direct rail · Berlin Hbf 13:36 → München Hbf 17:43", status: "confirmed" },
+  munichHotel: { kind: "Hotel", date: "Oct 9–12", title: "Pullman Munich", detail: "Munich · October 9–12 · confirmed stay", status: "confirmed" },
   returnFlight: { kind: "Flight", date: "Oct 12", title: "United UA109", detail: "MUC 12:00 → IAD 15:10", status: "confirmed" },
 } satisfies Record<string, RawRecord>;
 
@@ -93,17 +98,17 @@ function recommendedWroclawKrakowOption() {
   };
 }
 
-function recommendedBerlinMunichOption() {
+function confirmedBerlinMunichOption() {
   return {
-    id: "recommended-ice-midmorning",
+    id: "confirmed-db-berlin-munich",
     mode: "train",
-    name: "DB ICE · direct mid-morning target",
-    ride: "Target 09:36 → 13:43 · direct ICE · recheck Friday timetable",
-    door: "~5h hotel-to-hotel including checkout, station and Munich transfer buffers",
+    name: "Deutsche Bahn · Berlin Hbf → München Hbf",
+    ride: "Berlin Hbf 13:36 → München Hbf 17:43 · direct",
+    door: "Confirmed direct rail; allow Berlin checkout and Munich hotel-transfer time",
     hours: 4.12,
-    low: 70,
-    high: 140,
-    note: "Recommended window for Friday October 9: take a direct Berlin Hbf → München Hbf ICE and reserve seats when buying. This is a planning target, not a ticket or guaranteed schedule; confirm the exact Friday service before purchase.",
+    low: 0,
+    high: 0,
+    note: "Confirmed for October 9, 2026. Private order, payment and passenger information are excluded from the share-safe record.",
     source: "https://int.bahn.de/en",
   };
 }
@@ -116,9 +121,9 @@ export function applyAuthoritative2026Corrections(source: RawRecord, { privateMo
     [reviewed.inbound, /DE2039|B61254/i], [reviewed.ringHotel, /Hotel an der Nordschleife/i], [reviewedCarRental(privateMode), /CarVia|Audi RS6/i],
     [reviewed.ringDrive, /Driven[uü]rburg/i], [reviewed.polandFlight, /LH1374/i],
     [reviewed.wroclawTransfer, /WRO Airport.*Entre|taxi.*LH1374/i], [reviewed.wroclawHotel, /Entre Hotel/i],
-    [reviewed.krakowHotel, /Hotel M4 Boutique/i], [reviewed.duplicateHotel, /Millou Aparthotel/i],
-    [reviewed.auschwitz, /Auschwitz-Birkenau/i], [reviewed.krakowFlight, /KL1328|KRK.*AMS.*BRU/i], [reviewed.brusselsStay, /Grand Place|Rue du March/i],
-    [reviewed.sleeper, /(?:Euro|European) Sleeper/i], [reviewed.returnFlight, /UA109/i],
+    [reviewed.krakowHotel, /Hotel M4 Boutique/i], [reviewed.duplicateHotel, /Millou Aparthotel/i], [reviewed.academiaHotel, /Academia Apartments/i],
+    [reviewed.auschwitz, /Auschwitz-Birkenau/i], [reviewed.krakowFlight, /KL1328|KRK.*AMS.*BRU/i], [reviewed.brusselsStay, /Grand Place|Rue du March/i], [reviewed.amsterdamHotel, /Room Mate Aitana/i],
+    [reviewed.sleeper, /(?:Euro|European) Sleeper/i], [reviewed.berlinHotel, /SANA Berlin Residence/i], [reviewed.berlinMunichTrain, /Berlin Hbf.*M.nchen Hbf|Deutsche Bahn.*M.nchen/i], [reviewed.munichHotel, /Pullman Munich/i], [reviewed.returnFlight, /UA109/i],
   ];
   raw.$a = specifications.map(([record, pattern]) => mergeReviewed(bookings, record, pattern));
 
@@ -137,23 +142,23 @@ export function applyAuthoritative2026Corrections(source: RawRecord, { privateMo
     ],
     "2026-09-27": [
       { kind: "missing", label: "Wrocław → Kraków train", detail: "Direct PKP Intercity still to book · recommended mid-morning Wrocław Główny → Kraków Główny target" },
-      { kind: "hotel", label: "Hotel M4 Boutique", detail: "Confirmed Kraków stay · September 27–30" },
+      { kind: "missing", label: "Kraków hotel selection", detail: "Three active Sep 27–30 reservations overlap; choose one and cancel the others" },
     ],
     "2026-09-29": [{ kind: "activity", label: "Auschwitz-Birkenau guided tour", detail: "Confirmed · 12:00 pickup at Hotel M4 Boutique" }],
     "2026-09-30": [
       { kind: "flight", label: "KLM KL1328 · Kraków → Amsterdam → Brussels", detail: "Confirmed · KRK 17:55 → AMS 19:55; onward Brussels connection confirmed, timing not supplied" },
-      { kind: "hotel", label: "Stylish studio with private balcony near Grand Place", detail: "Confirmed Brussels stay through October 2 · check-in after 16:00" },
+      { kind: "missing", label: "Brussels accommodation", detail: "The prior Sep 30–Oct 2 Airbnb stay was canceled; replacement accommodation is still needed" },
     ],
-    "2026-10-02": [{ kind: "missing", label: "Brussels night · October 2", detail: "Current confirmed stay ends before this final Brussels night" }],
+    "2026-10-02": [{ kind: "hotel", label: "Room Mate Aitana", detail: "Confirmed Amsterdam stay · October 2–3 · check-in from 15:00" }],
     "2026-10-03": [
       { kind: "missing", label: "Brussels → Amsterdam rail", detail: "Direct rail still to book" },
-      { kind: "missing", label: "Amsterdam hotel", detail: "Stay for October 3–5 still to book" },
+      { kind: "missing", label: "Amsterdam hotel", detail: "Confirmed Room Mate Aitana covers Oct 2 only; stay for October 3–5 still to book" },
     ],
     "2026-10-05": [{ kind: "train", label: "European Sleeper · Amsterdam → Berlin", detail: "Confirmed · Amsterdam Centraal 21:34 → Berlin Gesundbrunnen 06:01" }],
-    "2026-10-06": [{ kind: "missing", label: "Berlin hotel", detail: "Stay after the overnight train through October 9 still to book" }],
+    "2026-10-06": [{ kind: "hotel", label: "SANA Berlin Residence", detail: "Confirmed Berlin stay · October 6–9" }],
     "2026-10-09": [
-      { kind: "missing", label: "Berlin → Munich train", detail: "Direct ICE still to book · recommended ~09:36–13:43 Berlin Hbf → München Hbf target; reserve seats" },
-      { kind: "missing", label: "Munich hotel", detail: "Stay for October 9–12 still to book" },
+      { kind: "train", label: "Deutsche Bahn · Berlin Hbf → München Hbf", detail: "Confirmed direct rail · 13:36–17:43" },
+      { kind: "hotel", label: "Pullman Munich", detail: "Confirmed Munich stay · October 9–12" },
     ],
     "2026-10-12": [
       { kind: "missing", label: "Munich hotel → MUC transfer", detail: "Airport transfer timing still to arrange" },
@@ -178,12 +183,12 @@ export function applyAuthoritative2026Corrections(source: RawRecord, { privateMo
     plans.berlin = [...plans.berlin];
     plans.berlin[3] = {
       ...plans.berlin[3],
-      theme: "Flexible Berlin day",
-      note: "Keep the final Berlin day flexible for a priority museum, neighborhood, or recovery time before the next morning's train.",
+      theme: "Berlin checkout and confirmed Munich rail",
+      note: "Use the morning for a nearby priority, then protect the confirmed 13:36 Berlin Hbf departure.",
       blocks: [
         { time: "Morning", title: "Museum Island or a saved priority", note: "Choose one major museum and reserve only if it remains a top priority." },
         { time: "Afternoon", title: "Classic Remise or neighborhood walk", note: "Use the open block for a saved automotive stop or an unhurried neighborhood." },
-        { time: "Evening", title: "Flexible Berlin night", note: "Keep a nearby backup and protect the next morning's departure." },
+        { time: "13:36", title: "Deutsche Bahn · Berlin Hbf → München Hbf", note: "Confirmed direct rail to München Hbf, arriving 17:43." },
       ],
     };
   }
@@ -236,8 +241,8 @@ export function applyAuthoritative2026Corrections(source: RawRecord, { privateMo
     transport["wroclaw-krakow"] = { ...transport["wroclaw-krakow"], recommend: "recommended-pkp-midmorning", options: [recommendedWroclawKrakowOption(), ...options] };
   }
   if (transport["berlin-munich"]) {
-    const options = (transport["berlin-munich"].options || []).filter((option: RawRecord) => option.id !== "recommended-ice-midmorning");
-    transport["berlin-munich"] = { ...transport["berlin-munich"], recommend: "recommended-ice-midmorning", options: [recommendedBerlinMunichOption(), ...options] };
+    const options = (transport["berlin-munich"].options || []).filter((option: RawRecord) => option.id !== "recommended-ice-midmorning" && option.id !== "confirmed-db-berlin-munich");
+    transport["berlin-munich"] = { ...transport["berlin-munich"], recommend: "confirmed-db-berlin-munich", options: [confirmedBerlinMunichOption(), ...options] };
   }
   raw._i = transport;
   return raw;

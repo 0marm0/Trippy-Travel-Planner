@@ -18,8 +18,9 @@ const reviewed = {
   academiaHotel: { kind: "Hotel", date: "Sep 27–30", title: "Academia Apartments · active overlap", detail: "Kraków · September 27–30 · active overlapping stay; choose or cancel before arrival", status: "conflict" },
   auschwitz: { kind: "Activity", date: "Sep 29 · 12:00", title: "Auschwitz-Birkenau guided tour", detail: "12:00 pickup at Hotel M4 Boutique", status: "confirmed" },
   krakowFlight: { kind: "Flight", date: "Sep 30", title: "KLM KL1328 + onward connection", detail: "KRK 17:55 → AMS 19:55 → BRU · onward connection confirmed; second-segment timing not supplied", status: "confirmed" },
-  brusselsStay: { kind: "Airbnb", date: "Sep 30–Oct 2", title: "Former Brussels Airbnb stay", detail: "Brussels · prior Sep 30–Oct 2 reservation was canceled and refunded", status: "missing" },
+  brusselsStay: { kind: "Hotel", date: "Sep 30–Oct 2", title: "The Usual Brussels", detail: "Brussels · September 30–October 2 · confirmed stay", status: "confirmed" },
   amsterdamHotel: { kind: "Hotel", date: "Oct 2–3", title: "Room Mate Aitana", detail: "Amsterdam · October 2–3 · one confirmed night", status: "confirmed" },
+  amsterdamHotelLater: { kind: "Hotel", date: "Oct 3–5", title: "Avani Museum Quarter Amsterdam", detail: "Amsterdam · October 3–5 · confirmed stay", status: "confirmed" },
   sleeper: { kind: "Train", date: "Oct 5–6", title: "European Sleeper · Amsterdam → Berlin", detail: "Amsterdam Centraal 21:34 → Berlin Gesundbrunnen 06:01", status: "confirmed" },
   berlinHotel: { kind: "Airbnb", date: "Oct 6–9", title: "SANA Berlin Residence · two-bedroom apartment", detail: "Berlin · October 6–9 · confirmed stay", status: "confirmed" },
   berlinMunichTrain: { kind: "Train", date: "Oct 9", title: "Deutsche Bahn · Berlin Hbf → München Hbf", detail: "Confirmed direct rail · Berlin Hbf 13:36 → München Hbf 17:43", status: "confirmed" },
@@ -122,7 +123,7 @@ export function applyAuthoritative2026Corrections(source: RawRecord, { privateMo
     [reviewed.ringDrive, /Driven[uü]rburg/i], [reviewed.polandFlight, /LH1374/i],
     [reviewed.wroclawTransfer, /WRO Airport.*Entre|taxi.*LH1374/i], [reviewed.wroclawHotel, /Entre Hotel/i],
     [reviewed.krakowHotel, /Hotel M4 Boutique/i], [reviewed.duplicateHotel, /Millou Aparthotel/i], [reviewed.academiaHotel, /Academia Apartments/i],
-    [reviewed.auschwitz, /Auschwitz-Birkenau/i], [reviewed.krakowFlight, /KL1328|KRK.*AMS.*BRU/i], [reviewed.brusselsStay, /Grand Place|Rue du March/i], [reviewed.amsterdamHotel, /Room Mate Aitana/i],
+    [reviewed.auschwitz, /Auschwitz-Birkenau/i], [reviewed.krakowFlight, /KL1328|KRK.*AMS.*BRU/i], [reviewed.brusselsStay, /The Usual Brussels|Grand Place|Rue du March/i], [reviewed.amsterdamHotel, /Room Mate Aitana/i], [reviewed.amsterdamHotelLater, /Avani Museum Quarter Amsterdam/i],
     [reviewed.sleeper, /(?:Euro|European) Sleeper/i], [reviewed.berlinHotel, /SANA Berlin Residence/i], [reviewed.berlinMunichTrain, /Berlin Hbf.*M.nchen Hbf|Deutsche Bahn.*M.nchen/i], [reviewed.munichHotel, /Pullman Munich/i], [reviewed.returnFlight, /UA109/i],
   ];
   raw.$a = specifications.map(([record, pattern]) => mergeReviewed(bookings, record, pattern));
@@ -147,12 +148,12 @@ export function applyAuthoritative2026Corrections(source: RawRecord, { privateMo
     "2026-09-29": [{ kind: "activity", label: "Auschwitz-Birkenau guided tour", detail: "Confirmed · 12:00 pickup at Hotel M4 Boutique" }],
     "2026-09-30": [
       { kind: "flight", label: "KLM KL1328 · Kraków → Amsterdam → Brussels", detail: "Confirmed · KRK 17:55 → AMS 19:55; onward Brussels connection confirmed, timing not supplied" },
-      { kind: "missing", label: "Brussels accommodation", detail: "The prior Sep 30–Oct 2 Airbnb stay was canceled; replacement accommodation is still needed" },
+      { kind: "hotel", label: "The Usual Brussels", detail: "Confirmed Brussels stay · September 30–October 2 · replaces the canceled Airbnb" },
     ],
     "2026-10-02": [{ kind: "hotel", label: "Room Mate Aitana", detail: "Confirmed Amsterdam stay · October 2–3 · check-in from 15:00" }],
     "2026-10-03": [
       { kind: "missing", label: "Brussels → Amsterdam rail", detail: "Direct rail still to book" },
-      { kind: "missing", label: "Amsterdam hotel", detail: "Confirmed Room Mate Aitana covers Oct 2 only; stay for October 3–5 still to book" },
+      { kind: "hotel", label: "Avani Museum Quarter Amsterdam", detail: "Confirmed Amsterdam stay · October 3–5" },
     ],
     "2026-10-05": [{ kind: "train", label: "European Sleeper · Amsterdam → Berlin", detail: "Confirmed · Amsterdam Centraal 21:34 → Berlin Gesundbrunnen 06:01" }],
     "2026-10-06": [{ kind: "hotel", label: "SANA Berlin Residence", detail: "Confirmed Berlin stay · October 6–9" }],

@@ -27,7 +27,7 @@ test("authoritative correction removes cancelled routes and restores reviewed ac
   assert.equal(corrected.$a.find((item) => /LH1374/.test(item.title))?.status, "confirmed");
   assert.equal(corrected.$a.find((item) => /European Sleeper/.test(item.title))?.status, "confirmed");
   assert.equal(corrected.$a.find((item) => /KL1328/.test(item.title))?.status, "confirmed");
-  assert.equal(corrected.$a.find((item) => /Millou/.test(item.title))?.status, "conflict");
+  assert.equal(corrected.$a.find((item) => /MINT Luxury Apartments/.test(item.title))?.status, "confirmed");
   assert.equal(corrected._i["frankfurt-wroclaw"].recommend, "confirmed-lh1374");
   assert.equal(corrected._i["amsterdam-berlin"].recommend, "confirmed-sleeper");
   assert.equal(corrected._i["krakow-brussels"].recommend, "confirmed-kl1328");
@@ -54,7 +54,7 @@ test("the redacted public sample contains no active cancelled Copenhagen itinera
   assert.equal(corrected._i["amsterdam-berlin"].recommend, "confirmed-sleeper");
   assert.equal(corrected._i["krakow-brussels"].recommend, "confirmed-kl1328");
   assert.equal(corrected.$a.filter((item) => item.status === "confirmed").length, 17);
-  assert.equal(corrected.$a.filter((item) => item.status === "conflict").length, 3);
+  assert.equal(corrected.$a.filter((item) => item.status === "conflict").length, 0);
   const rental = corrected.$a.find((item) => /CarVia.*Audi RS6/i.test(item.title));
   assert.match(rental?.detail || "", /Frankfurt Downtown.*confirmed/i);
   assert.doesNotMatch(JSON.stringify(rental), /46286|569\.45|1,750/);

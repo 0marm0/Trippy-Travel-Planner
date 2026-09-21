@@ -11397,15 +11397,15 @@
       },
       {
         "kind": "hotel",
-        "label": "Hotel M4 Boutique",
-        "detail": "Confirmed Kraków stay · September 27–30"
+        "label": "MINT Luxury Apartments at the Main Square",
+        "detail": "Confirmed Kraków Old Town stay · September 27–30"
       }
     ],
     "2026-09-29": [
       {
         "kind": "activity",
         "label": "Auschwitz-Birkenau guided tour",
-        "detail": "Confirmed · 12:00 pickup at Hotel M4 Boutique"
+        "detail": "Confirmed · 12:00; send the organiser the new MINT Luxury Apartments pickup location"
       }
     ],
     "2026-09-30": [
@@ -11531,10 +11531,10 @@
     "krakow": [
       {
         "id": "krk-hotel",
-        "title": "Hotel M4 Boutique",
-        "detail": "Confirmed hotel and Auschwitz pickup",
-        "lat": 50.0594,
-        "lon": 19.948,
+        "title": "MINT Luxury Apartments at the Main Square",
+        "detail": "Confirmed Kraków Old Town stay · September 27–30",
+        "lat": 50.0613,
+        "lon": 19.9434,
         "layer": "hotel",
         "exact": false
       },
@@ -11560,8 +11560,8 @@
     "brussels": [
       {
         "id": "brussels-airbnb",
-        "title": "Brussels Airbnb near Grand Place",
-        "detail": "Confirmed through Oct 2; extension needed for Oct 2 night",
+        "title": "The Usual Brussels",
+        "detail": "Confirmed Brussels stay · September 30–October 2",
         "lat": 50.847,
         "lon": 4.3506,
         "layer": "hotel",
@@ -11687,8 +11687,8 @@
     {
       "kind": "Hotel",
       "date": "Sep 27–30",
-      "title": "Hotel M4 Boutique",
-      "detail": "Kraków · September 27–30 · Morsztynowska 4",
+      "title": "MINT Luxury Apartments at the Main Square",
+      "detail": "Kraków Old Town · September 27–30 · confirmed paid stay",
       "ref": "Confirmed · private reference removed",
       "href": "",
       "status": "confirmed"
@@ -11698,15 +11698,15 @@
       "href": "",
       "kind": "Hotel",
       "date": "Sep 27–30",
-      "title": "Millou Aparthotel · duplicate hold",
-      "detail": "Confirmed overlapping Kraków hold; choose or cancel against Hotel M4 Boutique",
-      "status": "conflict"
+      "title": "Kraków stay reconciliation",
+      "detail": "Cancelled alternatives are excluded; use the confirmed MINT Luxury Apartments stay.",
+      "status": "cancelled"
     },
     {
       "kind": "Activity",
       "date": "Sep 29 · 12:00",
       "title": "Auschwitz-Birkenau guided tour",
-      "detail": "12:00 pickup at Hotel M4 Boutique",
+      "detail": "Confirmed 12:00 tour; organiser needs the new MINT Luxury Apartments pickup location",
       "ref": "Confirmed · private reference removed",
       "href": "",
       "status": "confirmed"

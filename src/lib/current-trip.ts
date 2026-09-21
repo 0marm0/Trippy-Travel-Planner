@@ -18,8 +18,8 @@ const routeDates = [
   ["ring", "2026-09-22", "2026-09-24", "Germany", "DE"],
   ["wroclaw", "2026-09-24", "2026-09-27", "Poland", "PL"],
   ["krakow", "2026-09-27", "2026-09-30", "Poland", "PL"],
-  ["brussels", "2026-09-30", "2026-10-03", "Belgium", "BE"],
-  ["amsterdam", "2026-10-03", "2026-10-05", "Netherlands", "NL"],
+  ["brussels", "2026-09-30", "2026-10-02", "Belgium", "BE"],
+  ["amsterdam", "2026-10-02", "2026-10-05", "Netherlands", "NL"],
   ["berlin", "2026-10-05", "2026-10-09", "Germany", "DE"],
   ["munich", "2026-10-09", "2026-10-12", "Germany", "DE"],
 ] as const;
@@ -179,9 +179,16 @@ export async function loadCurrentTrip({ allowPrivate = false }: { allowPrivate?:
   const cities = raw.U as AnyRecord;
   const stops: TripStop[] = routeDates.map(([id, checkIn, checkOut, country, code]) => {
     const city = cities[id];
-    return { id, name: city.name, country, flag: flags[code], checkIn, checkOut, nights: Math.round((Date.parse(checkOut) - Date.parse(checkIn)) / 86400000), lat: city.lat, lng: city.lon, stay: city.stay, hero: cityFallbacks[id] };
+    const stay = id === "krakow"
+      ? "MINT Luxury Apartments at the Main Square"
+      : id === "brussels"
+        ? "The Usual Brussels"
+        : id === "amsterdam"
+          ? "Room Mate Aitana (Oct 2–3) · Avani Museum Quarter (Oct 3–5)"
+          : city.stay;
+    return { id, name: city.name, country, flag: flags[code], checkIn, checkOut, nights: Math.round((Date.parse(checkOut) - Date.parse(checkIn)) / 86400000), lat: city.lat, lng: city.lon, stay, hero: cityFallbacks[id] };
   });
-  const legDates: Record<string, string> = { "frankfurt-ring": "2026-09-22", "ring-frankfurt": "2026-09-24", "frankfurt-wroclaw": "2026-09-24", "wroclaw-krakow": "2026-09-27", "krakow-brussels": "2026-09-30", "brussels-amsterdam": "2026-10-03", "amsterdam-berlin": "2026-10-05", "berlin-munich": "2026-10-09" };
+  const legDates: Record<string, string> = { "frankfurt-ring": "2026-09-22", "ring-frankfurt": "2026-09-24", "frankfurt-wroclaw": "2026-09-24", "wroclaw-krakow": "2026-09-27", "krakow-brussels": "2026-09-30", "brussels-amsterdam": "2026-10-02", "amsterdam-berlin": "2026-10-05", "berlin-munich": "2026-10-09" };
   const legOrder = ["frankfurt-ring", "ring-frankfurt", "frankfurt-wroclaw", "wroclaw-krakow", "krakow-brussels", "brussels-amsterdam", "amsterdam-berlin", "berlin-munich"];
   const transport: TransportLeg[] = Object.values(raw._i as AnyRecord).filter((leg: AnyRecord) => legDates[leg.id]).map((leg: AnyRecord) => ({
     id: String(leg.id),

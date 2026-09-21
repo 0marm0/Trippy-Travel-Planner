@@ -212,7 +212,12 @@ export function applyAuthoritative2026Corrections(source: RawRecord, { privateMo
 
   const places = { ...(source.Aa || {}) };
   if (Array.isArray(places.wroclaw)) places.wroclaw = places.wroclaw.map((place: RawRecord) => place.id === "wro-airport" ? { ...place, detail: "Confirmed LH1374 arrival at 14:00" } : place);
-  if (Array.isArray(places.krakow)) places.krakow = places.krakow.map((place: RawRecord) => place.id === "krk-airport" ? { ...place, detail: "Departure airport for the September 30 transport leg" } : place);
+  if (Array.isArray(places.krakow)) places.krakow = places.krakow.map((place: RawRecord) => {
+    if (place.id === "krk-hotel") return { ...place, title: "MINT Luxury Apartments at the Main Square", detail: "Confirmed Kraków Old Town stay · September 27–30", lat: 50.0613, lon: 19.9434 };
+    if (place.id === "krk-airport") return { ...place, detail: "Departure airport for the September 30 transport leg" };
+    return place;
+  });
+  if (Array.isArray(places.brussels)) places.brussels = places.brussels.map((place: RawRecord) => place.id === "brussels-airbnb" ? { ...place, title: "The Usual Brussels", detail: "Confirmed Brussels stay · September 30–October 2" } : place);
   raw.Aa = places;
 
   const transport = { ...(source._i || {}) };

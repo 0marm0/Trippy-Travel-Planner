@@ -14,7 +14,7 @@ const reviewed = {
   wroclawTransfer: { kind: "Car", date: "Sep 24", title: "WRO Airport → Entre Hotel transfer", detail: "Confirmed taxi transfer after LH1374 arrival", status: "confirmed" },
   wroclawHotel: { kind: "Hotel", date: "Sep 24–27", title: "Entre Hotel by Zdrojowa", detail: "Wrocław Old Town · September 24–27", status: "confirmed" },
   krakowHotel: { kind: "Apartment", date: "Sep 27–30", title: "MINT Luxury Apartments at the Main Square", detail: "Kraków Old Town · September 27–30 · confirmed paid stay", status: "confirmed" },
-  auschwitz: { kind: "Activity", date: "Sep 29 · 12:00", title: "Auschwitz-Birkenau guided tour", detail: "Confirmed tour · update pickup from the cancelled M4 Boutique to MINT Luxury Apartments", status: "needs_booking" },
+  auschwitz: { kind: "Activity", date: "Sep 29 · 12:00", title: "Auschwitz-Birkenau guided tour", detail: "Confirmed tour · send the organiser the new MINT Luxury Apartments pickup location", status: "needs_booking" },
   krakowFlight: { kind: "Flight", date: "Sep 30", title: "KLM KL1328 + onward connection", detail: "KRK 17:55 → AMS 19:55 → BRU · onward connection confirmed; second-segment timing not supplied", status: "confirmed" },
   brusselsStay: { kind: "Hotel", date: "Sep 30–Oct 2", title: "The Usual Brussels", detail: "Brussels · September 30–October 2 · confirmed stay", status: "confirmed" },
   amsterdamHotel: { kind: "Hotel", date: "Oct 2–3", title: "Room Mate Aitana", detail: "Amsterdam · October 2–3 · one confirmed night", status: "confirmed" },
@@ -143,7 +143,7 @@ export function applyAuthoritative2026Corrections(source: RawRecord, { privateMo
       { kind: "missing", label: "Wrocław → Kraków train", detail: "Direct PKP Intercity still to book · recommended mid-morning Wrocław Główny → Kraków Główny target" },
       { kind: "hotel", label: "MINT Luxury Apartments at the Main Square", detail: "Confirmed paid Kraków Old Town stay · September 27–30" },
     ],
-    "2026-09-29": [{ kind: "missing", label: "Auschwitz-Birkenau pickup update", detail: "Tour is confirmed for 12:00; update the pickup from cancelled M4 Boutique to MINT Luxury Apartments" }],
+    "2026-09-29": [{ kind: "missing", label: "Auschwitz-Birkenau pickup update", detail: "Tour is confirmed for 12:00; send the organiser the new MINT Luxury Apartments pickup location" }],
     "2026-09-30": [
       { kind: "flight", label: "KLM KL1328 · Kraków → Amsterdam → Brussels", detail: "Confirmed · KRK 17:55 → AMS 19:55; onward Brussels connection confirmed, timing not supplied" },
       { kind: "hotel", label: "The Usual Brussels", detail: "Confirmed Brussels stay · September 30–October 2 · replaces the canceled Airbnb" },

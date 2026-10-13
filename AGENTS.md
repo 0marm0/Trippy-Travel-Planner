@@ -24,6 +24,8 @@ Build a provider-neutral, privacy-conscious trip planner from structured data. N
 - Preserve alternatives, constraints, user rejections, and unknowns.
 - Explain score components and cash-versus-points assumptions.
 - Keep manual/sample mode working when providers are absent.
+- Optional `/collaborate` rooms are separate share-safe activity/day records, not atlas imports or private-trip accounts. Require review before publishing a board; keep bookings and all private identifiers outside it. Use owner/editor/viewer capabilities, Authorization headers, fragment-only invitation links, and revision-conditional writes. Preserve drafts on conflicts; never silently retry an overwrite or record access tokens in trip data.
+- Live rooms require explicit `COLLABORATION_ENABLED`, persistent local SQLite on one Node server, or a user-owned Postgres database for Vercel/multiple instances. Remote creation requires the server's private `COLLABORATION_CREATE_CODE`; never ask for its value in chat or write it to tracked files. Implementation does not authorize provisioning, invitations sent to others, or deployment. See [live collaboration](docs/LIVE_COLLABORATION.md).
 
 ## New-trip workflow
 

@@ -6,7 +6,7 @@ Choose a mode based on where the app runs and where your data and credentials ma
 | --- | --- | --- | --- |
 | Local-private | Your own planning on one computer | That browser's local storage | `.env.local`; any MCP or host connector stays on that computer/agent host |
 | Agent-connected | A guided planning session on your computer | The same local browser state and files you explicitly share | The agent host may use only connectors actually installed there, with explicit consent |
-| Personal cloud | Running your own website instance | Each visitor browser's local storage; no shared account or database | Deployment-environment secrets make only direct website-to-provider calls |
+| Personal cloud | Running your own website instance | Atlas edits stay browser-local; optional live boards use your configured durable database | Deployment-environment secrets support implemented provider calls and optional collaboration storage; no hosted private-trip accounts |
 | Public sample | Demonstrations and evaluation | Bundled redacted sample plus each visitor's browser state | No private trip material, host MCP, or implied live connector access |
 
 ## First run
@@ -28,7 +28,9 @@ For a guided session, keep the app local and tell the agent which data sources i
 
 A Vercel or self-hosted deployment is an independent instance operated by the person who creates it. Hosting accounts, billing, domains and environment secrets belong to that operator. Configure only that instance's environment variables in its secret manager. Server-side deployment credentials can support the website's implemented, direct provider calls; they cannot expose or relay an MCP connector from ChatGPT, Codex, Claude, or another local host.
 
-The atlas has browser-local-storage persistence; `/plan` drafts have no persistence until downloaded. Neither provides authenticated accounts or a durable database. A hosted deployment therefore is **not** private-trip sync: it has no user identity, cross-device trip history, shared household workspace, durable approval ledger, or server-side trip recovery. Do not treat it as a place to host raw email, booking files, confirmation details, or a personal itinerary. Keep private-local gates off in every deployment.
+The atlas has browser-local-storage persistence; `/plan` drafts have no persistence until downloaded. Neither provides private-trip accounts or server storage. Optional `/collaborate` rooms are separate reviewed activity/day boards with durable storage, role capabilities and conditional writes. They do not sync private trip records or provide account identity, trip history or a durable approval ledger. Do not host raw email, booking files, confirmation details or private identifiers in a room. Keep private-local gates off in every deployment.
+
+Enable rooms with `COLLABORATION_ENABLED=true`. One persistent Node server can use SQLite under ignored `.private/collaboration`; Vercel or multiple servers require the user's own Postgres through `COLLABORATION_DATABASE_URL`. Serverless hosts fail closed without durable Postgres. Remote room creation requires `COLLABORATION_CREATE_CODE` stored only in the server environment and entered privately in the masked creation field. Owners invite editors/viewers with fragment capabilities and can revoke future access; four-second polling and explicit revision conflicts keep stale edits from overwriting the latest board. No database has been provisioned and no deployment is performed by configuration documentation. [Live room setup and limits](LIVE_COLLABORATION.md).
 
 Public sample deployments must contain only reviewed, redacted sample material. They must not promise that any provider, Gmail path, or host connector is available. Optional adapters may be unconfigured, locked, limited, stale, or unavailable; manual entry remains the fallback.
 
@@ -40,7 +42,7 @@ Public sample deployments must contain only reviewed, redacted sample material. 
 | Your Vercel project | Your Vercel account and an authorized source checkout | Project ownership, environment scoping, quota control and provider permitted uses |
 | Your Node server | A Node-capable host and HTTPS/reverse proxy | Deployment, patching, process recovery, access/rate limits and secret storage |
 
-Vercel is optional. The existing `build`/`start` scripts run the full Next.js server; static hosting alone cannot run its APIs. Neither hosted option provides authenticated private-trip storage. Specific host prices and plan limits must be checked when choosing. Follow [setup](SETUP.md#choose-hosting-you-own) and the official [Vercel](https://vercel.com/docs/frameworks/full-stack/nextjs) or [self-hosting](https://nextjs.org/docs/app/guides/self-hosting) guide (checked 2026-10-13).
+Vercel is optional. The existing `build`/`start` scripts run the full Next.js server; static hosting alone cannot run its APIs. Both can serve optional planning rooms when durable storage is configured, but neither provides authenticated private-trip storage. Specific host prices and plan limits must be checked when choosing. Follow [setup](SETUP.md#choose-hosting-you-own) and the official [Vercel](https://vercel.com/docs/frameworks/full-stack/nextjs) or [self-hosting](https://nextjs.org/docs/app/guides/self-hosting) guide (checked 2026-10-13).
 
 ## One-click deploy after publication
 

@@ -5,5 +5,5 @@ import nextTypeScript from "eslint-config-next/typescript";
 export default defineConfig([
   ...nextVitals,
   ...nextTypeScript,
-  globalIgnores([".next/**", "out/**", "build/**", "next-env.d.ts", "public/maplibre-gl-*.mjs"]),
+  globalIgnores([".next/**", ".private/**", "output/**", ".playwright-cli/**", "out/**", "build/**", "next-env.d.ts", "public/maplibre-gl-*.mjs"]),
 ]);

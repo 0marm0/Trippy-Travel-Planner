@@ -1,6 +1,6 @@
 # Architecture
 
-TRIPPY is a Next.js application with a detailed sample atlas, a generic trip-draft workflow, optional server-side research adapters, and an explicitly separated private import boundary. The primary atlas loads the reviewed Europe 2026 sample. `/plan` creates or previews a normalized draft for arbitrary cities and dates, then hands it to the traveler's agent. Generic daily itinerary, quote selection and maps are future integration work; hosted private-trip accounts are also future work. See [module boundaries and migration plan](MODULARITY.md).
+TRIPPY is a Next.js application with a detailed sample atlas, a generic trip-draft workflow, optional server-side research adapters, optional live activity/day rooms, and an explicitly separated private import boundary. The primary atlas loads the reviewed Europe 2026 sample. `/plan` creates or previews a normalized draft for arbitrary cities and dates, then hands it to the traveler's agent. `/collaborate` edits a separate share-safe planning board using hashed role capabilities and durable SQLite/Postgres revision checks. Generic atlas integration, quote selection and maps remain future work; hosted private-trip accounts are also future work. See [module boundaries and migration plan](MODULARITY.md) and [live collaboration](LIVE_COLLABORATION.md).
 
 ## Runtime today
 

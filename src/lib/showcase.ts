@@ -6,6 +6,8 @@ export const showcasePhotos = [
   { city: "Amsterdam", label: "The canal belt after dark", alt: "Illuminated Amsterdam buildings beside a canal at night", image: "/guide-images/d58a91927dc0323f.webp" },
   { city: "Berlin", label: "Inside the Reichstag dome", alt: "Glass and steel inside the Reichstag dome in Berlin", image: "/guide-images/511c31258a672925.webp" },
   { city: "Sintra", label: "Pena Palace", alt: "The colorful towers of Pena Palace in Sintra", image: "/guide-images/c236d47a6202744c.webp" },
+  { city: "Egypt", label: "The pyramids at sunset", alt: "Pyramids silhouetted against an orange sunset", image: "/guide-images/ac3771b09af05031.webp" },
+  { city: "Nürburgring", label: "The circuit from above", alt: "An aerial view of the Nürburgring circuit", image: "/media/nurburgring-aerial.webp" },
 ] as const;
 
 export const planningSteps = [

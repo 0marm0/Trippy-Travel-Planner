@@ -56,4 +56,4 @@ Removing a label or renaming a type alone does not establish arbitrary-trip supp
 
 ## Scope of public release
 
-The repository can describe and ship a reviewed sample/manual atlas and generic validated draft/handoff before this migration is complete. It must label the generic detailed itinerary renderer, hosted accounts, durable storage/sync and import ledger as future work. TRIPPY does not perform bookings. Public release also requires privacy, history, media-rights and independent review gates; code modularity does not substitute for them.
+The repository can describe and ship a reviewed sample/manual atlas, generic validated draft/handoff and optional separate live activity/day board before this migration is complete. The board has durable SQLite/Postgres state and conflict-safe role capabilities; it does not integrate generic records into the detailed atlas. The generic detailed itinerary renderer, hosted private accounts/sync and import ledger remain future work. TRIPPY does not perform bookings. Public release also requires privacy, history, media-rights and independent review gates; code modularity does not substitute for them.

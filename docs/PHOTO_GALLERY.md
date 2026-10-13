@@ -1,6 +1,6 @@
 # Trippy photo gallery
 
-The complete set of 136 bundled guide photographs used by the reviewed sample. The captions below identify associated planning catalogue entries, not an independently verified photographic description or author credit.
+The complete set of 156 bundled travel photographs used by the reviewed sample. The captions below identify associated planning catalogue entries, not an independently verified photographic description or author credit.
 
 The owner has confirmed that the existing photo licenses are acquired; license records and required per-photo attributions are deferred. These images are not covered by the MIT code license. See [media provenance](MEDIA.md) before reuse or adding images.
 
@@ -238,3 +238,45 @@ The owner has confirmed that the existing photo licenses are acquired; license r
 </table>
 
 Originals, source documents and private review sheets are excluded from Git. Public image bytes and hashes are listed in [the media manifest](../public/media-manifest.json).
+
+<tr>
+<td width="33%"><img src="../public/media/audi-r8-road.webp" alt="Nürburgring · Rent a car built for it — not your rental" width="300" loading="lazy" /><br />Nürburgring · Rent a car built for it — not your rental</td>
+<td width="33%"><img src="../public/media/nurburgring-aerial.webp" alt="Nürburgring · Watch from Brünnchen" width="300" loading="lazy" /><br />Nürburgring · Watch from Brünnchen</td>
+<td width="33%"><img src="../public/guide-images/ac3771b09af05031.webp" alt="Egypt · Starlight Festival at the Pyramids" width="300" loading="lazy" /><br />Egypt · Starlight Festival at the Pyramids</td>
+</tr>
+
+<tr>
+<td width="33%"><img src="../public/guide-images/08886b88078ff457.webp" alt="Egypt · The Giza plateau" width="300" loading="lazy" /><br />Egypt · The Giza plateau</td>
+<td width="33%"><img src="../public/guide-images/6d5aa0eea4a20f19.webp" alt="Egypt · The Great Sphinx" width="300" loading="lazy" /><br />Egypt · The Great Sphinx</td>
+<td width="33%"><img src="../public/guide-images/e7dd064c5ada843a.webp" alt="Egypt · Grand Egyptian Museum" width="300" loading="lazy" /><br />Egypt · Grand Egyptian Museum</td>
+</tr>
+
+<tr>
+<td width="33%"><img src="../public/guide-images/c55bdf87c4e78e1e.webp" alt="Egypt · Islamic Cairo &amp; Al-Muizz Street" width="300" loading="lazy" /><br />Egypt · Islamic Cairo &amp; Al-Muizz Street</td>
+<td width="33%"><img src="../public/guide-images/09ff427db586d8e1.webp" alt="Egypt · Khan el-Khalili" width="300" loading="lazy" /><br />Egypt · Khan el-Khalili</td>
+<td width="33%"><img src="../public/guide-images/e7aece6448178e7c.webp" alt="Egypt · Saqqara &amp; the Step Pyramid" width="300" loading="lazy" /><br />Egypt · Saqqara &amp; the Step Pyramid</td>
+</tr>
+
+<tr>
+<td width="33%"><img src="../public/guide-images/727ff203ed240695.webp" alt="Egypt · Mosque of Muhammad Ali &amp; the Citadel" width="300" loading="lazy" /><br />Egypt · Mosque of Muhammad Ali &amp; the Citadel</td>
+<td width="33%"><img src="../public/guide-images/936d0b1d2b820bdf.webp" alt="Egypt · Mosque of Ibn Tulun" width="300" loading="lazy" /><br />Egypt · Mosque of Ibn Tulun</td>
+<td width="33%"><img src="../public/guide-images/b97e9a687a168c8b.webp" alt="Egypt · Sultan Hassan &amp; Al-Rifa'i" width="300" loading="lazy" /><br />Egypt · Sultan Hassan &amp; Al-Rifa'i</td>
+</tr>
+
+<tr>
+<td width="33%"><img src="../public/guide-images/de048135da2a4dd1.webp" alt="Egypt · Coptic Cairo" width="300" loading="lazy" /><br />Egypt · Coptic Cairo</td>
+<td width="33%"><img src="../public/guide-images/e642e9c943dd60ab.webp" alt="Egypt · Dahshur" width="300" loading="lazy" /><br />Egypt · Dahshur</td>
+<td width="33%"><img src="../public/guide-images/2df0aa32fc2f8577.webp" alt="Egypt · Egyptian Museum, Tahrir" width="300" loading="lazy" /><br />Egypt · Egyptian Museum, Tahrir</td>
+</tr>
+
+<tr>
+<td width="33%"><img src="../public/guide-images/b12fb456ad88742f.webp" alt="Egypt · Felucca on the Nile at sunset" width="300" loading="lazy" /><br />Egypt · Felucca on the Nile at sunset</td>
+<td width="33%"><img src="../public/guide-images/7d7fbc190674d041.webp" alt="Egypt · Al-Azhar Mosque &amp; Park" width="300" loading="lazy" /><br />Egypt · Al-Azhar Mosque &amp; Park</td>
+<td width="33%"><img src="../public/guide-images/f4b8829e61b3e24d.webp" alt="Egypt · Zamalek" width="300" loading="lazy" /><br />Egypt · Zamalek</td>
+</tr>
+
+<tr>
+<td width="33%"><img src="../public/guide-images/6433ba7e78f1a955.webp" alt="Egypt · Cairo Tower" width="300" loading="lazy" /><br />Egypt · Cairo Tower</td>
+<td width="33%"><img src="../public/guide-images/d61860fe54c0d30b.webp" alt="Egypt · Memphis &amp; Mit Rahina" width="300" loading="lazy" /><br />Egypt · Memphis &amp; Mit Rahina</td>
+</tr>
+</table>

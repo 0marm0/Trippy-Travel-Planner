@@ -5,6 +5,7 @@ import GlassSelect from "./glass-select";
 import BrandMark from "./brand-mark";
 
 import dynamic from "next/dynamic";
+import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import type { ImgHTMLAttributes } from "react";
 import { Icon } from "./planner-icon";
@@ -93,15 +94,21 @@ function displayCity(id: string) { return id === "ring" ? "Nürburgring" : id ==
 
 export default function TripWorkspace() {
   const [trip, setTrip] = useState<"2026" | "2025">("2026");
-  if (trip === "2025") return <div className="trip-era-wrap"><TripEraSwitch value={trip} onChange={setTrip} /><LegacyTripWorkspace /></div>;
-  return <Trip2026Workspace setTrip={setTrip} />;
+  const [legacyEnabled, setLegacyEnabled] = useState(false);
+  useEffect(() => {
+    const controller = new AbortController();
+    fetch("/api/itinerary/status", { cache: "no-store", signal: controller.signal }).then((response) => response.json()).then((status) => setLegacyEnabled(status.enabled === true)).catch(() => {});
+    return () => controller.abort();
+  }, []);
+  if (trip === "2025") return <div className="trip-era-wrap"><TripEraSwitch value={trip} onChange={setTrip} legacyEnabled={legacyEnabled} /><LegacyTripWorkspace /></div>;
+  return <Trip2026Workspace setTrip={setTrip} legacyEnabled={legacyEnabled} />;
 }
 
-function TripEraSwitch({ value, onChange }: { value: "2026" | "2025"; onChange: (value: "2026" | "2025") => void }) {
-  return <label className="trip-switch"><span>Workspace</span><GlassSelect aria-label="Workspace" value={value} onChange={(event) => onChange(event.target.value as "2026" | "2025")}><option value="2026">2026 Europe Trip</option><option value="2025">2025 Europe Trip</option></GlassSelect></label>;
+function TripEraSwitch({ value, onChange, legacyEnabled }: { value: "2026" | "2025"; onChange: (value: "2026" | "2025") => void; legacyEnabled: boolean }) {
+  return <label className="trip-switch"><span>Workspace</span><GlassSelect aria-label="Workspace" value={value} onChange={(event) => onChange(event.target.value as "2026" | "2025")}><option value="2026">2026 Europe Trip</option>{legacyEnabled && <option value="2025">Private legacy itinerary</option>}</GlassSelect></label>;
 }
 
-function Trip2026Workspace({ setTrip }: { setTrip: (value: "2026" | "2025") => void }) {
+function Trip2026Workspace({ setTrip, legacyEnabled }: { setTrip: (value: "2026" | "2025") => void; legacyEnabled: boolean }) {
   const [data, setData] = useState<Trip2026Payload | null>(null);
   const [error, setError] = useState("");
   const [view, setView] = useState<View>("route");
@@ -214,9 +221,10 @@ function Trip2026Workspace({ setTrip }: { setTrip: (value: "2026" | "2025") => v
   };
 
   return <div className="premium-shell" data-theme={theme} data-experience={experience}>
+    <nav className="workspace-public-links" aria-label="Trippy pages"><Link href="/plan">Plan your own trip</Link><Link href="/about">About Trippy</Link><Link href="/collaborate">Plan together</Link></nav>
     <header className="premium-header glass">
       <div className="brand-lockup"><span className="brand-orb trippy-brand-frame"><BrandMark /></span><div><strong>TRIPPY</strong><small>Travel intelligence</small></div></div>
-      <TripEraSwitch value="2026" onChange={setTrip} /><a className="quiet-button" href="/plan">Plan your own trip</a><a className="quiet-button" href="/about">About Trippy</a>
+      <TripEraSwitch value="2026" onChange={setTrip} legacyEnabled={legacyEnabled} />
       <ExperienceBar experience={experience} switchExperience={switchExperience} />
       <div className="header-trip-context"><span><Icon name="calendar" /><small>Travel window</small><b>{formatDate(data.start)}–{formatDate(data.end)}</b></span></div>
       <div className="header-actions">

@@ -15,14 +15,14 @@ At the initial audit the checkout was on `main` with no Git remote. The signed-i
 - User-owned integration accounts/keys with zero-key fallbacks, coverage and freshness limits, and separate consent for private imports. Booking states cannot be promoted from a quote or recommendation.
 - Independent Vercel and self-hosted Node guidance. Forks use their own accounts, projects, billing and environment settings. No maintainer Vercel identifiers or credentials are needed.
 - Stronger sample redaction and blank booking links. All itinerary export modes remove private identifiers; CSV cells neutralize spreadsheet formulas.
-- 136 restored, reviewed WebP guide photos, about 4.22 MB total. Brand/app icons are about 133 KB combined. Missing legacy image references use placeholders. Original files and review contact sheets stay private.
+- 156 restored, reviewed WebP travel photos (154 guide images and two automotive images). Brand/app icons are about 133 KB combined. The 20 missing activity images identified against the deployed dashboard have been restored; generic fallback placeholders remain available. Original files and review contact sheets stay private.
 - Public media manifest, metadata stripping, provenance/privacy review and hash validation. Local guide photos render from this checkout and can be embedded into standalone HTML and visual PDF exports.
 - Patched Next.js 16.3.8, sharp 0.35.5 and Ajv 8.18.0, with refreshed lockfile.
 - Next.js private file-trace exclusions, `.vercelignore`, and a regression-tested build boundary gate. A private trip file initially present in a function trace was excluded; final traces contain zero detected private targets.
 
 ## Verification
 
-The integrated gates cover lint, TypeScript, 78 tests, public sample validation, canonical schema validation, production build, browser/server bundle privacy, staged/history scanning, public media and production dependency advisories. The build boundary check reports 22 trace manifests and 3,827 traced entries with zero findings. The media inventory reports 144 local assets and 1,074 remote references with zero missing-file, privacy, metadata or rights-attestation findings.
+The integrated gates cover lint, TypeScript, 85 tests, public sample validation, canonical schema validation, production build, browser/server bundle privacy, staged/history scanning, public media and production dependency advisories. The build boundary check reports 31 trace manifests and 7,021 traced entries with zero findings. The media inventory reports 164 local assets and 1,074 remote references with zero missing-file, privacy, metadata or rights-attestation findings.
 
 The redacted sample has 230 activity records, 176 hotels and 13 booking summaries. Independent review inspected its strings/keys without printing personal identifiers. Independent source review found and verified fixes for dictionary-key privacy, credential-shaped text, CLI symlink escapes, untrusted export fields, CSV formulas, locked-anchor destination retention and image-download timeouts.
 
@@ -47,7 +47,7 @@ The owner explicitly states that licenses have already been acquired for all exi
 
 The rich atlas at `/` still contains 2026 sample-specific route, currency, geometry, persistence and research assumptions. `/plan` is the generic draft/review/agent-handoff entry point; it does not yet populate the atlas's detailed maps, daily itinerary or quote-selection views. Agents must research and record at least three materially different routes before pricing, or explain when hard constraints prevent that. The draft schema records route city order but does not prove nightly allocation, anchor timing, transit feasibility or inventory.
 
-There are no hosted user accounts, authentication, durable private database, cross-device sync or automated bookings. Do not deploy personal trips or Gmail/private-local gates onto a public instance. Provider access and redistribution terms remain separate from code licensing. The existing deployed demo was not redeployed during this work.
+Optional shared rooms now provide capability-based owner/editor/viewer access, durable local SQLite or user-owned PostgreSQL, cross-browser activity/day editing, polling and revision conflict checks. There are no hosted identity accounts or automated bookings. The shared planning DTO excludes bookings and is separate from the full atlas. Do not deploy personal trips or Gmail/private-local gates onto a public instance. Provider access and redistribution terms remain separate from code licensing. The existing deployed demo was not redeployed during this work.
 
 ## Release operations still to perform
 
@@ -62,6 +62,12 @@ Public visibility and deployment were not executed. Private repository creation 
 
 The owner authorized repository creation after reviewing the prepared candidate. `0marm0/Trippy-Travel-Planner` has been created with private visibility and linked as `origin`. The display name is **Trippy Travel Planner**; the package name is `trippy-travel-planner`. This approval covers repository creation and pushing the reviewed source, not public visibility or deployment.
 
-The candidate now includes an expanded photographic README, a complete 136-image gallery, a static `/about` introduction, detailed cash/award and multimodal planning instructions, and a separate collaboration architecture and agent walkthrough. Collaboration research recommends generic activity editing and versioned file proposals before hosted multi-user groups. Existing file handoffs are documented honestly; friends cannot add new activity objects through the current atlas bundle.
+The candidate now includes an expanded photographic README, a complete 156-image gallery, a static `/about` introduction, detailed cash/award and multimodal planning instructions, and a separate collaboration architecture and agent walkthrough. Live collaboration is now implemented at `/collaborate` for a separate share-safe activity/day board. Friends can add new activities there; the current atlas update bundle still references existing activity IDs. The implementation does not provision a database or deploy a hosted service.
 
-The updated local gate passes lint, types, 78 tests, sample/schema validation, production build, privacy/media, file-trace boundaries, staged/history scan and production dependency audit. Independent reviews found no remaining material capability/sharing overclaims. CI status and final commit are reported after the push; the repository remains private.
+The updated local gate passes lint, types, 85 tests, sample/schema validation, production build, privacy/media, file-trace boundaries, staged/history scan and production dependency audit. Independent reviews found no remaining material capability/sharing overclaims. CI status and final commit are reported after the push; the repository remains private.
+
+## Dashboard parity and shared editing update — 2026-10-13
+
+The full downloaded application includes all seven atlas tabs, Plan/Decide/Travel, transport layers and route maps, city sights, hotel/activity maps and galleries, daily editing, route research and exports. `/about` is the introduction, not a replacement dashboard. The restored 18 Egypt photographs and two automotive photos have independent contact-sheet review and metadata/hash checks. Seventeen Egypt originals are small thumbnails; the source resolution is documented rather than inflated. The Nürburgring hero now uses the recovered circuit aerial instead of unrelated generic scenery.
+
+Live browser acceptance passed 15 checks across isolated owner, editor and viewer contexts: explicit sample sharing review, fragment removal, role restrictions, synchronized activity/day edits, stale-save HTTP 412, preserved drafts, explicit conflict resolution, invitation revocation, persistent access after reload, and mobile layout. Local artifacts remain ignored. PostgreSQL adapter code is present but no live PostgreSQL service has been provisioned or exercised. See [live collaboration](LIVE_COLLABORATION.md) and [dashboard parity](DASHBOARD_PARITY.md).

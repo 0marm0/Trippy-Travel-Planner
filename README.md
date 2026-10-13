@@ -14,7 +14,7 @@ A cheaper flight can change your arrival city. A hotel can change how much time 
 
 [Planning guide](docs/PLANNING_GUIDE.md) · [Setup](docs/SETUP.md) · [Agent setup prompt](prompts/SETUP_GUIDE.md) · [Collaboration plan](docs/COLLABORATION.md) · [Full photo gallery](docs/PHOTO_GALLERY.md)
 
-> **Beta · private staging repository.** The detailed atlas demonstrates the reviewed Europe 2026 sample. `/plan` supports your own cities and dates as a validated draft and agent handoff; generic drafts do not yet populate the atlas’s detailed itinerary, map or quote-selection views. Hosted accounts, shared editing and automatic bookings are not implemented. [Current capabilities and limits](docs/IMPLEMENTATION_STATUS.md).
+> **Beta · private staging repository.** The detailed atlas demonstrates the reviewed Europe 2026 sample. `/plan` supports your own cities and dates as a validated draft and agent handoff; generic drafts do not yet populate the atlas’s detailed itinerary, map or quote-selection views. Optional `/collaborate` rooms support live activity/day editing with owner, editor and viewer access on a configured durable server. Hosted private-trip accounts and automatic bookings remain future work. [Current capabilities and limits](docs/IMPLEMENTATION_STATUS.md).
 
 <table>
 <tr>
@@ -29,7 +29,7 @@ A cheaper flight can change your arrival city. A hotel can change how much time 
 </tr>
 </table>
 
-These are six of the **136 bundled guide photos**. Explore the [complete gallery](docs/PHOTO_GALLERY.md), the sample atlas, or the app’s `/about` page. Images retain their own terms; the MIT code license does not license third-party photos. [Photo provenance and adding images](docs/MEDIA.md).
+These are six of the **156 bundled travel photos**. Explore the [complete gallery](docs/PHOTO_GALLERY.md), the sample atlas, or the app’s `/about` page. Images retain their own terms; the MIT code license does not license third-party photos. [Photo provenance and adding images](docs/MEDIA.md).
 
 ## What you can plan
 
@@ -42,7 +42,7 @@ These are six of the **136 bundled guide photos**. Explore the [complete gallery
 | Attractions and activities | Keep a broad catalogue, priorities, sources and geographic context before narrowing it | Opening hours, closures, timed tickets, travel time, accessibility and weather alternatives |
 | Daily itinerary | Assign activities to days, reorder them, and keep hotel/station/airport logistics visible | Feasible timing, transit buffers, fatigue and conflicts |
 | Booking progress | Distinguish recommendations, quotes, holds, confirmations, missing items and conflicts | Confirmation comes from a traveler-reviewed record, never a search result |
-| Sharing | Export sanitized HTML/PDF/CSV; exchange supported planning files and reviewed proposals | Files are copies; hosted invitations, conflict-safe shared editing and new activity proposals are future work |
+| Sharing | Export sanitized files or use optional live activity/day rooms with revocable editor/viewer invitations | Files remain copies; rooms require durable server storage and reviewed safe content; private booking records stay separate |
 
 Trippy ranks **the alternatives and evidence you supply**. It does not guarantee the cheapest possible itinerary across every airline, loyalty program, rail operator or booking site. Missing price, tax, availability or timetable data remains unknown.
 
@@ -144,7 +144,7 @@ For reading, export sanitized HTML, PDF or CSV. Bundled photos are embedded in H
 
 For edits, exchange a normalized `/plan` JSON draft or a supported `.trippy` workspace proposal. The owner validates and previews the proposed record or supported workspace changes, then accepts or rejects them. `/plan` previews the whole record; comparison with the previous draft is manual. Current atlas bundles reference existing activities/options; they cannot add new attractions, detect concurrent edits or provide live shared state. A downloaded file cannot be revoked after a friend receives it.
 
-The next modular collaboration sequence is **generic activity editing → versioned proposals and conflict review → hosted invitations and permissions**. The [collaboration architecture](docs/COLLABORATION.md) specifies how friends can add activities and agree on changes without exposing private booking records or sharing API credentials. Use [the collaborative-trip prompt](prompts/COLLABORATIVE_TRIP_GUIDE.md) for a truthful file-based handoff today.
+For live planning, open `/collaborate`, prepare or load a reviewed public planning board, and review it before creating a room. Owners can grant editor or viewer capabilities and revoke future access; editors can add activities and arrange days. The browser checks for changes every four seconds. Revision conflicts preserve the unsaved draft and require explicit review/reload before another save. This board is separate from the sample atlas and `/plan` drafts, and it excludes bookings and private identifiers. [Live setup and limits](docs/LIVE_COLLABORATION.md) · [Collaboration workflow](docs/COLLABORATION.md) · [Agent prompt](prompts/COLLABORATIVE_TRIP_GUIDE.md).
 
 ## Run it on your own infrastructure
 
@@ -154,7 +154,7 @@ The next modular collaboration sequence is **generic activity editing → versio
 | Your Vercel project | A reviewed redacted demo or independent instance | Your Vercel account, billing, project, domains and server secrets; no maintainer account access |
 | Your Node server | Self-hosting on infrastructure you control | You operate HTTPS, updates and process management; no Vercel dependency |
 
-Vercel is optional. A public deployment does not add private accounts, shared storage or friend invitations. Keep private-trip/Gmail gates disabled on public instances and never upload `.private/` or `.env.local`. [Hosting setup](docs/SETUP.md#vercel-deployment) · [Deployment modes](docs/DEPLOYMENT_MODES.md).
+Vercel is optional. Live rooms require `COLLABORATION_ENABLED=true` and persistent SQLite on one Node server, or your own Postgres database on Vercel/multiple servers. Remote room creation also requires a server-owned creation code. No hosted database has been provisioned; enabling rooms does not create private-trip accounts. Keep private-trip/Gmail gates disabled on public instances and never upload `.private/` or `.env.local`. [Live room setup](docs/LIVE_COLLABORATION.md) · [Hosting setup](docs/SETUP.md#vercel-deployment) · [Deployment modes](docs/DEPLOYMENT_MODES.md).
 
 ## Extend the modules
 
@@ -163,6 +163,7 @@ Vercel is optional. A public deployment does not add private accounts, shared st
 - **Optimization:** explainable ranking of supplied route/leg alternatives with explicit missing evidence.
 - **Presentation:** sample compatibility adapter, atlas views, generic draft workflow and `/about` introduction.
 - **Interchange:** sanitized exports and reviewed workspace proposals.
+- **Live planning:** a bounded share-safe activity/day schema, hashed role capabilities, durable SQLite/Postgres adapters and transactional revision checks.
 - **Media:** private originals → approved metadata-free derivatives → manifest/hash validation.
 
 See [architecture](docs/ARCHITECTURE.md), [modularity](docs/MODULARITY.md), [collaboration](docs/COLLABORATION.md), and [contributing](CONTRIBUTING.md). New trips, providers, activity editors and storage backends should extend these contracts instead of hardcoding another personal itinerary into the UI.

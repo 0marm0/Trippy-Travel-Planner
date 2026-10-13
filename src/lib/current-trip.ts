@@ -26,7 +26,7 @@ const routeDates = [
 
 const flags: Record<string, string> = { DE: "🇩🇪", PL: "🇵🇱", BE: "🇧🇪", NL: "🇳🇱" };
 const cityFallbacks: Record<string, string> = {
-  ring: "https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?auto=format&fit=crop&w=1600&q=85",
+  ring: "/media/nurburgring-aerial.webp",
   wroclaw: "https://commons.wikimedia.org/wiki/Special:Redirect/file/Market_square%2C_Wroclaw.jpg?width=1600",
   krakow: "https://commons.wikimedia.org/wiki/Special:Redirect/file/Rynek_Glowny_Krakow.jpg?width=1600",
   brussels: "https://images.unsplash.com/photo-1491557345352-5929e343eb89?auto=format&fit=crop&w=1600&q=85",

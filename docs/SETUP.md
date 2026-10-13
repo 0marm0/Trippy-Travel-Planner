@@ -19,6 +19,12 @@ Run the standard verification suite before sharing code:
 npm run check
 ```
 
+## Optional live planning rooms
+
+Open `/collaborate` for a separate reviewed activity/day board. Enable it only when you want to publish that safe planning content. In untracked `.env.local`, set `COLLABORATION_ENABLED=true`. One persistent Node 22.18+/24 server uses ignored `.private/collaboration/rooms.sqlite`; Vercel or multiple servers require `COLLABORATION_DATABASE_URL` configured privately for your own durable Postgres database. Remote room creation also requires `COLLABORATION_CREATE_CODE`, privately generated with 16–256 characters and no whitespace. Enter it in the masked creation field; never paste the value in chat or tracked files. No database is provisioned by this setup.
+
+Owners grant/revoke editor and viewer capabilities; editors change activities/days; viewers read. Polling checks revisions every four seconds and conflicting saves preserve the draft for explicit review. This does not create private-trip accounts or sync the atlas, `/plan` or booking data. Manual mode works with rooms disabled. Follow [the complete live setup](LIVE_COLLABORATION.md) for storage, backup and capability limits.
+
 ## Create your own trip
 
 In `/plan`, enter a name, start/end dates, cities and acceptable origins, then travelers, pace, date flexibility and themes. Preview the validated normalized record, explicitly accept the draft, download its JSON and copy the detailed agent brief. Paste an agent’s normalized response to validate and preview it before another explicit acceptance. Keep downloaded real trips private-local. This creates a structured planning record; it does not populate the sample atlas, research prices, generate route candidates, make bookings or provide recovery after reload.

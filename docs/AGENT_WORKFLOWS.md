@@ -25,6 +25,8 @@ For any new destination/date combination, use `/plan` for browser draft/validati
 
 Agent update bundles propose a narrow set of decisions for existing atlas IDs; they do not create trips, add route stops or confirm bookings. Use [the bundle contract](AGENT_UPDATE_BUNDLES.md), preview a diff and obtain acceptance before applying a bundle.
 
+For authorized live group planning, `/collaborate` uses a separate bounded board of dates, cities, activities and day assignments. The owner reviews its safe contents before publishing, then grants editor or viewer capabilities. Editors may add/edit activities and arrange days; only owners change the trip frame or manage invitations. Polling checks shared revisions every four seconds. Preserve an unsaved draft on HTTP 412 and require an explicit reconciliation/reload; never auto-retry a stale state. This does not sync `/plan`, alter the sample atlas or import bookings. Store tokens only in the capability flow, never in trip records, logs, query parameters or exports. Configure user-owned durable storage and a private remote creation code following [LIVE_COLLABORATION.md](LIVE_COLLABORATION.md); provisioning, deployment and sending links still require authorization.
+
 ## Phase 0 — consent and constraint ledger
 
 **Human/traveler:** supplies known trip facts and decides whether manual/sample, provider research, or an optional private-local import is allowed.

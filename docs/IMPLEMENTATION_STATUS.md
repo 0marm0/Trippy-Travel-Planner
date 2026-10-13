@@ -26,8 +26,11 @@ Atlas CSV/HTML/PDF downloads apply redaction even for legacy private-operational
 - Booking.com Demand hotel research for eligible partner accounts.
 - Private Gmail read-only booking-candidate preview with no automatic import or trip mutation.
 - Production live-quota access code and signed secure session.
+- `/collaborate` live planning rooms with owner/editor/viewer capabilities, new activity editing, day assignments, revocable invitations, four-second polling and explicit revision conflicts. Requires explicit enablement, persistent Node/SQLite or user-owned Postgres; Vercel requires Postgres and remote room creation requires a private creation code. [Setup and boundaries](LIVE_COLLABORATION.md).
 
 These paths were validated with mocks and zero-credential degradation. No real provider key, mailbox, or private booking record was used during repository verification.
+
+Collaboration backend tests use invented planning records and isolated temporary SQLite databases to verify persistence, role restrictions, stale writes, revocation, hashing and privacy. Postgres is implemented but has not been exercised against a hosted database. No database or hosting service was provisioned. Rooms contain only reviewed planning-board data and are separate from the atlas, generic `/plan` drafts and future private-trip accounts.
 
 ## Manual by design
 

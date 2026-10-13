@@ -47,7 +47,7 @@ export default function NewTripPlanner() {
     catch { setMessage("Clipboard unavailable. Copy the brief below."); }
   }
   return <main className="new-trip-page">
-    <nav><Link href="/">TRIPPY · Sample atlas</Link><Link href="/about">About Trippy</Link></nav>
+    <nav><Link href="/">TRIPPY · Sample atlas</Link><Link href="/about">About Trippy</Link><Link href="/collaborate">Plan together</Link></nav>
     <header><span className="trip-kicker">YOUR CITIES. YOUR DATES. YOUR ACCOUNTS.</span><h1>Start with the trip you want.</h1><p>Create a structured draft, review it, then take it to your agent for route research. No keys or accounts required.</p></header>
     <p className="trip-local-note">This form runs in your browser. Drafts stay in memory until you download or copy them; reload clears them. Enter planning facts only—no names, email addresses, booking codes, seats, or API keys.</p>
     <form onSubmit={(event) => { event.preventDefault(); preview(); }} className="new-trip-card">

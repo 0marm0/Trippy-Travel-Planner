@@ -4,8 +4,8 @@ import "./brand.css";
 import "./workspace.css";
 
 export const metadata: Metadata = {
-  title: "TRIPPY — Travel Optimizer",
-  description: "A premium, privacy-conscious workspace for planning better trips.",
+  title: "Trippy Travel Planner",
+  description: "Compare cash and points, shape multi-city routes, plan your days and track booking gaps with Trippy.",
 };
 
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {

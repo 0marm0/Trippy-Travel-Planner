@@ -7,7 +7,7 @@ cd "$repo_root"
 failed=0
 
 if git rev-parse --is-inside-work-tree >/dev/null 2>&1; then
-  tracked_secret_files=$(git ls-files | grep -E '(^|/)(\.env($|\.)|credentials\.json$|client_secret.*\.json$|token\.json$|.*\.(pem|key)$)' | grep -vE '(^|/)\.env\.example$' || true)
+  tracked_secret_files=$(git ls-files | grep -E '(^|/)(\.env($|\.)|credentials\.json$|client_secret.*\.json$|token\.json$|.*\.(pem|key|eml|mbox|ics)$|\.private/|data/private/|data/imports/|bookings/|emails/|calendar-private/)' | grep -vE '(^|/)\.env\.example$' || true)
   if [ -n "$tracked_secret_files" ]; then
     echo "FAIL: secret-bearing filenames are tracked:"
     printf '%s\n' "$tracked_secret_files"
@@ -17,7 +17,7 @@ else
   echo "INFO: no Git work tree yet; history and tracked-file checks were skipped."
 fi
 
-suspicious_files=$(grep -RIlE --exclude='.env.example' --exclude='public-release-preflight.sh' --exclude-dir='.git' --exclude-dir='node_modules' --exclude-dir='.next' --exclude-dir='.private' --exclude-dir='dist' --exclude-dir='build' "(api[_-]?key|client[_-]?secret|access[_-]?token|authorization)[[:space:]]*[=:][[:space:]]*['\"]?[A-Za-z0-9_+/\-]{32,}['\"]?" . || true)
+suspicious_files=$(grep -RIlE --exclude='.env' --exclude='.env.*' --exclude='public-release-preflight.sh' --exclude-dir='.git' --exclude-dir='node_modules' --exclude-dir='.next' --exclude-dir='.private' --exclude-dir='dist' --exclude-dir='build' --exclude-dir='output' "(api[_-]?key|client[_-]?secret|access[_-]?token|authorization)[[:space:]]*[=:][[:space:]]*['\"]?[A-Za-z0-9_+/\-]{32,}['\"]?" . || true)
 if [ -n "$suspicious_files" ]; then
   echo "FAIL: possible hard-coded credentials found in:"
   printf '%s\n' "$suspicious_files"
@@ -42,7 +42,7 @@ if [ -n "$public_secret_files" ]; then
   failed=1
 fi
 
-personal_files=$(find . -type f \( -name '*.eml' -o -name '*.mbox' -o -name '*.ics' -o -name 'token.json' -o -name 'credentials.json' \) -not -path './.git/*' -print)
+personal_files=$(find . \( -path './.git' -o -path './.private' -o -path './node_modules' -o -path './.next' -o -path './output' \) -prune -o -type f \( -name '*.eml' -o -name '*.mbox' -o -name '*.ics' -o -name 'token.json' -o -name 'credentials.json' \) -print)
 if [ -n "$personal_files" ]; then
   echo "FAIL: possible personal/credential files found:"
   printf '%s\n' "$personal_files"
@@ -54,9 +54,12 @@ if [ -f "$public_sample" ]; then
   private_sample_patterns='mail\.google\.com|mailto:|[[:alnum:]._%+-]+@[[:alnum:].-]+\.[[:alpha:]]{2,}|Booking\.com[[:space:]]+[0-9]{8,}|confirmation[[:space:]]+[A-Z0-9-]{6,}|record[[:space:]]+locator|seat[[:space:]]+[0-9]{1,2}[A-Z]'
   if grep -Eiq "$private_sample_patterns" "$public_sample"; then
     echo "FAIL: the public 2026 sample may contain a private booking or contact reference."
-    grep -Ein "$private_sample_patterns" "$public_sample" | head -20
     failed=1
   fi
+fi
+
+if ! node scripts/validate-public-media.mjs; then
+  failed=1
 fi
 
 if [ -d ".next/static" ]; then
@@ -89,5 +92,5 @@ if [ "$failed" -ne 0 ]; then
   exit 1
 fi
 
-echo "PASS: basic current-tree preflight found no listed secret or personal-data files."
+echo "PASS: current-tree preflight found no listed secret/personal-data findings and media validation passed."
 echo "NOTE: this is not a history scan; run a dedicated secret scanner and review generated bundles before publication."

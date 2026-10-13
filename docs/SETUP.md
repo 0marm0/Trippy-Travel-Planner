@@ -1,17 +1,17 @@
 # Set up TRIPPY
 
-TRIPPY starts in a complete sample/manual mode. Do this first; live research and private imports are separate, opt-in capabilities.
+TRIPPY starts in sample/manual mode. The visual atlas is currently sample-centered; use [guided onboarding](ONBOARDING.md) for a different trip and [the setup prompt](../prompts/SETUP_GUIDE.md) for agent help. Do this first; live research and private imports are separate, opt-in capabilities.
 
 ## Local sample/manual mode
 
-Install a supported current Node.js release, then run:
+Install Node.js 22 or a newer supported LTS release and npm, then run:
 
 ```bash
-npm install
+npm ci
 npm run dev
 ```
 
-Visit [http://localhost:3000](http://localhost:3000). No account, API key, Gmail connection, MCP, or paid travel provider is needed. The app loads `examples/trips/2026-europe-sample.json`, a tracked redacted sample; browser changes remain local to the browser.
+Visit [http://localhost:3000](http://localhost:3000) for the detailed sample atlas or [http://localhost:3000/plan](http://localhost:3000/plan) to start your own normalized trip. No account, API key, Gmail connection, MCP or paid travel provider is needed. The atlas loads `examples/trips/2026-europe-sample.json`; its edits persist in browser-local storage. The `/plan` draft has no persistence or server upload and clears on reload.
 
 Run the standard verification suite before sharing code:
 
@@ -19,9 +19,23 @@ Run the standard verification suite before sharing code:
 npm run check
 ```
 
+## Create your own trip
+
+In `/plan`, enter a name, start/end dates, cities and acceptable origins, then travelers, pace, date flexibility and themes. Preview the validated normalized record, explicitly accept the draft, download its JSON and copy the detailed agent brief. Paste an agent’s normalized response to validate and preview it before another explicit acceptance. Keep downloaded real trips private-local. This creates a structured planning record; it does not populate the sample atlas, research prices, generate route candidates, make bookings or provide recovery after reload.
+
+For a local-file workflow:
+
+```bash
+npm run trip:init -- --name "Portugal 2027" --start 2027-04-10 --end 2027-04-18 --cities "Lisbon,Porto" --origins "IAD,DCA" --adults 2 --pace balanced --flex-days 2 --themes "food,art"
+npm run trip:validate -- .private/trips/portugal-2027/trip.json
+npm run schema:check
+```
+
+`trip:init` defaults to `.private/trips/<trip-slug>/trip.json`, restricts output to the ignored private trip tree and refuses to overwrite an existing file. `trip:validate` checks the supplied normalized record; without a path it checks the generic example. `schema:check` validates that example too. Use `schema/trip.schema.json` as the contract. Plan at least three materially different routes with the agent before price research; the initializer deliberately leaves route candidates empty. [Onboarding](ONBOARDING.md) explains the remaining limitations.
+
 ## Optional user-owned research keys
 
-Only configure a key if you are enabling an adapter in your own environment and it will materially improve the decision. Create an ignored local file:
+Only configure a key if you are enabling an adapter in your own environment and it will materially improve the decision. Select modules independently: general search, award research, qualified hotel demand, maps, or a private-local Gmail preview. You may stop after manual setup. Create an ignored local file:
 
 ```bash
 cp .env.example .env.local
@@ -35,13 +49,13 @@ SEATS_AERO_API_KEY=<your Seats.aero key>
 ```
 
 - `SERPAPI_API_KEY` is for optional general search/discovery research. Create an account and retrieve your key from the official [SerpApi dashboard](https://serpapi.com/manage-api-key).
-- `SEATS_AERO_API_KEY` is for optional award-seat research. Check eligibility and generate your personal key from the API tab described in the official [Seats.aero API getting-started guide](https://developers.seats.aero/reference/getting-started-p). Access, quotas, and permitted uses depend on the user's current plan and Seats.aero terms.
+- `SEATS_AERO_API_KEY` is for optional award-seat research. Check eligibility and generate your personal key from the API tab described in the official [Seats.aero API getting-started guide](https://developers.seats.aero/reference/getting-started-p). Personal partner-API access is conditional for Pro users; commercial use requires written agreement. A personal account is not permission to offer a shared public API-backed service. Access, quotas and permitted uses depend on current eligibility and terms.
 
 Never paste a value into chat, source control, an issue, a screenshot, or a tracked config file. Restart the local server after changing `.env.local`.
 
 These variables activate implemented server-side adapters; they are not sent to the browser. Results disclose source, checked time, freshness basis, limitations, errors, and manual fallbacks. They remain research evidence—not holds, confirmations, or booking instructions. Review [integrations](INTEGRATIONS.md) before enabling one.
 
-Seats.aero defaults to its Pro-compatible cached search. Set `SEATS_AERO_SEARCH_MODE=live` only if you have a separate commercial Live Search agreement. The same account key can expose Rooms.aero award-hotel research subject to its separate quota and cache age. Booking.com Demand requires both a qualified partner API key and affiliate ID; a hotel request also needs a Booking.com numeric city ID. Consumer-site inventory parity is not assumed.
+Seats.aero defaults to its Pro-compatible cached search. Set `SEATS_AERO_SEARCH_MODE=live` only if you have a separate commercial Live Search agreement. The same account key can expose Rooms.aero award-hotel research subject to its separate quota and cache age. Booking.com Demand requires both a qualified partner API key and affiliate ID; a hotel request also needs a Booking.com numeric city ID. Consumer-site inventory parity is not assumed. Review the official [Booking.com Demand prerequisites](https://developers.booking.com/demand/docs/getting-started/prerequisites) before choosing this module; a consumer Booking.com login does not establish partner API access.
 
 ### Protect live quota on a hosted site
 
@@ -52,7 +66,7 @@ TRIPPY_ACCESS_CODE=<a private code you will enter in the app>
 TRIPPY_SESSION_SECRET=<at least 32 random characters>
 ```
 
-Visitors without the code keep the manual workflow but cannot spend live provider quota. A successful same-origin unlock creates a signed, 12-hour, secure HttpOnly cookie; neither value is stored in browser-readable state. Keep the access code private and use platform rate limiting if the deployment will serve many users.
+Visitors without the code keep the manual workflow but cannot spend live provider quota. This quota gate is not a user account, trip-privacy system, provider license, or per-user billing system. A successful same-origin unlock creates a signed, 12-hour, secure HttpOnly cookie; neither value is stored in browser-readable state. Keep the access code private and use platform rate limiting if the deployment will serve many users.
 
 ### Verify configuration without exposing values
 
@@ -78,6 +92,8 @@ Connectors belong to the user’s chosen host—not to this repository. ChatGPT,
 4. Record source, timestamp, coverage, cost/limits, and fallback for results used in a decision.
 5. Keep manual entry available if a connector is absent, limited, stale, or fails.
 
+Seats.aero also documents an [official host MCP](https://developers.seats.aero/reference/getting-started-p); installing and authorizing it in an agent host is separate from configuring the website API adapter. Use only the capabilities and read-only scope available to that session.
+
 See the provider-neutral [connector inventory](INTEGRATIONS.md#provider-neutral-connector-inventory), including Booking.com, Expedia, trivago, Priceline, TripAdvisor, Gmail, maps, rail, rental cars, activities, and calendar.
 
 ## Private local trip data
@@ -89,7 +105,7 @@ TRIPPY_ITINERARY_PATH=/absolute/path/to/private-itinerary.html
 TRIPPY_ALLOW_PRIVATE_LOCAL=true
 ```
 
-Private itinerary endpoints are available only in development on a loopback host with the explicit gate. Production must serve the redacted sample; never set `TRIPPY_ALLOW_PRIVATE_LOCAL=true` in a deployment. Keep raw emails, booking documents, confirmation references, OAuth files, provider responses, and personal data outside the repo.
+Private files do not become public samples by enabling a gate. Private itinerary endpoints are available only in development on a loopback host with the explicit gate. Production must serve the redacted sample; never set `TRIPPY_ALLOW_PRIVATE_LOCAL=true` in a deployment. Keep raw emails, booking documents, confirmation references, OAuth files, provider responses, and personal data outside the repo.
 
 ## Maps
 
@@ -101,17 +117,37 @@ NEXT_PUBLIC_CITY_MAP_STYLE_URL=https://your-map-provider.example/style.json
 
 `NEXT_PUBLIC_*` values are exposed to the browser. Never place a private server credential in one. If a map SDK needs a browser key, use a separate key restricted to the intended origins and APIs; keep geocoding/routing server keys server-side. See [map configuration](INTEGRATIONS.md#map-stack).
 
+## Choose hosting you own
+
+Stay local for private trips. For a reviewed redacted website, Vercel offers managed Next.js hosting; a Node server on infrastructure you control avoids requiring a Vercel account. Neither choice adds identity, private cloud storage, sync or host-local connectors. Compare current host terms, quotas, costs and region needs before choosing; no hosting or provider plan is assumed free. See [deployment modes](DEPLOYMENT_MODES.md).
+
 ## Vercel deployment
 
 Vercel deployment is optional and does not change the public-release gate. It creates an independent website instance; it does not turn the current browser-local app into an authenticated or synchronized private-trip service. See [deployment modes](DEPLOYMENT_MODES.md) for the local-private, agent-connected, personal-cloud, and public-sample boundary.
 
-1. Verify demo/manual mode on a clean checkout.
-2. Add only needed values in Vercel Project Settings → Environment Variables; never upload `.env.local` or paste secrets into chat. Scope values deliberately to Production, Preview, and/or Development. These server-side values support only the deployed website's direct implemented adapter calls. They cannot provide a visitor access to an MCP or connector installed in a local ChatGPT, Codex, Claude, or other agent host.
+1. With explicit deployment authorization, sign into your own Vercel account, create a project under your account/team, and import your authorized source checkout. Use the repository root and detected Next.js preset. Verify demo/manual mode on a clean checkout first.
+2. Add only needed values in Vercel Project Settings → Environment Variables; never upload `.env.local` or paste secrets into chat. Scope values deliberately to Production, Preview, and/or Development; keep production values separate from local/test credentials. Never prefix private values with `NEXT_PUBLIC_`. These server-side values support only the deployed website's direct implemented adapter calls. They cannot provide a visitor access to an MCP or connector installed in a local ChatGPT, Codex, Claude, or other agent host.
 3. Keep `TRIPPY_ALLOW_PRIVATE_LOCAL=false` and do not configure a private itinerary path.
 4. Restrict any browser map key to the deployment domains; use server-side secret storage for private provider keys.
 5. Redeploy after environment-variable changes. Run `npm run check`, then complete the [public release checklist](PUBLIC_RELEASE_CHECKLIST.md) before any source publication.
 
 The deployment must degrade to manual/sample mode when optional providers are unavailable. It must not expose debug errors, account identifiers, raw provider responses, or private imports. Browser edits remain in that browser's local storage: there is no account, durable trip database, cross-device sync, or server-side recovery. Do not use a hosted instance for private itinerary, raw mail, booking-document, or confirmation data.
+
+These steps follow the official [Next.js on Vercel guide](https://vercel.com/docs/frameworks/full-stack/nextjs) and [environment-variable guide](https://vercel.com/docs/environment-variables), checked 2026-10-13. Credentials remain yours; the maintainers do not receive them.
+
+## Self-host a redacted website
+
+The existing scripts support a full Next.js Node server:
+
+```bash
+npm ci
+npm run build
+npm start -- --hostname 127.0.0.1 --port 3000
+```
+
+Keep private gates disabled. Supply only the needed server environment values through your process manager or host secret store. Do not rely on `.env.local` being transferred to another machine, upload it with build artifacts, or embed private values in container images. A VPS, container platform or other Node-capable host is an operator choice; this repo does not yet ship a Dockerfile or host-specific deployment recipe.
+
+For internet access, configure HTTPS and a reverse proxy, request/body limits, rate limiting, process restart, and secret rotation in infrastructure you control. Test the built app and provider lock before exposing it. Static-file-only hosting is not equivalent: the app uses server route handlers for trip loading, provider access, exports and optional Gmail preview. Self-hosting still serves reviewed redacted data, with per-browser state and no private-trip cloud sync. See the official [Next.js self-hosting guide](https://nextjs.org/docs/app/guides/self-hosting), checked 2026-10-13.
 
 ### Optional post-publication deploy link
 
@@ -128,3 +164,7 @@ npm run privacy:check
 ```
 
 Inspect the resulting artifact and staged release tree for email addresses, Gmail URLs, confirmation/booking references, record locators, seats, loyalty IDs, keys, tokens, and private notes. A second reviewer must inspect the release artifact before any publication.
+
+## Deployment artifact privacy
+
+The release gate checks Next.js function file traces as well as public bundles. `next.config.ts` excludes ignored private data and environment files from every route trace; `.vercelignore` separately excludes them from local CLI uploads. Run `npm run build:boundary:check` after building and again after creating `.next/standalone` or `.vercel/output` packages. A development-only runtime gate does not make it safe to upload private source files. Never package personal trips or credentials with a hosted deployment.

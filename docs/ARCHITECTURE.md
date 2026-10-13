@@ -1,111 +1,80 @@
-# TRIPPY — Travel Optimizer architecture
+# Architecture
 
-## Product boundary
+TRIPPY is a Next.js application with a detailed sample atlas, a generic trip-draft workflow, optional server-side research adapters, and an explicitly separated private import boundary. The primary atlas loads the reviewed Europe 2026 sample. `/plan` creates or previews a normalized draft for arbitrary cities and dates, then hands it to the traveler's agent. Generic daily itinerary, quote selection and maps are future integration work; hosted private-trip accounts are also future work. See [module boundaries and migration plan](MODULARITY.md).
 
-TRIPPY is a Next.js trip-planning app. Its primary surface is a trip overview: route and date summary, an at-a-glance map, planning progress, and direct city drilldowns. The app remains useful in demo/manual mode; connected providers enrich an existing plan but never become a prerequisite for viewing or editing it.
+## Runtime today
 
-The implementation keeps four concerns separate:
-
-1. **Trip data** — user-authored cities, dates, choices, and reviewed bookings.
-2. **Planning views** — overview, city drilldowns, flight builder, and daily itinerary.
-3. **Provider results** — time-bounded quotes, map/geocoding results, and import candidates.
-4. **Credentials and raw imports** — server-only secrets, OAuth tokens, and raw email/file references.
-
-## Runtime shape
-
-```text
-Browser (Next.js UI)
-  ├─ overview: route, dates, overview map, completed onboarding
-  ├─ city drilldown: flags, city map, hotel/activity pin filters
-  ├─ flight builder: cash-versus-points comparison and route map
-  └─ itinerary: collapsed day summaries, then reviewed import candidates
-                         │
-                         ▼
-                 Next.js server boundary
-  ├─ trip read/write and validation
-  ├─ provider-adapter orchestration and freshness handling
-  ├─ import parsing and review queue
-  └─ export/redaction controls
-                         │
-                         ▼
-      normalized trip store   provider adapters   private import store
+```mermaid
+flowchart TD
+  Sample[Reviewed public sample] --> Loader[Server sample adapter]
+  Loader --> API[GET /api/trips/2026]
+  API --> UI[Browser workspace]
+  UI <--> State[Browser local storage]
+  UI --> Optimizer[Route optimization API]
+  UI --> Research[Provider search API]
+  Research --> Access[Server access and validation]
+  Access --> Providers[Optional research adapters]
+  UI --> Export[Sanitized export snapshot]
+  Export --> Files[CSV / HTML / PDF]
+  Consent[Explicit private-local consent and gates] --> Imports[Private itinerary or Gmail preview]
+  Imports --> Review[Candidate review]
+  Form[Generic /plan form or pasted JSON] --> Validate[Shared normalized-trip validation]
+  Validate --> Preview[Preview every proposed field]
+  Preview --> Accept[Explicit draft acceptance]
+  Accept --> Draft[Planning JSON download or agent brief copy]
 ```
 
-Client components may handle local interaction and rendering. Server components/routes/actions own validation, private provider calls, OAuth token use, rate limits, and persistent writes. A browser never receives a provider secret, raw Gmail body, OAuth refresh token, or unreviewed booking payload.
+`src/app/page.tsx` mounts `src/components/trip-workspace.tsx`. The workspace fetches the sample API, composes planning views, and saves selections and assignments to local storage. `src/lib/current-trip.ts` adapts the older compact sample format into the typed view payload in `src/lib/trip-model.ts`. It also joins reviewed corrections, map coordinates, and hotel enrichment. The legacy 2025 view has a separate data path.
 
-## Deployment and persistence boundary
+`src/app/plan/page.tsx` mounts `src/components/new-trip-planner.tsx`. Its draft stays in browser memory and clears on reload. Shared logic in `src/lib/normalized-trip.ts` creates drafts, validates the actual JSON Schema plus relationships and private-text checks, and generates the agent brief. Preview does not replace an accepted draft. Acceptance enables a local JSON download or explicit clipboard copy; it does not invoke providers, import personal records, infer bookings, save to the sample atlas, or persist a hosted account.
 
-Today, the interactive planner persists trip working state in browser local storage. The app has no authenticated user model, durable trip database, shared workspace, or cross-device synchronization. A Vercel deployment is therefore an independently operated website instance, not a hosted private-trip account: each browser retains its own state, and serverless execution must not be treated as trip storage or recovery.
+The same shared validation powers `npm run trip:init`, `npm run trip:validate`, and the release gate's `schema:check`. Initialization writes a new normalized draft beneath the private-local trip directory and refuses an existing destination. The CLI is a local authoring tool, not a server filesystem endpoint.
 
-MCPs and host connectors live with the chosen agent host. They are neither bundled into the Next.js deployment nor reachable by its visitors. Deployment-environment credentials are a separate boundary: they are server-side values used only for the site's direct implemented provider calls. No configured value proves a connector is available or provider coverage is live.
+The server has no durable normalized trip write API, authenticated trip ownership model, shared workspace, or cross-device sync. Client selections do not update the sample file. Hosting a website instance does not create a private trip account or a backup of browser state. [Deployment modes](DEPLOYMENT_MODES.md) describes that boundary.
 
-The public sample and private planning remain separate artifacts. Hosted deployments keep private-local import gates disabled and may serve only reviewed redacted material. The planned transition to hosted private trips requires authenticated identity/authorization, encrypted durable normalized storage, per-user secret handling, durable review/audit/retention controls for imports, sync conflict handling, and independent privacy/security review; it is not implemented by the current runtime. See [deployment modes](DEPLOYMENT_MODES.md).
+## Code boundaries
 
-Private itinerary-file adapters are disabled in production. Live provider adapters are optional and server-only; production quota is locked behind a signed private session even when credentials are configured. Development access uses a loopback bypass for local testing. A `Host` header alone is not treated as authorization, and the public 2026 endpoint always defaults to the redacted sample.
+| Concern | Source home | Contract |
+| --- | --- | --- |
+| App shell and API handlers | `src/app/` | HTTP request validation, authorization, bounded responses, cache policy |
+| Planning presentation | `src/components/` | Props and local interaction; no provider credentials |
+| Generic draft and agent handoff | `src/components/new-trip-planner.tsx`, `src/lib/normalized-trip.ts`, `schema/trip.schema.json` | Browser-memory preview/accept/download/copy; actual schema, relationships and privacy validation |
+| Sample compatibility adapter | `src/lib/current-trip.ts`, reviewed enrichment modules | Translate reviewed sample data into a view payload; isolate legacy keys |
+| Typed view records | `src/lib/trip-model.ts` | Stops, activities, stays, transport, days, and booking summaries |
+| Route decisions | `src/lib/optimization/route-optimizer.ts` | Structured stops, candidate legs, explicit weights, uncertainty and explanations |
+| Logistics | `src/lib/trip-logistics.ts` | Derive planning gaps and timeline from records; preserve confirmation semantics |
+| Research providers | `src/lib/providers/` | Optional typed research results with source, freshness, limitations and failure state |
+| Agent update interchange | `src/lib/trippy-bundle.ts`, `schema/trippy-update.schema.json` | Bounded, parsed, previewed changes against an existing workspace scope |
+| Exports | `src/lib/trip-exports.ts`, HTML/PDF modules, export API | Build and sanitize a selected snapshot before rendering files |
+| Private access and imports | `src/lib/private-access.ts`, `src/lib/private-itinerary.ts`, `src/lib/imports/gmail/` | Explicit local/private consent, read-only candidates, raw input custody |
+| Public release checks | `scripts/`, `.github/workflows/ci.yml` | Current artifacts and reachable history; no secret-dependent verification |
 
-## Route and view model
+The generic normalized trip schema in `schema/trip.schema.json` and its city-break example drive the new draft workflow and CLI. They remain distinct from the older compact Europe sample and the current `Trip2026Payload`. A schema-valid new draft does not yet become a selectable detailed atlas workspace automatically. Do not describe these formats as interchangeable without an explicit view adapter.
 
-- **Overview (`/`)** is the default decision surface. It shows dates, the selected route, a route/map overview, next unresolved work, and the completed onboarding summary. Onboarding is collapsed once completed, but remains editable and discoverable.
-- **City drilldowns** are scoped to a selected destination rather than global destination-specific tabs. They surface only planning flags relevant to that city, such as an unpriced stay, closure risk, or schedule conflict.
-- **City maps** display selected/shortlisted places by default. Independent hotel and activity pin toggles control density without changing underlying selections.
-- **Flight builder** is a dedicated planning surface, not a city-map mode. It compares cash and points options using explicit traveler valuations, taxes/fees, freshness, and route geometry on a flight map.
-- **Itinerary** begins as collapsed daily summaries so the route and dates remain legible. Importing Gmail or files is a separate, explicit action that opens a review queue; it must not expand or overwrite a day automatically.
+Shared validation checks unique IDs, date-window bounds, night constraints, known route/anchor references, required cities and locked-anchor destination retention. Route candidates currently record city order without dated nightly allocations. Validation therefore does not prove that a candidate reaches a fixed event on time, provides enough transit slack, or has bookable inventory; those require researched allocation and review.
 
-The URL/state model should make the active trip and selected city/day addressable, while keeping transient map toggles and open/closed panels local unless users choose to save them.
+## Provider boundary
 
-## Data and domain boundaries
+`ProviderAdapter` in `src/lib/providers/types.ts` specifies `configured`, `health`, `supports`, and `search`. A search returns normalized results and freshness, or a typed failure. The composition root in `src/lib/providers/index.ts` constructs adapters server-side; request parsing, access checks, and HTTP handling remain outside presentation components.
 
-The canonical model is normalized trip data described in [Trip data model](TRIP_DATA_MODEL.md). It records decision state, flags, provenance, and references; it does not embed raw provider responses or email bodies.
+Implemented adapters cover SerpApi cash flights, hotels, places and general research; Seats.aero award flights and Rooms.aero award hotels; and Booking.com Demand hotel research for eligible accounts. Manual provider handoffs preserve useful zero-key behavior. A compiled adapter or a configured key does not prove current inventory, account eligibility, complete coverage, or booking ability.
 
-Important invariants:
+Credentials remain in untracked local configuration or a server secret manager. Production live quota uses the signed-session access boundary. Private itinerary-file adapters are disabled in production. Host-local MCPs belong to the agent host and are not installed into or reachable through a deployed Next.js app merely because its documentation names them.
 
-- An option, quote, import candidate, and confirmed booking are different records/states.
-- A `booked` state requires a user-confirmed booking record, never a recommendation, price quote, or parser guess.
-- Provider values retain provider identity, checked time, price basis, and known uncertainty.
-- A city flag is a transparent planning signal with source/reason and severity; it is not a hidden score or a booking assertion.
-- Imported data enters a private candidate queue before it can affect trip data.
+## Data, review, and privacy
 
-## Provider adapter contract
+The product contract uses `recommended`, `quoted`, `held`, `confirmed`, `missing`, and `conflict` booking states. A recommendation, quote, parsed email, or optimization result cannot create a confirmation. Existing compatibility types still contain older labels such as `tbc`; the schema and migration work described in [MODULARITY.md](MODULARITY.md) must reconcile those labels explicitly rather than silently promoting their state.
 
-Adapters are server-side, optional, and independently degradable. Each adapter returns normalized output plus provider/native identifiers, request parameters, checked time, freshness/expiry, currency and total-price basis, included/unknown fees, coverage limits, and an error or rate-limit state.
+Gmail preview is an optional private read-only research path. Raw messages, provider payloads, OAuth material, links and booking identifiers must remain outside public samples and exports. Import candidates require explicit review before a normalized write or state transition. A durable review/approve/reject ledger is not currently implemented.
 
-```ts
-type ProviderOutcome = {
-  provider: string
-  mode: "live" | "manual"
-  status: "ok" | "error" | "unconfigured" | "locked"
-  freshness?: {
-    basis: "live-request" | "provider-cache" | "manual" | "unknown"
-    checkedAt: string
-  }
-  limitations: string[]
-  results?: NormalizedResearchResult[]
-}
-```
-
-Manual/demo adapters implement the same interface with clearly labeled sample or user-entered data. An unavailable award, lodging, Gmail, or map adapter must leave the applicable view editable and communicate the limitation rather than blocking the whole trip.
-
-Implemented live kinds are cash flights, award flights, hotels, award hotels, places, and general research. Booking.com, when available to a qualified partner, is a **Demand API adapter**. It is not documented or represented as an official Booking.com MCP server. See [Integrations](INTEGRATIONS.md).
-
-## Import pipeline
-
-```text
-Gmail connector or user-selected file
-  → private candidate record
-  → parser confidence + deduplication
-  → visible review/edit/reject step
-  → normalized, user-accepted booking
-```
-
-Deduplication may use a privacy-preserving confirmation-reference hash together with provider, dates, traveler, and route/property signals. Keep the original raw email/file in the private import boundary where possible; public/exportable trip data only carries the reviewed normalized record.
+Atlas export is a separate sanitization step with its own tests. It is not the full private object rendered in a different theme. Legacy `private-operational` callers now receive redacted downloadable artifacts too; the UI no longer offers a private identifier-bearing download. The generic planning JSON download and agent brief require a validated, accepted planning draft; they are a separate interchange path from atlas CSV/HTML/PDF. Public samples must be built through the sanctioned sample transform, scanned, and independently reviewed. Browser local storage is still user data: it is not appropriate for multi-user authorization, secret custody, or durable retention guarantees.
 
 ## Presentation and resilience
 
-- Maps have a list/link fallback; map failure cannot hide dates, route, or shortlisted places.
-- No image, map tile, provider quote, or import is assumed authoritative merely because it renders.
-- Loading, unavailable, stale, partial, manual, and demo states are first-class UI states.
-- Accessible controls include keyboard-operable pin toggles, clear expanded/collapsed state, textual flag explanations, and non-color-only map/flag distinctions.
+Maps are optional presentation. Routes, dates and lists remain visible when tiles, geocoding, images, or providers fail. Hotel and activity pin toggles change map density without changing selections. Research and optimization views retain manual, unavailable, partial and stale states rather than inventing availability or price certainty.
 
-## Non-goals
+UI controls should work by keyboard and on small screens, with textual status and non-color-only distinctions. The current quality gate covers lint, types, tests, sample checks, production compilation and privacy/history scans; it must be accompanied by a representative browser planning flow. A build alone does not verify accessibility or live provider coverage.
 
-TRIPPY does not make purchases, send email, alter calendars, or infer confirmation. It is not a marketplace, a universal price-coverage claim, or a replacement for provider terms and eligibility checks.
+## Extension rules
+
+Keep route-specific dates, city aliases, imagery, airport defaults and booking narrative in reviewed data packs or the compatibility adapter. Keep the optimizer and provider contracts free of sample city assumptions. Add tests with invented destinations and missing data before expanding the product claims. [MODULARITY.md](MODULARITY.md) records the existing coupling and acceptance criteria for that migration.

@@ -4,7 +4,7 @@ Use this prompt when a traveler asks TRIPPY, Codex, or Claude to plan a trip. Pr
 
 ## Start safely
 
-State the operating mode: `sample/manual`, `research-enabled`, or `private-local import`. Do not access a provider, email, file, calendar, map search, or connector until the traveler has approved that scope. Never request a secret in chat or put it in a tracked file. A named service is not proof of an official MCP or connector.
+State the operating mode: `sample/manual`, `research-enabled`, or `private-local import`. Use existing authorizations for their named scope. Do not access a provider, private email/file/calendar, map search or connector beyond approved scope. Ask before expanding access, importing records or changing booking state. Never request a secret in chat or put it in a tracked file. A named service is not proof of an official MCP or connector.
 
 Ask one compact, skippable batch of decision-bearing questions:
 
@@ -17,12 +17,16 @@ Ask one compact, skippable batch of decision-bearing questions:
 7. What rail, rental-car, driving, overnight-travel, ferry/coach, border-crossing, and disruption tolerance applies?
 8. Should the first pass use manual inputs, public research, or an approved private-local import?
 
-Offer reasonable defaults and say which answer would most change the plan. Do not turn omissions into hard preferences.
+Use the traveler’s dates, destinations and route length; never silently inherit the Europe sample. Offer reasonable labeled defaults and say which answer would most change the plan. Do not turn omissions into hard preferences.
+
+## Choose a supported workspace
+
+Use `/plan` to preview, explicitly accept and download a browser-only normalized draft, or `npm run trip:init -- ...` followed by `npm run trip:validate -- <path>` for a private-local file. Validate against `schema/trip.schema.json`. `/plan` can preview validated pasted agent JSON; it uploads nothing and clears on reload. It leaves candidate generation and research to the agent. Real records belong in private-local custody. The current visual atlas is sample-centered; saving its setup profile does not create a new trip or apply changed stops/dates. The update inbox changes existing selections and assignments only. Keep unsupported route creation and export steps explicit; do not overwrite the tracked sample or invent a completed UI import. See `docs/ONBOARDING.md` and `docs/AGENT_UPDATE_BUNDLES.md`.
 
 ## Route before prices
 
 1. Record a short constraint ledger: hard constraints, soft preferences, rejections, assumptions, unknowns, permissions, and data freshness.
-2. Build at least three materially different multi-city candidates before broad price research. A different candidate changes a meaningful route dimension: city inclusion/order or nights, gateway/open jaw/positioning strategy, or regional mode strategy.
+2. Build at least three materially different multi-city candidates before broad price research. A different candidate changes a meaningful route dimension: city inclusion/order or nights, gateway/open jaw/positioning strategy, or regional mode strategy. If hard constraints permit only one city or route, explain why and compare three feasible allocation/mode strategies instead of adding unapproved destinations.
 3. For each candidate show: route thesis, nights by city, gateway plan, plausible modes, door-to-door time burden, main upside, sacrifice, and fragile assumption.
 4. Ask only follow-up questions that can eliminate or reshape a candidate. Do not ask generic preference questions once real evidence can answer them.
 
@@ -65,6 +69,6 @@ For Gmail, email, file, or calendar import: explain the read-only minimum scope,
 
 ## Finish or stop
 
-Before marking a plan ready, verify route, date allocation, selected modes, booking states, source freshness, opening/closure risk, budget and points arithmetic, and itinerary feasibility. Offer current sanitized exports (CSV, visual HTML, operational PDF) and retain editable structured state.
+Before marking a plan ready, verify route, date allocation, selected modes, booking states, source freshness, opening/closure risk, budget and points arithmetic, and itinerary feasibility. Offer sanitized exports only through a renderer compatible with the actual record (the current atlas has CSV, visual HTML and PDF) and retain editable structured state.
 
 Stop and ask instead of guessing when a hard constraint, travel-document requirement, provider permission, booking-state conflict, cancellation rule, source credibility issue, material price/time tradeoff, or approval to import/write is unresolved. End with the selected route, alternatives retained, assumptions, data freshness, unresolved decisions, risks, and next highest-value action.

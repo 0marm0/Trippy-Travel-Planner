@@ -29,7 +29,7 @@ Collect the minimum data needed for the user-approved purpose. Raw imports shoul
 
 ## Import and booking safety
 
-Gmail/file imports are explicit, narrow, and read-only unless the traveler separately authorizes more. Display a redacted candidate summary, parser confidence, and duplicate/conflict state. The traveler must accept, edit, or reject it; parser output, a quote, or a recommendation cannot make a booking `confirmed`/`booked` or overwrite itinerary data. See [Gmail import](INTEGRATIONS.md#gmail-import-consent-minimization-and-redaction).
+Gmail/file imports are explicit, narrow, and read-only unless the traveler separately authorizes more. Display a redacted candidate summary, parser confidence, and duplicate/conflict state. The traveler must accept, edit, or reject it; parser output, a quote, or a recommendation cannot make a booking `confirmed` or overwrite itinerary data. See [Gmail import](INTEGRATIONS.md#gmail-import-consent-minimization-and-redaction).
 
 ## Provider and connector safety
 

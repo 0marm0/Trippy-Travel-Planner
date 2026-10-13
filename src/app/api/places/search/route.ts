@@ -105,8 +105,8 @@ function readSearchInput(value: string | null, maxLength: number, optional = fal
 function nominatimUserAgent(): string {
   const contact = process.env.TRIPPY_CONTACT_EMAIL?.trim();
   return contact
-    ? `TRIPPY-Travel-Optimizer/0.1 (local user-initiated geocoding; contact: ${contact})`
-    : "TRIPPY-Travel-Optimizer/0.1 (local user-initiated geocoding)";
+    ? `Trippy-Travel-Planner/0.1 (local user-initiated geocoding; contact: ${contact})`
+    : "Trippy-Travel-Planner/0.1 (local user-initiated geocoding)";
 }
 
 async function runOneAtATime<T>(operation: () => Promise<T>): Promise<T> {

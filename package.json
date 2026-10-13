@@ -1,5 +1,5 @@
 {
-  "name": "trippy-travel-optimizer",
+  "name": "trippy-travel-planner",
   "version": "0.1.0",
   "private": true,
   "type": "module",
@@ -17,17 +17,28 @@
     "history:check": "sh scripts/scan-git-history.sh",
     "maps:prepare": "node scripts/prepare-map-data.mjs",
     "postinstall": "npm run maps:prepare",
-    "check": "npm run lint && npm run typecheck && npm test && npm run sample:validate && npm run build && npm run privacy:check",
-    "release:check": "npm run check && npm run history:check"
+    "check": "npm run lint && npm run typecheck && npm test && npm run sample:validate && npm run schema:check && npm run build && npm run build:boundary:check && npm run privacy:check",
+    "release:check": "npm run check && npm run history:check && npm run media:validate && npm run security:audit",
+    "trip:init": "node --experimental-strip-types scripts/init-trip.mjs",
+    "trip:validate": "node --experimental-strip-types scripts/validate-trip.mjs",
+    "schema:check": "npm run trip:validate",
+    "security:audit": "npm audit --omit=dev --audit-level=moderate",
+    "dev:local": "next dev --hostname 127.0.0.1",
+    "start:local": "next start --hostname 127.0.0.1",
+    "media:prepare": "node scripts/prepare-public-media.mjs",
+    "media:validate": "node scripts/validate-public-media.mjs",
+    "build:boundary:check": "node scripts/check-build-boundary.mjs"
   },
   "dependencies": {
+    "ajv": "8.18.0",
+    "ajv-formats": "^3.0.1",
     "leaflet": "1.9.4",
     "maplibre-gl": "^6.9.0",
-    "next": "16.3.5",
+    "next": "16.3.8",
     "pdf-lib": "^1.17.1",
     "react": "19.3.0",
     "react-dom": "19.3.0",
-    "sharp": "^0.35.4"
+    "sharp": "0.35.5"
   },
   "devDependencies": {
     "@types/leaflet": "1.9.22",
@@ -36,7 +47,17 @@
     "@types/react-dom": "19.3.0",
     "acorn": "8.18.0",
     "eslint": "9.39.5",
-    "eslint-config-next": "16.3.5",
+    "eslint-config-next": "16.3.8",
     "typescript": "5.9.3"
-  }
+  },
+  "license": "MIT",
+  "engines": {
+    "node": ">=22.18.0 <23 || >=24.0.0 <25"
+  },
+  "description": "A privacy-conscious planner for cash and points research, multi-city routes, itineraries and booking tracking.",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/0marm0/Trippy-Travel-Planner.git"
+  },
+  "homepage": "https://github.com/0marm0/Trippy-Travel-Planner#readme"
 }

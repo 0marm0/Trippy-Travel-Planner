@@ -13,11 +13,17 @@ Use these booking states only:
 | `recommended` | Planning suggestion; no provider inventory claim. | quoted, missing |
 | `quoted` | Time-bounded price/availability evidence. | held, confirmed, missing, conflict |
 | `held` | Evidence of a provider hold and its expiry. | confirmed, missing, conflict |
-| `confirmed` | Reviewed confirmation evidence. | conflict, missing/cancelled only with evidence |
+| `confirmed` | Reviewed confirmation evidence. | conflict, missing only with reviewed evidence |
 | `missing` | Needed item lacks usable evidence or inventory. | recommended, quoted, conflict |
 | `conflict` | Sources disagree or details cannot be matched. | confirmed, missing after traveler resolution |
 
-No agent may infer a later state from a prior state.
+No agent may infer a later state from a prior state. Selection, rejection and cancellation reasons are separate decision metadata; do not invent `booked` or `cancelled` as booking-state values. Follow the runtime schema if historical records have older labels, and flag migrations rather than silently coercing them.
+
+## Choose the actual data surface
+
+For any new destination/date combination, use `/plan` for browser draft/validation/preview/acceptance/download, or `npm run trip:init -- ...` for an ignored private-local file. Validate records with `npm run trip:validate -- <path>` and `schema/trip.schema.json`. `/plan` has no server upload or persistence and clears on reload. The current atlas loader and `Trip2026Payload` are specialized to the Europe sample; a schema-valid generic record is not automatically renderable there. Keep real trip records private-local, preserve the public sample, and state the remaining manual or unsupported step. See [current onboarding limits](ONBOARDING.md#what-is-implemented-today).
+
+Agent update bundles propose a narrow set of decisions for existing atlas IDs; they do not create trips, add route stops or confirm bookings. Use [the bundle contract](AGENT_UPDATE_BUNDLES.md), preview a diff and obtain acceptance before applying a bundle.
 
 ## Phase 0 — consent and constraint ledger
 
@@ -25,11 +31,11 @@ No agent may infer a later state from a prior state.
 
 **Codex/Claude:** asks one compact, skippable high-impact batch: travelers/rooms; origin airports and positioning/open-jaw tolerance; hard/flexible dates and trip length; fixed anchors; destinations/interests/rejections; pace; budget/cabin/lodging/cancellation; points programs/balances/transfers; passports/visas; accessibility/luggage; rail/car/overnight/direct-connection tolerance. Record unknowns and reasonable provisional assumptions.
 
-**Stop/ask:** missing hard dates, a potential passport/visa blocker, unclear traveler count/accessibility requirement, conflicting fixed anchor, or unapproved provider/private-data access.
+**Stop/ask:** conflicting hard dates/anchors, a material travel-document or accessibility blocker, or unapproved provider/private-data access. Missing answers may stay unknown while provisional route exploration proceeds; do not commit a route that depends on them.
 
 ## Phase 1 — route frontier before research
 
-Build at least three materially different multi-city route candidates before broad price research. Vary city mix/order/nights, gateway/open jaw/positioning, or regional mode strategy. For each, give date allocation, route thesis, plausible mode chain, estimated door-to-door burden, upside, sacrifice, and fragile assumption.
+Build at least three materially different multi-city route candidates before broad price research. Vary city mix/order/nights, gateway/open jaw/positioning, or regional mode strategy. Respect explicit single-city or fixed-route constraints; when they prevent three distinct multi-city routes, explain why and compare three feasible allocation/mode strategies. For each, give date allocation, route thesis, plausible mode chain, estimated door-to-door burden, upside, sacrifice, and fragile assumption.
 
 Do not replace this phase with “which airline do you prefer?” Ask follow-ups only when the answer would change the route frontier.
 
@@ -69,4 +75,4 @@ Review selected route, dates, sources/freshness, price/points arithmetic, bookin
 
 **Claude:** keep the conversation focused on the next decision; do not turn a connector name into a capability claim; present evidence and uncertainty in plain language.
 
-**Both:** do not publish, book, send email, modify a calendar, or use a private connector without explicit current authorization. Stop and ask rather than guessing on any material constraint, consent, booking, legal/travel-document, or data-quality question.
+**Both:** use existing session authorizations for their exact scope. Do not publish, book, send email, modify a calendar, expand connector permissions or access a private source without explicit authorization. Stop and ask rather than guessing on any material constraint, consent, booking, legal/travel-document, or data-quality question.

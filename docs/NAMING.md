@@ -2,17 +2,17 @@
 
 ## Settled working name
 
-**Display name:** TRIPPY — Travel Optimizer
-**Repository slug:** `TRIPPY-Travel-Optimizer`
+**Display name:** Trippy Travel Planner
+**Repository slug:** `Trippy-Travel-Planner`
 **Short reference:** TRIPPY
 
-TRIPPY is a warm, concise planning companion; “Travel Optimizer” makes the practical value clear: it compares routes, time, cash, points, and trip fit without pretending there is one universal best answer.
+TRIPPY is a warm, concise planning companion; “Travel Planner” makes the practical value clear: it compares routes, time, cash, points, and trip fit without pretending there is one universal best answer.
 
 ## Use
 
-- Use **TRIPPY — Travel Optimizer** for page titles, introductions, and formal product references.
+- Use **Trippy Travel Planner** for page titles, introductions, and formal product references.
 - Use **TRIPPY** in navigation, concise UI labels, and conversational copy.
-- Use `TRIPPY-Travel-Optimizer` for the local repository and exact technical references.
+- Use `Trippy-Travel-Planner` for the local repository and exact technical references.
 - Use sentence case for feature names: “New trip,” “Route options,” “Points value.”
 
 ## Voice
@@ -24,4 +24,4 @@ TRIPPY is a warm, concise planning companion; “Travel Optimizer” makes the p
 
 ## Guardrail
 
-This is a private working brand, not a clearance result. Domain, package, and trademark availability must be checked before any external use or publication.
+The owner chose this working name on 2026-10-13. The private staging repository is `0marm0/Trippy-Travel-Planner`. Existing demo domains retain their previous names. Naming does not claim domain or trademark clearance.

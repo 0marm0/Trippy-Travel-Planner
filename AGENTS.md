@@ -17,7 +17,8 @@ Build a provider-neutral, privacy-conscious trip planner from structured data. N
 
 ## Product behavior
 
-- Work from normalized `trip.json` data and schemas.
+- Work from normalized `trip.json` data and schemas. For a new trip use the traveler’s dates, destinations and constraints; never treat the Europe sample as universal defaults.
+- Use `/plan` or `trip:init`/`trip:validate` for generic normalized drafts. `/plan` requires preview and acceptance and has no server upload/persistence; downloads stay private-local for real trips. The detailed visual atlas has a specialized 2026 loader. Do not claim its planning-profile setup or update bundles create arbitrary trips, rewrite stops/dates or import confirmations. Use the generic schema for separate agent-led records and state UI limitations.
 - Separate facts, live quotes, estimates, recommendations, and confirmations.
 - Attach source and checked-at time to external facts and prices.
 - Preserve alternatives, constraints, user rejections, and unknowns.
@@ -28,14 +29,14 @@ Build a provider-neutral, privacy-conscious trip planner from structured data. N
 
 Follow [the agent workflow](docs/AGENT_WORKFLOWS.md) and [research playbook](docs/RESEARCH_PLAYBOOK.md). In short:
 
-1. Validate the trip file and establish whether work is sample/manual, researched, or private-local.
+1. Validate the trip file and establish whether work is sample/manual, researched, or private-local. Existing authorization covers its stated scope; ask again only for an expansion or a separately required import/write decision.
 2. Ask a compact batch of high-impact questions: travelers; acceptable home airports; hard dates, flexible window, and trip length; fixed anchors; cities/interests; pace; budget/cabin; points programs, balances and transfer rules; passport/visa, accessibility, luggage, rail/car, overnight and connection tolerance; cancellation needs; must-dos and rejections.
 3. Record assumptions, hard constraints, unknowns, and consent before any provider or private-data access.
 4. Create at least three materially different multi-city route candidates before price research. Vary city order/allocation, gateways or open jaws, and mode strategy—not only a connection airport.
 5. Compare representative dates and direct, connecting, positioning, open-jaw, rail, and car options. Then ask only reactive questions grounded in an actual price/time/risk tradeoff.
 6. Research cities from attributable sources, retain a broad catalogue, score and geographically cluster options, and build a feasible, editable itinerary with alternatives.
 7. Verify before locking. Present every route, transport, stay, activity, and booking-state transition for review; preserve rejected alternatives and conflicts.
-8. Export only sanitized, current structured data. Stop and ask when consent, a material constraint, source quality, or a booking/import decision is unresolved.
+8. Export only sanitized, current structured data. A local/private label never permits confirmation numbers, references, seats, email links, loyalty IDs or secrets in exports. Stop and ask when consent, a material constraint, source quality, or a booking/import decision is unresolved.
 
 ## Optional integration onboarding
 
@@ -43,7 +44,7 @@ Follow [the agent workflow](docs/AGENT_WORKFLOWS.md) and [research playbook](doc
 - If live general search would materially help, direct the user to create their own SerpAPI account/key and place it only in untracked `.env.local` as `SERPAPI_API_KEY`.
 - If award-seat research would materially help, direct the user to create their own Seats.aero account/key and place it only in untracked `.env.local` as `SEATS_AERO_API_KEY`.
 - Ask which host-local connectors or MCPs the user actually has before relying on Booking.com, Gmail, maps, rail, rental-car, or activity access. Never invent an official connector.
-- Explain permissions, coverage, freshness, cost, and fallback before use. Use read-only/minimum access and keep manual entry available.
+- Explain permissions, coverage, freshness, cost, permitted uses and fallback before use. Hosting, provider accounts, billing and secrets belong to the user; a personal API key does not establish permission for commercial or shared-site use. Vercel is optional; a full Node server is another hosting path. Use read-only/minimum access and keep manual entry available.
 - Never request that a user paste a real secret into chat or a tracked file. Never print or expose a value while validating configuration.
 
 ## Booking and import rules

@@ -2,7 +2,7 @@
 
 ## Canonical data boundary
 
-TRIPPY renders and edits normalized trip data, not a generated personal HTML page. The existing JSON Schema remains the validation baseline; application types may add the view-oriented records below only after the schema evolves with matching validation and migration.
+TRIPPY renders and edits normalized trip data, not a generated personal HTML page. `schema/trip.schema.json` is validated by the shared `src/lib/normalized-trip.ts` validator, `/plan`, and `npm run trip:validate`; it remains the validation baseline; application types may add the view-oriented records below only after the schema evolves with matching validation and migration.
 
 Keep raw provider responses, OAuth tokens, raw Gmail/file contents, and unreviewed import evidence outside exportable trip data.
 
@@ -12,8 +12,8 @@ Keep raw provider responses, OAuth tokens, raw Gmail/file contents, and unreview
 - Store money in integer minor units plus ISO currency; store points as integer amounts plus loyalty program.
 - Attach provider/source identity, checked time, price/fee basis, freshness, and limitations to external facts/quotes.
 - Preserve `unknown` rather than inventing a fee, availability, point valuation, confirmation, or flag resolution.
-- Treat `idea`, `shortlisted`, `selected`, `held`, `booked`, and `cancelled` as distinct decision states.
-- A booking is confirmed only after user review of a confirmation record. A recommendation, quote, or import candidate cannot imply `booked`.
+- Treat `recommended`, `quoted`, `held`, `confirmed`, `missing`, and `conflict` as distinct decision states.
+- A booking is confirmed only after user review of a confirmation record. A recommendation, quote, or import candidate cannot imply `confirmed`.
 - Public/story export is a separate redaction transform, not the same object with a different screen.
 
 ## Core trip records
@@ -73,7 +73,7 @@ type FlightOption = {
   award?: { program: string; points: number; taxesFeesMinor?: number; currency: string }
   checkedAt?: string
   freshness: "fresh" | "stale" | "unknown"
-  status: "idea" | "shortlisted" | "selected" | "held" | "booked" | "cancelled"
+  status: "recommended" | "quoted" | "held" | "confirmed" | "missing" | "conflict"
 }
 ```
 
@@ -127,4 +127,4 @@ Only `accepted` candidates may create or update a normalized booking, and the ap
 
 ## Export profiles
 
-A public/story export strips or hashes traveler names/emails, confirmation and loyalty references, private notes, home location, raw import references, provider tokens, request headers, and sensitive booking fields. Preview every included field before creating that export. A private backup has different access controls and must never be mistaken for a safe public artifact.
+A public/story export removes traveler names/emails, confirmation and loyalty references, private notes, home location, raw import references, provider tokens, request headers, and sensitive booking fields. Preview every included field before creating that export. Every downloadable itinerary artifact uses this redaction boundary, including legacy callers requesting private-operational mode. Operational references stay only in private local display.

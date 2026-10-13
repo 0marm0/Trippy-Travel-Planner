@@ -41,3 +41,7 @@ output/
 *.tsbuildinfo
 .DS_Store
 .vercel
+
+# Keep reviewed category artwork despite host-global "Icon?" ignore rules.
+!public/icons/
+!public/icons/*.png

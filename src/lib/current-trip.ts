@@ -43,6 +43,7 @@ function slug(value: string) {
 
 function absoluteImage(value: string, city: string) {
   if (!value) return cityFallbacks[city] || cityFallbacks.berlin;
+  if (value.startsWith("/guide-images/") || value === "/photo-placeholder.svg" || value.startsWith("/media/")) return value;
   return value.startsWith("/") ? `${LIVE_ORIGIN}${value}` : value;
 }
 

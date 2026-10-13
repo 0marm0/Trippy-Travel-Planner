@@ -5,7 +5,7 @@ labels: [enhancement]
 body:
   - type: markdown
     attributes:
-      value: Never include real traveler data, API responses, email contents, confirmation numbers, or booking references.
+      value: Never include real traveler data, API responses, email contents, confirmation numbers, or booking references. Use the private process in SECURITY.md for security or privacy exposures.
   - type: textarea
     id: outcome
     attributes:
@@ -20,6 +20,12 @@ body:
       description: Describe the smallest useful interaction and its manual fallback.
     validations:
       required: true
+  - type: checkboxes
+    id: fallback
+    attributes:
+      label: Manual operation
+      options:
+        - label: I described how this feature works or degrades without provider credentials.
   - type: checkboxes
     id: privacy
     attributes:

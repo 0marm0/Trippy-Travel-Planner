@@ -13,7 +13,7 @@ failed=0
 credential_pattern='AIza[[:alnum:]_-]{24,}|(^|[^[:alnum:]_])sk-[[:alnum:]_-]{20,}|ya29\.[[:alnum:]_-]{20,}|[Bb]earer[[:space:]]+[[:alnum:]_.~+/=-]{20,}'
 email_pattern='[[:alnum:]._%+-]+@[[:alnum:].-]+\.[[:alpha:]]{2,}'
 reserved_email_pattern='@(example\.(com|org|net)|example\.test|test\.invalid|localhost|users\.noreply\.github\.com)$'
-private_name_pattern='(^|/)(\.env($|\.)|credentials\.json$|client_secret.*\.json$|token\.json$|.*\.(pem|key|eml|mbox|ics)$|\.private/|data/private/|bookings/|emails/)'
+private_name_pattern='(^|/)(\.env($|\.)|credentials\.json$|client_secret.*\.json$|token\.json$|.*\.(pem|key|eml|mbox|ics)$|\.private/|data/private/|data/imports/|bookings/|emails/|calendar-private/)'
 
 contains_sensitive_value() {
   candidate=$1
@@ -33,9 +33,14 @@ if [ -n "$tracked_private" ]; then
   failed=1
 fi
 
+scan_tmp=$(mktemp "${TMPDIR:-/tmp}/trippy-history-scan.XXXXXX")
+trap 'rm -f "$scan_tmp"' EXIT HUP INT TERM
+
 staged_secret_files=$(git diff --cached --name-only --diff-filter=ACMR | while IFS= read -r file; do
-  [ -f "$file" ] || continue
-  if grep -Iq . "$file" && contains_sensitive_value "$file"; then printf '%s\n' "$file"; fi
+  # Inspect the proposed index bytes, even when the working copy was sanitized
+  # after staging. Matching content must never be sent to the terminal.
+  git show ":${file}" > "$scan_tmp"
+  if grep -Iq . "$scan_tmp" && contains_sensitive_value "$scan_tmp"; then printf '%s\n' "$file"; fi
 done)
 if [ -n "$staged_secret_files" ]; then
   echo "FAIL: staged files contain credential- or personal-contact-shaped values:"
@@ -43,10 +48,12 @@ if [ -n "$staged_secret_files" ]; then
   failed=1
 fi
 
-scan_tmp=$(mktemp "${TMPDIR:-/tmp}/trippy-history-scan.XXXXXX")
-trap 'rm -f "$scan_tmp"' EXIT HUP INT TERM
-
 for revision in $(git rev-list --all 2>/dev/null || true); do
+  git show -s --format='%B' "$revision" > "$scan_tmp"
+  if contains_sensitive_value "$scan_tmp"; then
+    echo "FAIL: history contains credential- or personal-contact-shaped commit message content in revision ${revision}."
+    failed=1
+  fi
   metadata_emails=$(git show -s --format='%ae%n%ce' "$revision" | sort -u | grep -Ei "$email_pattern" | grep -Eiv "$reserved_email_pattern" || true)
   if [ -n "$metadata_emails" ]; then
     echo "FAIL: history contains a personal-contact-shaped author or committer email in revision ${revision}."
@@ -81,7 +88,8 @@ EOF
   fi
 done
 
-if ! git diff --cached --check; then
+if ! git diff --cached --check > "$scan_tmp" 2>&1; then
+  echo "FAIL: staged diff has whitespace or conflict-marker errors; inspect it locally."
   failed=1
 fi
 

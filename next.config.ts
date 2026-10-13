@@ -3,6 +3,12 @@ import type { NextConfig } from "next";
 const nextConfig: NextConfig = {
   reactStrictMode: true,
   poweredByHeader: false,
+  outputFileTracingIncludes: {
+    "/api/exports/trip-pdf": ["./public/icons/*.png", "./public/guide-images/*.webp", "./public/media/*.webp"],
+  },
+  outputFileTracingExcludes: {
+    "/**": ["./.private/**/*", "./.env", "./.env.*", "./data/private/**/*", "./data/imports/**/*", "./bookings/**/*", "./emails/**/*", "./calendar-private/**/*", "./output/**/*", "./.playwright-cli/**/*"],
+  },
   async headers() {
     return [{
       source: "/:path*",

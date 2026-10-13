@@ -5,7 +5,7 @@ labels: [bug]
 body:
   - type: markdown
     attributes:
-      value: Use the public sample or invented data. Remove emails, keys, confirmations, references, and personal screenshots before submitting.
+      value: Use the public sample or invented data. Remove emails, keys, confirmations, references, and personal screenshots before submitting. Report suspected security or privacy exposures through the private process in SECURITY.md; never put exposure details in this form.
   - type: textarea
     id: problem
     attributes:
@@ -19,9 +19,15 @@ body:
     validations:
       required: true
   - type: textarea
+    id: environment
+    attributes:
+      label: Environment
+      description: Browser/OS and TRIPPY version or commit, plus sample/manual mode. Include no account identifiers, local usernames or paths, configuration values, or raw logs containing private data.
+  - type: textarea
     id: reproduce
     attributes:
       label: Reproduction using sample data
+      description: Give minimal steps and sanitized error text. Check the existing issues first. A public sample reproduction is preferable to uploading a trip file.
     validations:
       required: true
   - type: checkboxes

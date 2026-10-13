@@ -14,23 +14,33 @@ Choose a mode based on where the app runs and where your data and credentials ma
 Start local-private unless you have a reason to host a redacted sample:
 
 ```bash
-npm install
+npm ci
 npm run dev
 ```
 
-Open `http://localhost:3000`, review the sample, then enter or import only data you are authorized to use. Browser edits persist only in that browser. Clearing site data, changing browsers, or moving devices does not transfer the trip.
+Open `http://localhost:3000` for the sample atlas, or `/plan` for an arbitrary normalized trip draft. Atlas edits persist only in that browser; `/plan` uploads nothing and clears on reload unless you download its planning JSON. Enter or import only authorized data. Clearing site data, changing browsers or moving devices does not transfer the trip.
 
-When the explicit localhost private-data gate loads a private trip file, the app can display its operational booking details and offers two clearly marked private exports: a printable HTML itinerary and a working CSV. Those copies may include seats and booking references present in the private file. They are never offered for the public sample, must not be committed or shared, and remain separate from every share-safe export.
+When the explicit localhost private-data gate loads a private trip file, operational confirmation details may be displayed locally. Every export must still strip email addresses, email links, seats, confirmation/booking references, record locators, loyalty identifiers, tokens and secrets. A private label is not permission to include those fields in a downloadable artifact. Keep original booking documents in private-local custody.
 
 For a guided session, keep the app local and tell the agent which data sources it may access. An MCP credential, installed connector, or OAuth session belongs to that host. It is not packaged with TRIPPY, uploaded to Vercel, or made available to other visitors.
 
 ## Personal cloud and public sample
 
-A Vercel deployment is an independent instance operated by the person who creates it. Configure only that instance's environment variables in its secret manager. Server-side Vercel credentials can support the website's implemented, direct provider calls; they cannot expose or relay an MCP connector from ChatGPT, Codex, Claude, or another local host.
+A Vercel or self-hosted deployment is an independent instance operated by the person who creates it. Hosting accounts, billing, domains and environment secrets belong to that operator. Configure only that instance's environment variables in its secret manager. Server-side deployment credentials can support the website's implemented, direct provider calls; they cannot expose or relay an MCP connector from ChatGPT, Codex, Claude, or another local host.
 
-The current app has browser/local-storage persistence, not authenticated accounts or a durable database. A hosted deployment therefore is **not** private-trip sync: it has no user identity, cross-device trip history, shared household workspace, durable approval ledger, or server-side trip recovery. Do not treat it as a place to host raw email, booking files, confirmation details, or a personal itinerary. Keep private-local gates off in every deployment.
+The atlas has browser-local-storage persistence; `/plan` drafts have no persistence until downloaded. Neither provides authenticated accounts or a durable database. A hosted deployment therefore is **not** private-trip sync: it has no user identity, cross-device trip history, shared household workspace, durable approval ledger, or server-side trip recovery. Do not treat it as a place to host raw email, booking files, confirmation details, or a personal itinerary. Keep private-local gates off in every deployment.
 
 Public sample deployments must contain only reviewed, redacted sample material. They must not promise that any provider, Gmail path, or host connector is available. Optional adapters may be unconfigured, locked, limited, stale, or unavailable; manual entry remains the fallback.
+
+## Hosting choice
+
+| Choice | Prerequisites | Operator responsibility |
+| --- | --- | --- |
+| Local-private | Node/npm and a browser | Private files, local secrets and sanitized exports |
+| Your Vercel project | Your Vercel account and an authorized source checkout | Project ownership, environment scoping, quota control and provider permitted uses |
+| Your Node server | A Node-capable host and HTTPS/reverse proxy | Deployment, patching, process recovery, access/rate limits and secret storage |
+
+Vercel is optional. The existing `build`/`start` scripts run the full Next.js server; static hosting alone cannot run its APIs. Neither hosted option provides authenticated private-trip storage. Specific host prices and plan limits must be checked when choosing. Follow [setup](SETUP.md#choose-hosting-you-own) and the official [Vercel](https://vercel.com/docs/frameworks/full-stack/nextjs) or [self-hosting](https://nextjs.org/docs/app/guides/self-hosting) guide (checked 2026-10-13).
 
 ## One-click deploy after publication
 

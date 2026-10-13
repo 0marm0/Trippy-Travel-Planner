@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://example.invalid/open-trip-planner/trip.schema.json",
+  "$id": "https://example.invalid/trippy/trip.schema.json",
   "title": "TRIPPY trip",
   "type": "object",
   "additionalProperties": false,
@@ -19,32 +19,72 @@
     "bookings"
   ],
   "properties": {
-    "schemaVersion": { "const": 1 },
-    "id": { "$ref": "#/$defs/id" },
-    "name": { "type": "string", "minLength": 1, "maxLength": 120 },
+    "schemaVersion": {
+      "const": 1
+    },
+    "id": {
+      "$ref": "#/$defs/id"
+    },
+    "name": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 120
+    },
     "status": {
-      "enum": ["idea", "planning", "selected", "traveling", "complete", "archived"]
+      "enum": [
+        "idea",
+        "planning",
+        "selected",
+        "traveling",
+        "complete",
+        "archived"
+      ]
     },
     "dateWindow": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["earliestDeparture", "latestReturn", "flexDays"],
+      "required": [
+        "earliestDeparture",
+        "latestReturn",
+        "flexDays"
+      ],
       "properties": {
-        "earliestDeparture": { "type": "string", "format": "date" },
-        "latestReturn": { "type": "string", "format": "date" },
-        "flexDays": { "type": "integer", "minimum": 0, "maximum": 60 }
+        "earliestDeparture": {
+          "type": "string",
+          "format": "date"
+        },
+        "latestReturn": {
+          "type": "string",
+          "format": "date"
+        },
+        "flexDays": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 60
+        }
       }
     },
     "travelers": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["adults", "childrenAges"],
+      "required": [
+        "adults",
+        "childrenAges"
+      ],
       "properties": {
-        "adults": { "type": "integer", "minimum": 1, "maximum": 20 },
+        "adults": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 20
+        },
         "childrenAges": {
           "type": "array",
           "maxItems": 20,
-          "items": { "type": "integer", "minimum": 0, "maximum": 17 }
+          "items": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 17
+          }
         }
       }
     },
@@ -54,10 +94,23 @@
       "items": {
         "type": "object",
         "additionalProperties": false,
-        "required": ["kind", "code"],
+        "required": [
+          "kind",
+          "code"
+        ],
         "properties": {
-          "kind": { "enum": ["airport", "station", "city"] },
-          "code": { "type": "string", "minLength": 2, "maxLength": 12 }
+          "kind": {
+            "enum": [
+              "airport",
+              "station",
+              "city"
+            ]
+          },
+          "code": {
+            "type": "string",
+            "minLength": 2,
+            "maxLength": 12
+          }
         }
       }
     },
@@ -67,28 +120,71 @@
       "items": {
         "type": "object",
         "additionalProperties": false,
-        "required": ["id", "name", "priority"],
+        "required": [
+          "id",
+          "name",
+          "priority"
+        ],
         "properties": {
-          "id": { "$ref": "#/$defs/id" },
-          "name": { "type": "string", "minLength": 1, "maxLength": 120 },
-          "priority": { "enum": ["required", "optional", "curious"] },
-          "minimumNights": { "type": "integer", "minimum": 0, "maximum": 60 },
-          "maximumNights": { "type": "integer", "minimum": 0, "maximum": 90 }
+          "id": {
+            "$ref": "#/$defs/id"
+          },
+          "name": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 120
+          },
+          "priority": {
+            "enum": [
+              "required",
+              "optional",
+              "curious"
+            ]
+          },
+          "minimumNights": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 60
+          },
+          "maximumNights": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 90
+          }
         }
       }
     },
     "preferences": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["pace", "directFlightBias", "hotelLocationBias", "activityThemes"],
+      "required": [
+        "pace",
+        "directFlightBias",
+        "hotelLocationBias",
+        "activityThemes"
+      ],
       "properties": {
-        "pace": { "enum": ["relaxed", "balanced", "packed"] },
-        "directFlightBias": { "$ref": "#/$defs/weight" },
-        "hotelLocationBias": { "$ref": "#/$defs/weight" },
+        "pace": {
+          "enum": [
+            "relaxed",
+            "balanced",
+            "packed"
+          ]
+        },
+        "directFlightBias": {
+          "$ref": "#/$defs/weight"
+        },
+        "hotelLocationBias": {
+          "$ref": "#/$defs/weight"
+        },
         "activityThemes": {
           "type": "array",
           "uniqueItems": true,
-          "items": { "type": "string", "minLength": 1, "maxLength": 60 }
+          "items": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 60
+          }
         },
         "currency": {
           "type": "string",
@@ -109,13 +205,31 @@
       "items": {
         "type": "object",
         "additionalProperties": false,
-        "required": ["id", "date", "label", "locked"],
+        "required": [
+          "id",
+          "date",
+          "label",
+          "locked"
+        ],
         "properties": {
-          "id": { "$ref": "#/$defs/id" },
-          "date": { "type": "string", "format": "date" },
-          "label": { "type": "string", "minLength": 1, "maxLength": 160 },
-          "placeId": { "$ref": "#/$defs/id" },
-          "locked": { "type": "boolean" }
+          "id": {
+            "$ref": "#/$defs/id"
+          },
+          "date": {
+            "type": "string",
+            "format": "date"
+          },
+          "label": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 160
+          },
+          "placeId": {
+            "$ref": "#/$defs/id"
+          },
+          "locked": {
+            "type": "boolean"
+          }
         }
       }
     },
@@ -124,19 +238,39 @@
       "items": {
         "type": "object",
         "additionalProperties": false,
-        "required": ["id", "label", "status", "placeOrder"],
+        "required": [
+          "id",
+          "label",
+          "status",
+          "placeOrder"
+        ],
         "properties": {
-          "id": { "$ref": "#/$defs/id" },
-          "label": { "type": "string", "minLength": 1, "maxLength": 120 },
-          "status": { "$ref": "#/$defs/decisionStatus" },
+          "id": {
+            "$ref": "#/$defs/id"
+          },
+          "label": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 120
+          },
+          "status": {
+            "$ref": "#/$defs/decisionStatus"
+          },
           "placeOrder": {
             "type": "array",
-            "items": { "$ref": "#/$defs/id" }
+            "items": {
+              "$ref": "#/$defs/id"
+            }
           },
-          "score": { "type": "number" },
+          "score": {
+            "type": "number"
+          },
           "scoreReasons": {
             "type": "array",
-            "items": { "type": "string", "maxLength": 240 }
+            "items": {
+              "type": "string",
+              "maxLength": 240
+            }
           }
         }
       }
@@ -146,18 +280,43 @@
       "items": {
         "type": "object",
         "additionalProperties": false,
-        "required": ["id", "kind", "status", "startAt", "endAt"],
+        "required": [
+          "id",
+          "kind",
+          "status",
+          "startAt",
+          "endAt"
+        ],
         "properties": {
-          "id": { "$ref": "#/$defs/id" },
-          "kind": { "enum": ["flight", "rail", "car", "stay", "activity", "ferry", "bus", "other"] },
-          "status": { "$ref": "#/$defs/decisionStatus" },
-          "startAt": { "type": "string", "format": "date-time" },
-          "endAt": { "type": "string", "format": "date-time" },
-          "provider": { "type": "string", "maxLength": 120 },
-          "confirmationRef": {
+          "id": {
+            "$ref": "#/$defs/id"
+          },
+          "kind": {
+            "enum": [
+              "flight",
+              "rail",
+              "car",
+              "stay",
+              "activity",
+              "ferry",
+              "bus",
+              "other"
+            ]
+          },
+          "status": {
+            "$ref": "#/$defs/decisionStatus"
+          },
+          "startAt": {
             "type": "string",
-            "maxLength": 200,
-            "description": "Private export only; strip from public story exports"
+            "format": "date-time"
+          },
+          "endAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "provider": {
+            "type": "string",
+            "maxLength": 120
           }
         }
       }
@@ -174,7 +333,14 @@
       "maximum": 1
     },
     "decisionStatus": {
-      "enum": ["idea", "shortlisted", "selected", "held", "booked", "cancelled"]
+      "enum": [
+        "recommended",
+        "quoted",
+        "held",
+        "confirmed",
+        "missing",
+        "conflict"
+      ]
     }
   }
 }

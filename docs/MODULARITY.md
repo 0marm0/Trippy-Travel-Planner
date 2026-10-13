@@ -1,0 +1,59 @@
+# Module boundaries and arbitrary-trip readiness
+
+The current app combines a substantial sample atlas with a generic `/plan` trip-draft and agent-handoff workflow. Shared schema/relationship validation also powers the `trip:init` and `trip:validate` CLI. Research, optimization, logistics, interchange and export modules are reusable. The detailed atlas is not yet a plug-in renderer for every file matching `schema/trip.schema.json`; generic daily itinerary, quote selection and maps remain the next integration layer.
+
+## Reusable seams today
+
+| Extension | Start here | Verify |
+| --- | --- | --- |
+| Generic draft, validation or agent brief | `src/lib/normalized-trip.ts`, `schema/trip.schema.json`, `src/components/new-trip-planner.tsx` | Arbitrary cities/dates, relationship/privacy validation, preview then accept, browser-memory reset, no invented prices or confirmation; normalized-trip tests |
+| New research source | `src/lib/providers/types.ts`, adapter factory, `src/lib/providers/index.ts` | Validated requests, no-key failure, freshness, bounded requests, cancellation, sanitized errors; provider adapter tests |
+| New route scoring behavior | `src/lib/optimization/route-optimizer.ts` | Explicit weights, asymmetric legs, missing evidence, bounded search, invented stop IDs; optimizer tests |
+| Logistics or booking-gap rule | `src/lib/trip-logistics.ts` | Rule explains its evidence and never infers confirmation; logistics tests |
+| Agent-authored plan changes | `src/lib/trippy-bundle.ts`, `schema/trippy-update.schema.json` | Parse, size/privacy checks, scope and ID references, preview/accept/reject; bundle tests |
+| New export format | `src/lib/trip-exports.ts`, HTML/PDF renderers | Start from a sanitized snapshot; never serialize the private source object; export tests |
+| Map or activity presentation | `src/components/geographic-map.tsx`, typed view records | Missing coordinates, loading/failure, list fallback, no hardcoded destination requirement |
+| Private import parser | `src/lib/imports/gmail/` | Minimum read-only consent, deduplication, private custody, no automatic mutation; Gmail tests |
+
+Live adapters are source code modules with a typed registry, not dynamically loaded third-party plugins. Adding an adapter currently requires updating provider IDs and composition as well as its own implementation. Keep eligibility, coverage, terms, cost and manual fallback in the integration documentation.
+
+## Current coupling
+
+| Source | Current limitation | Required change for generic trips |
+| --- | --- | --- |
+| `schema/trip.schema.json`, shared validation and `/plan` | Canonical draft creation/preview is implemented; detailed sample rendering uses a different payload | Translate validated canonical input through a documented, versioned detailed view adapter |
+| Canonical route candidates and locked anchors | Required and locked-anchor cities are retained, but candidates contain city order without dated nightly allocations | Add an explicit allocation model before claiming fixed-event timing or transit feasibility |
+| `src/lib/trip-model.ts` | `Trip2026Payload` has a literal sample identity; older booking labels remain | General trip identity, explicit source mode and canonical booking-state migration |
+| `src/lib/current-trip.ts` | Reads compact legacy fields, fixed route dates, sample media/enrichment and reviewed corrections | Isolate this as a compatibility data pack; never apply sample corrections to arbitrary trips |
+| `src/app/api/trips/2026/route.ts` | Active endpoint targets one sample | Add trip selection through a safe source registry, with no user-controlled filesystem paths |
+| `src/components/trip-workspace.tsx` | Fixed 2025/2026 switch, sample-scoped storage keys, city list, route notes and research examples | Derive selected city, route, dates, flags, airports and persistence namespace from the selected trip |
+| `src/components/research-optimizer.tsx` | Presentation favors one sample leg and EUR; missing-leg source search is guarded | Data-driven first usable leg, explicit currency basis and a complete empty-state flow |
+| `src/lib/planner.ts` and map enrichment | Legacy geographic catalogue covers a subset of destinations | Accept supplied reviewed coordinates; missing coordinates should omit a pin and explain the limitation |
+| Export API and download names | Some names contain the sample year | Derive safe filenames from trip identity; retain redaction and bounded image fetching |
+
+Removing a label or renaming a type alone does not establish arbitrary-trip support. The new trip must pass the same planning, persistence, map, provider, review and export flow without inheriting the sample's dates or confirmation narrative.
+
+## Incremental migration
+
+1. Extend the implemented canonical draft/schema boundary into detailed views. Keep the sample compatibility adapter intact so existing reviewed data and browser state survive. Preserve `/plan`'s preview/accept handoff and refusal to fabricate researched results.
+2. Add a source registry for reviewed public examples and approved private-local inputs. Do not expose arbitrary path reads or embed private data into browser bundles.
+3. Build one pure adapter from canonical records to the view payload. Resolve IDs, dates, currency, reviewed coordinates, booking states and unknowns there; return useful validation errors for incomplete records.
+4. Namespace saved state by trip ID and version, with an explicit migration/reset choice. Switching trips must not transfer saved hotels, activity IDs, assignments or provider evidence.
+5. Derive navigation and research defaults from the loaded payload. Move sample narrative, airport geometry, correction rules and media into its data pack. Keep missing stays, activities, transport and coordinates editable and visible.
+6. Split the large workspace component by view and state responsibility when the generic contract is stable. A shared display/formatting layer should eliminate duplicated city aliases and implicit currency assumptions.
+7. Verify two materially different invented trips through the complete browser flow before claiming generic support. Provider credentials remain optional throughout.
+
+## Acceptance criteria
+
+- An invented non-European trip and an invented one-city trip validate and render without editing source city lists, dates, currency or airport constants.
+- No city key silently aliases a distinct destination into the sample route. Input IDs remain stable and referenced records resolve correctly.
+- Empty or partial route, activity, hotel, transport and coordinate data produce clear editable states rather than crashes or substituted sample facts.
+- Route optimization discloses missing edges and uncertainty. A route comparison never changes confirmation state.
+- Switching between trips preserves isolated selections and assignments; a schema migration cannot apply silently to unrelated stored data.
+- Agent updates are constrained to the selected trip and require visible review. Rejected alternatives and unknowns survive.
+- Public exports exclude private identifiers and raw imports, use the selected trip's metadata, and pass scanner and independent review.
+- The full local release gate and a keyboard/mobile representative flow pass with zero provider credentials.
+
+## Scope of public release
+
+The repository can describe and ship a reviewed sample/manual atlas and generic validated draft/handoff before this migration is complete. It must label the generic detailed itinerary renderer, hosted accounts, durable storage/sync and import ledger as future work. TRIPPY does not perform bookings. Public release also requires privacy, history, media-rights and independent review gates; code modularity does not substitute for them.

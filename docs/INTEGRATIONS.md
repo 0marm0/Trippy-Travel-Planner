@@ -58,6 +58,14 @@ Never expose a value in a browser bundle, `NEXT_PUBLIC_*` variable, request URL,
 | OAuth client secret/refresh token | Local or encrypted server-side token store | Never in trip JSON, client storage, public samples, or logs |
 | Connector/MCP config | User’s local host configuration | Do not track, share, or forward its tokens to another provider |
 
+## Search workflows and current form limits
+
+Follow the [planning guide](PLANNING_GUIDE.md) for route-first research, cash/award requests, effective-cost arithmetic, multimodal comparisons and hotel/attraction geography.
+
+The Connections form is a starter research surface, not a full traveler-specific search engine. Cash searches currently send one adult, economy, EUR and one-way travel; award searches send one seat and `program: "any"`; hotel searches send one adult/room for one night. The visible Sort selector is not wired to search or result ordering. Flight requests require a single three-letter airport code despite the form's broader placeholder. Use reviewed manual/agent requests or the validated API for actual party size, cabin, currency, return date, hotel length and supported award-program key. A saved result stays research evidence and does not become a trip item or confirmed booking.
+
+`POST /api/providers/search` accepts the six kinds in [provider types](../src/lib/providers/types.ts) and rejects unknown fields. It supports a provider allowlist; `/api/providers/health` reports redacted configuration, not tested credential validity. Production quota access requires a private session. Do not put provider credentials in request bodies or browser code.
+
 ## Cash, points, and evidence semantics
 
 Cash and award adapters are separate inputs. Normalize origin/destination, dates, cabin, segments, currency, cash amount, points program/amount, taxes/fees, checked time, observed availability, and limitations. TRIPPY must use the traveler’s explicit point valuation; no provider supplies a universal cents-per-point truth.
@@ -79,6 +87,17 @@ The whole-trip overview uses a bundled atlas and requires no key. City and itine
 | Rooms.aero | Award-hotel research with points and optional cash comparison | Cached results may be old and use a separate quota |
 | Booking.com Demand | Qualified-partner hotel availability | Requires numeric city ID; not a mirror of the consumer site |
 | Expedia, trivago, Priceline, TripAdvisor | Safe manual comparison links | No scraping or live-coverage claim |
+
+### Provider documentation and eligibility
+
+These primary-source references were checked on 2026-10-13; recheck before configuring a provider or making a travel decision:
+
+- **SerpApi:** [Google Flights API](https://serpapi.com/google-flights-api) documents broader multi-city, filters and follow-up calls than TRIPPY currently implements. The adapter issues one-way/round-trip snapshot searches, uses provider cache and returns at most 20 normalized results; it does not implement multi-city ticket construction or the return-selection/booking flow.
+- **Seats.aero:** [Getting Started](https://developers.seats.aero/reference/getting-started-p) permits eligible Pro API access for non-commercial use, with commercial use subject to written agreement. [Cached Search](https://developers.seats.aero/reference/cached-search) is the configured default. TRIPPY requests one date and ten summary rows, omits flight-detail lookups and does not enforce requested party size on cached rows. Verify exact seats and taxes with the program. [Live Search API](https://developers.seats.aero/reference/live-search) requires commercial agreement; its entitlement differs from consumer website/MCP features. TRIPPY opts into exact-query cached fallback and retains provider filters.
+- **Rooms.aero:** [Search](https://developers.seats.aero/reference/rooms-search) uses a range of possible check-in dates, with `nights` for stay length. TRIPPY requests up to 50 rows without pagination. [Access guidance](https://developers.seats.aero/reference/rooms-getting-started) explains the shared Seats.aero key and separate quota. The current adapter labels evidence cached and mentions a 21-day horizon; the checked Search reference does not establish that horizon as a universal freshness guarantee. Inspect provider timestamps and verify the actual stay before relying on it.
+- **Booking.com:** [Prerequisites](https://developers.booking.com/demand/docs/getting-started/prerequisites) require Managed Affiliate Partner access, a contract, Partner Centre, an API token and affiliate ID. TRIPPY uses `BOOKING_COM_API_KEY`, `BOOKING_COM_AFFILIATE_ID` and `BOOKING_COM_DEMAND_ENV=production|sandbox`, plus request-specific `bookingCityId` and `bookerCountry`. Sandbox results are simulated; a configured credential never establishes partner eligibility or a confirmed reservation.
+
+No direct adapter presently searches live rail, rental-car, coach or ferry inventory. General research can locate operator sources; a human or authorized agent must verify and enter the dated quote. The optimizer core accepts those modes but ranks supplied evidence rather than discovering inventory. Host-local connectors remain separate from website adapters.
 
 All provider requests are bounded, validated, timed out, and normalized. Responses carry freshness and limitations, never keys or raw upstream payloads. Provider errors degrade independently so one failure does not disable the rest of the planner.
 

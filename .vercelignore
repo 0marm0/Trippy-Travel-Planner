@@ -1,0 +1,25 @@
+# Local CLI deployments must have the same public/private boundary as Git.
+.private/
+.env
+.env.*
+data/private/
+data/imports/
+bookings/
+emails/
+calendar-private/
+*.eml
+*.mbox
+*.ics
+credentials.json
+client_secret*.json
+token.json
+*.pem
+*.key
+.mcp.json
+mcp.local.json
+.claude/settings.local.json
+.codex/config.local.toml
+.playwright-cli/
+output/
+coverage/
+*.log

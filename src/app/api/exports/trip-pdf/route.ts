@@ -1,7 +1,7 @@
 import sharp from "sharp";
 import { readFile } from "node:fs/promises";
 import { join } from "node:path";
-import { createTripPdf, sanitizeTripExportSnapshot, TRIP_EXPORT_IMAGE_HOSTS, type TripPdfIcon } from "@/lib/trip-exports";
+import { createTripPdf, sanitizeTripExportSnapshot, TRIP_EXPORT_IMAGE_HOSTS, isBundledTripImage, type TripPdfIcon } from "@/lib/trip-exports";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -24,6 +24,12 @@ function permittedImageUrl(value: string): URL | null {
 }
 
 async function loadImage(value: string): Promise<Uint8Array | null> {
+  if (isBundledTripImage(value)) {
+    const source = await readFile(join(process.cwd(), "public", value.slice(1)));
+    if (source.byteLength > MAX_IMAGE_BYTES) return null;
+    const jpeg = await sharp(source, { limitInputPixels: 40_000_000 }).rotate().resize({ width: 1000, height: 700, fit: "inside", withoutEnlargement: true }).jpeg({ quality: 78 }).toBuffer();
+    return new Uint8Array(jpeg);
+  }
   let url = permittedImageUrl(value);
   if (!url) return null;
   const signal = AbortSignal.timeout(10_000);

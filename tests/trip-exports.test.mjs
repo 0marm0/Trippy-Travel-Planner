@@ -9,6 +9,7 @@ import {
   renderTripHtml,
   sanitizeTripExportSnapshot,
   tripExportFilename,
+  isBundledTripImage,
 } from '../src/lib/trip-exports.ts';
 
 const trip = {
@@ -82,13 +83,13 @@ test('CSV and HTML render the same complete sanitized snapshot', () => {
   assert.match(lightDossier, /html\[data-theme="light"\]/);
 });
 
-test('private operational HTML preserves local booking details while share-safe exports stay redacted', () => {
+test('legacy private operational exports also remove booking identifiers', () => {
   const privateSnapshot = buildTripExportSnapshot(trip, state, 'private-operational');
-  assert.match(privateSnapshot.bookings[0].detail, /ABC123/);
-  assert.match(privateSnapshot.bookings[0].detail, /person@example\.com/);
+  assert.doesNotMatch(privateSnapshot.bookings[0].detail, /ABC123/);
+  assert.doesNotMatch(privateSnapshot.bookings[0].detail, /person@example\.com/);
   const privateHtml = renderTripHtml(privateSnapshot, { privacy: 'private-operational' });
-  assert.match(privateHtml, /ABC123/);
-  assert.match(privateHtml, /person@example\.com/);
+  assert.doesNotMatch(privateHtml, /ABC123/);
+  assert.doesNotMatch(privateHtml, /person@example\.com/);
 
   const publicData = { ...trip, dataMode: 'sample' };
   const forcedPrivate = buildTripExportSnapshot(publicData, state, 'private-operational');
@@ -103,6 +104,22 @@ test('untrusted export snapshots are bounded and sanitized again at the PDF boun
   assert.equal(snapshot.days[0].activities[0].image, '');
   assert.equal(snapshot.days[0].activities[1].image, '');
   assert.equal(snapshot.catalogue[0].image, '');
+});
+
+test('all export text boundaries reject credentials and CSV formula injection', () => {
+  const credential = ['Bearer', 'x'.repeat(32)].join(' ');
+  const snapshot = sanitizeTripExportSnapshot({ title: credential, days: [{ date: 'person@example.com', theme: '=1+1', anchors: [{ status: 'person@example.com', label: credential, detail: credential }], activities: [] }] });
+  assert.doesNotMatch(JSON.stringify(snapshot), /person@example|inventedtestcredential/);
+  assert.doesNotMatch(renderTripHtml(snapshot, { privacy: 'private-operational' }), /person@example|inventedtestcredential/);
+  assert.match(renderTripCsv(snapshot), /'\=1\+1/);
+});
+
+test('bundled photos survive export sanitization while traversal and private paths fail', () => {
+  const path = '/guide-images/123456abcdef.webp';
+  assert.equal(isBundledTripImage(path), true);
+  for (const rejected of ['/guide-images/../../.private/photo.webp', '/media/photo.webp?token=secret', '/.private/photo.webp', '//example.com/photo.webp']) assert.equal(isBundledTripImage(rejected), false);
+  const snapshot = sanitizeTripExportSnapshot({ title: 'Trip', catalogue: [{ title: 'Photo', city: 'Kyoto', image: path }] });
+  assert.equal(snapshot.catalogue[0].image, path);
 });
 
 test('light, dark and visual PDF generators return real PDF bytes', async () => {

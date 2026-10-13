@@ -6,7 +6,7 @@ This is a blocking release gate, not authority to publish, deploy, make a reposi
 
 - [ ] A clean checkout starts and supports sample/manual planning with zero keys, providers, connectors, or agents.
 - [ ] Route, dates, transport, stays, activities, map/list fallbacks, and daily itinerary behavior are accurate and accessible.
-- [ ] Ideas, quotes, selections, holds, availability observations, and confirmed bookings remain visibly distinct; `booked` needs a reviewed confirmation record.
+- [ ] Ideas, quotes, selections, holds, availability observations, and confirmed bookings remain visibly distinct; `confirmed` needs a reviewed confirmation record.
 - [ ] Cash, points, taxes/fees, traveler valuation, timestamps, source/coverage limits, and unknown/stale states are clear.
 - [ ] Optional provider failures preserve manual entry and do not expose account data, raw errors, or private responses.
 - [ ] Gmail/file import is explicit, scoped, read-only, reviewable, and cannot automatically change itinerary or booking state.
@@ -44,4 +44,4 @@ This is a blocking release gate, not authority to publish, deploy, make a reposi
 - `NOT_READY` — ordinary work remains; do not publish.
 - `BLOCKED` — an external dependency or decision prevents completion.
 
-**Current status: `READY_FOR_OWNER_REVIEW`.** The exact local candidate passes lint, type checks, 43 tests, sample validation, a production build, current-tree privacy checks, and a history scan that includes commit metadata. A bounded independent audit found and prompted removal of inherited personal Git metadata. The production Vercel home and redacted provider-health endpoint return successfully. The repository has no remote and has not been published. Owner review and a new explicit publication approval are still mandatory.
+**Current status: `READY_FOR_OWNER_REVIEW` for the local source candidate.** See [the current release report](RELEASE_REPORT.md) for the dated gates and limits. Private staging repository creation is authorized and complete; exact staged-candidate review, verified push/CI, public repository settings and publication remain separate release operations. Photo-license receipts and per-photo attribution mapping are deferred by the owner; the current photo inventory records the owner's license attestation rather than claiming an independently verified blanket license. The private GitHub remote is `0marm0/Trippy-Travel-Planner`.

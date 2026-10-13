@@ -12,7 +12,9 @@ fi
 failed=0
 credential_pattern='AIza[[:alnum:]_-]{24,}|(^|[^[:alnum:]_])sk-[[:alnum:]_-]{20,}|ya29\.[[:alnum:]_-]{20,}|[Bb]earer[[:space:]]+[[:alnum:]_.~+/=-]{20,}'
 email_pattern='[[:alnum:]._%+-]+@[[:alnum:].-]+\.[[:alpha:]]{2,}'
-reserved_email_pattern='@(example\.(com|org|net)|example\.test|test\.invalid|localhost|users\.noreply\.github\.com)$'
+# GitHub and Dependabot sign automated commits with these public system
+# addresses. Keep this exact: personal addresses on github.com still fail.
+reserved_email_pattern='@(example\.(com|org|net)|example\.test|test\.invalid|localhost|users\.noreply\.github\.com)$|^(noreply|support)@github\.com$'
 private_name_pattern='(^|/)(\.env($|\.)|credentials\.json$|client_secret.*\.json$|token\.json$|.*\.(pem|key|eml|mbox|ics)$|\.private/|data/private/|data/imports/|bookings/|emails/|calendar-private/)'
 
 contains_sensitive_value() {

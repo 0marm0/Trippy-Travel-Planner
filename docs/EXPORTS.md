@@ -26,7 +26,7 @@ Rich HTML includes city/day chapters, flight/train/car/hotel logistics, catalogu
 
 ## Offline and privacy checks
 
-- Standalone HTML carries its CSS and reading controls. Prepared bundled photos can be embedded; remote images still need network access and retain their separate terms. Generic records do not gain sample photos or inferred map positions.
+- Standalone HTML carries its CSS and reading controls. Prepared bundled photos can be embedded; remote images still need network access and retain their separate terms. Failed external activity photos show a neutral “Photo unavailable” placeholder; failed hero photos leave the gradient background. Generic records do not gain sample photos or inferred map positions.
 - PDF is a reading copy; HTML controls, live maps and provider searches do not run inside it. No export sends an email, creates a booking or mutates a calendar.
 - Check selected dates, route, activities, stays/transport, booking states and unresolved conflicts before downloading. Review notes manually too: schema checks cannot recognize every private fact written in prose.
 - Collection-bound failures must be visible; do not publish an incomplete itinerary that silently drops activities or records. Keep editable JSON/evidence alongside a reading copy.

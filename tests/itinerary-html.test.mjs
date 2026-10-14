@@ -15,7 +15,7 @@ test('rich dossier exports assigned day activities, nested keyboard details and 
   const attack = '</script><img src=x onerror="alert(1)">';
   const snapshot = sanitizeTripExportSnapshot({ title: attack, start: '2030-01-01', end: '2030-01-03', stops: [{ name: 'Bay City', country: 'Invented country', checkIn: '2030-01-01', checkOut: '2030-01-03', nights: 2 }], days: [{ date: '2030-01-01', dayNumber: 1, city: 'Bay City', theme: 'Art day', note: attack, anchors: [{ status: 'quoted', label: 'Quoted movement confirmed in title', detail: 'Needs verification' }], activities: [{ title: 'Assigned gallery', details: attack, category: 'Art', priority: 'must', image: 'javascript:alert(1)' }] }], catalogue: [{ city: 'Bay City', title: 'Alternative walk', priority: 'could' }] });
   const html = renderTripHtml(snapshot);
-  for (const label of ['Assigned gallery', 'Alternative walk', 'Day by day', 'Invented country', 'itinerary-search', 'data-day open', 'Print / save PDF', 'prefers-reduced-motion', 'beforeprint']) assert.ok(html.includes(label), label);
+  for (const label of ['Assigned gallery', 'Alternative walk', 'Day by day', 'Invented country', 'itinerary-search', 'data-day open', 'Print / save PDF', 'prefers-reduced-motion', 'beforeprint', 'Photo unavailable']) assert.ok(html.includes(label), label);
   assert.equal((html.match(/<script>/g) || []).length, 1);
   assert.doesNotMatch(html, /<img src=x|src="javascript:|<script src=|fetch\(/);
   assert.match(html, /&lt;\/script&gt;&lt;img/);

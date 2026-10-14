@@ -170,3 +170,16 @@ test("HTTP rejects unversioned writes, cross-origin bodies, query capabilities a
   assert.equal((await response.text()).includes("invented-sensitive"), false);
   assert.equal(response.headers.get("cache-control").includes("no-store"), true);
 });
+
+
+test("planning notes accept line breaks while private text and other controls remain rejected", () => {
+  const state = sample();
+  state.activities[0].notes = "Morning museum visit\nAfternoon river walk\r\nBring water";
+  assert.equal(validateCollaborationState(state).activities[0].notes, state.activities[0].notes);
+  for (const notes of ["Walk\u0000later", "Walk\tlater", "First line\nbooking reference invented", "booking\nreference invented", "api\nkey invented"]) {
+    const invalid = sample(); invalid.activities[0].notes = notes;
+    assert.throws(() => validateCollaborationState(invalid), fails(400));
+  }
+  state.title = "Two\nlines";
+  assert.throws(() => validateCollaborationState(state), fails(400));
+});

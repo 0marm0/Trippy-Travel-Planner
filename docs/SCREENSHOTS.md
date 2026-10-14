@@ -1,6 +1,6 @@
 # Trippy app screenshots
 
-Actual application screenshots captured on 2026-10-13 from the production build of commit e01ffdf, in verified public sample mode. There are no private trip records, booking identifiers, provider keys or invitation capabilities in these captures. New-trip and collaboration setup screenshots show blank local drafts. The additional editor captures show reviewed sample day cards and a sample-only owner room; the production room uses an ephemeral local test creation code and exposes no access values.
+Original atlas application screenshots captured on 2026-10-13 from the production build of commit e01ffdf, in verified public sample mode. There are no private trip records, booking identifiers, provider keys or invitation capabilities in these captures. New-trip and collaboration setup screenshots show blank local drafts. The three collaboration captures were refreshed on 2026-10-14 UTC from the redesigned production candidate, using a blank board and reviewed public sample only. The additional editor captures show reviewed sample day cards and a sample-only owner room; the production room uses an ephemeral local test creation code and exposes no access values.
 
 [Back to the README](../README.md) · [Travel photo gallery](PHOTO_GALLERY.md)
 

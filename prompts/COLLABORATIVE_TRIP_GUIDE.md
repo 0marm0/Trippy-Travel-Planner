@@ -10,4 +10,6 @@ Use this prompt with your travel agent for reviewed file proposals or optional l
 >
 > For file exchange, validate and preview normalized `/plan` records before whole-record acceptance. For the sample atlas, use supported known-ID `.trippy` proposals and review any list replacement manually against the latest plan. Files cannot be revoked and v1 bundles cannot add activities or detect simultaneous edits. New attractions may stay separate suggestions or be added to an authorized live board. Never label an activity confirmed because the group likes it.
 
+Before handing over a live room, use sample/invented data to verify owner/editor/viewer permissions, an edit visible in another browser, preservation of an unsaved conflicting draft, server restart persistence and denial of a revoked invitation. Report any untested item. For remote friends, verify the same authorized server is reachable; a localhost link points to each friend's own computer. Keep the owner capability privately and explain that it has no account recovery. Follow [the acceptance checklist](../docs/AGENT_WORKFLOWS.md#acceptance-checklist).
+
 The owner chooses recipients and sends only reviewed content through their own channel. [Live setup and limits](../docs/LIVE_COLLABORATION.md) · [Deployment modes](../docs/DEPLOYMENT_MODES.md) · [Agent workflow](../docs/AGENT_WORKFLOWS.md).

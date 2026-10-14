@@ -58,6 +58,16 @@ Follow [the agent workflow](docs/AGENT_WORKFLOWS.md) and [research playbook](doc
 - Gmail access is optional and user-local. Do not imply it is connected, invent an official Gmail/Booking.com/provider MCP, or expand a connector's permissions.
 - Keep raw mail, links, identifiers, confirmation codes, loyalty IDs, and secrets private. Public/sample/export models may contain only redacted, decision-useful facts.
 
+## Start and close work with evidence
+
+1. Read this contract, `CLAUDE.md` and the relevant workflow/status docs; inspect the current diff and preserve unrelated edits. Identify the actual surface: sample atlas, generic draft, research adapter, private import or live board.
+2. State the authorized outcome and evidence needed. For trip planning, record constraints/consent and actual connector inventory before queries. For code, read the installed Next.js guide relevant to the change and keep data, providers and presentation behind their existing contracts.
+3. Keep an explicit coverage ledger for dates, airports, programs, modes, stays and city research. Distinguish searched-empty, unsearched, unsupported, stale, failed and unconfigured. Comprehensive means accounting for relevant gaps; never claim exhaustive automatic search or a global cheapest result.
+4. Use invented records or the reviewed public sample for tests and browser checks. Do not read private trip files or secret values to make a test pass. Evidence artifacts must obey the public/private boundary too.
+5. Close with changed behavior, checks actually run, supported UI path, remaining gaps and the next decision. A passed build proves neither provider eligibility nor live inventory, remote persistence, generic atlas import or publication readiness.
+
+Use [the acceptance checklist](docs/AGENT_WORKFLOWS.md#acceptance-checklist) for planning/setup handoffs. Keep research notes in private-local sidecars when the strict trip schema has no matching field; never add unsupported fields or silently change the schema to fit a response.
+
 ## Quality gate
 
 Run lint, typecheck, tests, build, schema validation, secret checks, and a representative end-to-end planning flow before calling a change complete.

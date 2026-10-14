@@ -84,3 +84,22 @@ Review selected route, dates, sources/freshness, price/points arithmetic, bookin
 Use [the copyable master prompt](../prompts/START_HERE.md) to connect setup, trip intake and the full research workflow. Deliver a constraint ledger, at least three route/allocation candidates, a date/airport/program/mode search ledger, cash-versus-points calculation, hotel total-price/location comparison, broad per-city activity catalogue, feasible editable day plan, and booking-gap list. Record searched and unsearched combinations and react to actual tradeoffs. The detailed [new-trip prompt](../prompts/NEW_TRIP_GUIDE.md) and [research playbook](RESEARCH_PLAYBOOK.md) define adaptive search coverage; [integrations](INTEGRATIONS.md) defines actual tool discovery and user-owned credential setup. Keep research sidecars private-local when they do not fit the strict trip schema.
 
 Check optional live-room setup separately: `/collaborate` supports reviewed activity/day boards with owner/editor/viewer capabilities, conditional saves and durable SQLite/Postgres. Confirm persistence, editor/viewer restrictions, conflict preservation and revocation with synthetic/sample content before handing off a configured server. Host connector access stays with the authorized agent and does not become an entitlement for friends or the deployed website.
+
+## Acceptance checklist
+
+Use the applicable rows as receipts, with `verified`, `not checked`, `not applicable` or `blocked` plus a reason. Separate setup completion, bounded research completion, traveler acceptance and booking readiness; one does not establish the others.
+
+| Work | Evidence required before handoff |
+| --- | --- |
+| Intake and workspace | Actual mode and supported surface; constraint/consent ledger; schema-valid record; safe private-local location for real plans; known persistence/download behavior |
+| Route comparison | Three materially different feasible route/allocation strategies, or the constraint-based explanation; dates/nights and all required legs; preserved alternatives/rejections |
+| Search coverage | Date/airport/program/mode ledger; party/cabin/currency basis; query timestamps and outcomes; declared budget/stop condition; gaps and fallback for every relevant family |
+| Cash and points | Comparable cash and award outlay; taxes/fees and unknowns; source-points denominator, transfer rules/timing and disclosed valuation; no inferred inventory or holds |
+| Stays and cities | Actual stay/room/occupancy totals and terms; alternative base areas where feasible; broad attributable catalogue for every retained city; verified geography or explicit unknowns |
+| Day feasibility | Arrivals/departures, fixed anchors, hours, reservations, local time zones, transfers, check-in/out, meals/rest/luggage and closure/weather alternatives checked |
+| Bookings/imports | Every necessary reservation represented; canonical states with evidence; approved read scope and separate accepted normalized write when importing; private identifiers excluded |
+| Sharing | Current sanitized artifact or reviewed live board; actual recipient role; explicit publication/sending authorization; supported format and known copy/revocation limits |
+| Live server setup | Configured durable backend; synthetic/sample role checks, restart persistence, stale-write draft preservation and revocation; remote creation gate and reachability checked if in scope |
+| Repository change | Relevant lint/types/tests/build/schema/privacy checks and representative end-to-end flow; observed failures and untested external services named |
+
+A handoff should include the editable record location, companion evidence ledger, checks/results, unresolved constraints and the next action. Keep token-bearing URLs, raw imports, credentials and private booking identifiers out of receipts. Do not describe a hosted Postgres integration as tested unless a user-authorized database was actually exercised.

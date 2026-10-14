@@ -5,7 +5,7 @@ This page separates what works today from what still requires private configurat
 ## Works with no credentials
 
 - Full redacted 2026 Europe sample and manual planning workflow.
-- Static `/about` product introduction with reviewed local photo gallery, plus the README and complete bundled-photo documentation gallery.
+- Static `/about` product introduction with reviewed local photos and actual itinerary/shared-board screenshots, clear workspace boundaries, plus the README and complete bundled-photo documentation gallery.
 - Generic `/plan` workflow for arbitrary cities and dates: schema/relationship-validated draft preview, explicit acceptance, planning JSON download and agent brief copy. Drafts stay in browser memory and clear on reload.
 - Shared normalized-trip creation/validation through `trip:init`, `trip:validate`, and `schema:check`; canonical booking states and no confirmation-reference field in the planning schema.
 - Route overview, detailed city maps, hotels, activities, daily itinerary, booking gaps, cash-versus-points comparison, and downloadable CSV/HTML/PDF exports.
@@ -26,11 +26,13 @@ Atlas CSV/HTML/PDF downloads apply redaction even for legacy private-operational
 - Booking.com Demand hotel research for eligible partner accounts.
 - Private Gmail read-only booking-candidate preview with no automatic import or trip mutation.
 - Production live-quota access code and signed secure session.
-- `/collaborate` live planning rooms with owner/editor/viewer capabilities, new activity editing, day assignments, revocable invitations, four-second polling and explicit revision conflicts. Requires explicit enablement, persistent Node/SQLite or user-owned Postgres; Vercel requires Postgres and remote/production room creation requires a private creation code. [Setup and boundaries](LIVE_COLLABORATION.md).
+- `/collaborate` live planning rooms with activity creation/editing/deletion, day assignment/unassignment/reordering, optional location maps, owner/editor/viewer capabilities, revocable invitations, four-second polling and explicit revision conflicts. Only owners edit trip title, dates and cities; editors edit activities and days; viewers are read-only. Requires explicit enablement, persistent Node/SQLite or user-owned Postgres; Vercel requires Postgres and remote/production room creation requires a private creation code. [Setup and boundaries](LIVE_COLLABORATION.md).
 
 These paths were validated with mocks and zero-credential degradation. No real provider key, mailbox, or private booking record was used during repository verification.
 
 Collaboration backend tests use invented planning records and isolated temporary SQLite databases to verify persistence, role restrictions, stale writes, revocation, hashing and privacy. Postgres is implemented but has not been exercised against a hosted database. No database or hosting service was provisioned. Rooms contain only reviewed planning-board data and are separate from the atlas, generic `/plan` drafts and future private-trip accounts.
+
+Conflicts preserve the board and unfinished activity form in the current tab and pause saving. The UI can download schema-validated, share-safe board JSON, review the newer state and require confirmation before discarding local board/form edits to load it. The download explicitly excludes unfinished activity fields. It does not provide JSON reimport, conflict merging, automatic retries or unsaved-draft recovery after reload. Polling, unload warnings and header-link checks protect edits; this is not a guarantee for every browser-history navigation. Changing dates retains in-range day assignments and returns out-of-range assignments to the activity catalogue. Room deletion, invitation expiry and owner-link rotation are not implemented.
 
 ## Manual by design
 
@@ -39,6 +41,8 @@ Collaboration backend tests use invented planning records and isolated temporary
 - No result makes a purchase, sends mail, changes a calendar, or becomes confirmed without explicit traveler review.
 
 ## Next production phases
+
+The prioritized [improvement roadmap](IMPROVEMENT_ROADMAP.md) gives concrete acceptance criteria for the remaining gaps. The list below records future work, not implemented capabilities.
 
 1. Authenticated multi-user accounts and an encrypted database for private trips.
 2. A durable Gmail review/approve/reject ledger with an explicit retention and deletion policy.

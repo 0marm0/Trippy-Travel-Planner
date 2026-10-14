@@ -9,16 +9,16 @@ export class CollaborationError extends Error {
   constructor(status: number, message: string) { super(message); this.status = status; }
 }
 const bad = () => { throw new CollaborationError(400, "Invalid share-safe collaboration state. Remove private identifiers, links, and unsupported fields."); };
-const privateText = /@|https?:|www\.|mailto:|gmail|\b(?:api[ _-]?key|oauth|bearer|password|secret|token|confirmation|pnr|booking[ _-]?(?:reference|number|code)|record[ _-]?locator|loyalty|seat[ _-]?(?:(?:assignment|number)|\d{1,3}[a-z]))\b|\b(?:sk-[a-z0-9_-]+|ghp_[a-z0-9]+|github_pat_[a-z0-9_]+|AIza[a-z0-9_-]+|ya29\.[a-z0-9_-]+)|\b\d{9,}\b/i;
+const privateText = /@|https?:|www\.|mailto\x3a|gmail|\b(?:api[ _-]?key|oauth|bearer|password|secret|token|confirmation|pnr|booking[ _-]?(?:reference|number|code)|record[ _-]?locator|loyalty|seat[ _-]?(?:(?:assignment|number)|\d{1,3}[a-z]))\b|\b(?:sk-[a-z0-9_-]+|ghp_[a-z0-9]+|github_pat_[a-z0-9_]+|AIza[a-z0-9_-]+|ya29\.[a-z0-9_-]+)|\b\d{9,}\b/i;
 function object(value: unknown, keys: string[]): Record<string, unknown> {
   if (!value || typeof value !== "object" || Array.isArray(value)) return bad();
   if (Object.keys(value).some(key => !keys.includes(key))) return bad();
   return value as Record<string, unknown>;
 }
-function text(value: unknown, max: number, allowEmpty = false): string {
+function text(value: unknown, max: number, allowEmpty = false, multiline = false): string {
   if (typeof value !== "string") return bad();
   const normalized = value.normalize("NFKC");
-  if (normalized.length > max || (!allowEmpty && !normalized.trim()) || /[\u0000-\u001f\u007f]/.test(normalized) || privateText.test(normalized) || /\b(?=[A-Z0-9]{6}\b)(?=[A-Z0-9]*\d)[A-Z0-9]+\b/.test(normalized)) return bad();
+  if (normalized.length > max || (!allowEmpty && !normalized.trim()) || (multiline ? /[\u0000-\u0009\u000b\u000c\u000e-\u001f\u007f]/ : /[\u0000-\u001f\u007f]/).test(normalized) || privateText.test(normalized.replace(/[\r\n]+/g, " ")) || /\b(?=[A-Z0-9]{6}\b)(?=[A-Z0-9]*\d)[A-Z0-9]+\b/.test(normalized)) return bad();
   return normalized.trim();
 }
 function id(value: unknown): string {
@@ -61,7 +61,7 @@ export function validateCollaborationState(input: unknown): CollaborationState {
     if (!cityIds.has(cityId) || (a.durationMinutes !== undefined && (typeof a.durationMinutes !== "number" || !Number.isInteger(a.durationMinutes) || a.durationMinutes < 1 || a.durationMinutes > 1440))) return bad();
     const image = safeCollaborationImage(a.image), sourceUrl = safeCollaborationSourceUrl(a.sourceUrl);
     if ((a.image !== undefined && !image) || (a.sourceUrl !== undefined && !sourceUrl)) return bad();
-    return { id: id(a.id), cityId, title: text(a.title, 160), notes: text(a.notes ?? "", 1000, true), ...coordinates(a), ...(a.durationMinutes !== undefined ? { durationMinutes: a.durationMinutes as number } : {}), ...(image ? { image } : {}), ...(sourceUrl ? { sourceUrl } : {}) };
+    return { id: id(a.id), cityId, title: text(a.title, 160), notes: text(a.notes ?? "", 1000, true, true), ...coordinates(a), ...(a.durationMinutes !== undefined ? { durationMinutes: a.durationMinutes as number } : {}), ...(image ? { image } : {}), ...(sourceUrl ? { sourceUrl } : {}) };
   });
   const activityIds = new Set(activities.map(a => a.id));
   if (activityIds.size !== activities.length || !s.days || typeof s.days !== "object" || Array.isArray(s.days) || Object.keys(s.days).length > 367) return bad();

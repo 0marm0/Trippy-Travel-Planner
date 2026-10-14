@@ -25,6 +25,19 @@ Optional research modules include **SerpApi** for cash flights, hotels and place
 
 > **Beta · private staging repository.** The detailed atlas demonstrates the reviewed Europe 2026 sample. `/plan` supports your own cities and dates as a validated draft and agent handoff; generic drafts do not yet populate the atlas’s detailed itinerary, map or quote-selection views. Optional `/collaborate` rooms support live activity/day editing with owner, editor and viewer access on a configured durable server. Hosted private-trip accounts and automatic bookings remain future work. [Current capabilities and limits](docs/IMPLEMENTATION_STATUS.md).
 
+## Choose your starting path
+
+| Your goal | Start here | What you get today |
+| --- | --- | --- |
+| Explore without accounts | Run locally and open `/` | Detailed reviewed sample, editable days, maps and sanitized atlas exports |
+| Plan different dates or destinations | Open `/plan` or use `trip:init` | Validated generic draft, preview/acceptance, JSON download and agent handoff |
+| Research the whole trip | Copy [Start here](prompts/START_HERE.md) | Agent-guided routes, cash/points, stays, city research and booking-gap review within disclosed coverage |
+| Add provider searches | Follow [integrations](docs/INTEGRATIONS.md) | Optional server adapters or your agent host's actual tools, using your own eligible accounts |
+| Let friends edit days | Follow [live collaboration](docs/LIVE_COLLABORATION.md) | A separate reviewed activity/day board on configured durable storage |
+| Operate a hosted instance | Follow [deployment modes](docs/DEPLOYMENT_MODES.md) | Your infrastructure and secrets, with separate authorization before deployment |
+
+**Supported now:** manual sample planning, generic draft creation and handoff, optional research adapters, and configured live activity/day rooms. **Next:** generic drafts in the full atlas, private-trip accounts and cross-device private-trip sync. Comprehensive research is an agent workflow with a coverage ledger; the website does not automatically search every date, connection or program.
+
 ## See the app
 
 [Route map](#overall-route) · [Itinerary builder](#itinerary-builder) · [Collaborative editing](#collaborative-editing) · [City maps](#city-maps) · [Hotels](#hotels-and-location) · [All screenshots](docs/SCREENSHOTS.md)
@@ -167,7 +180,7 @@ The initializer only writes beneath ignored `.private/trips/`, rejects symlink e
 Start without keys. Add an integration when it will help answer a concrete question:
 
 ```bash
-cp .env.example .env.local
+test -e .env.local || cp .env.example .env.local
 ```
 
 Enter your own values **directly in that ignored local file**, or in your own host’s secret settings. Never paste them into chat, a public issue, a screenshot or tracked code.
@@ -225,7 +238,9 @@ For reading, export sanitized HTML, PDF or CSV. Bundled photos are embedded in H
 
 For edits, exchange a normalized `/plan` JSON draft or a supported `.trippy` workspace proposal. The owner validates and previews the proposed record or supported workspace changes, then accepts or rejects them. `/plan` previews the whole record; comparison with the previous draft is manual. Current atlas bundles reference existing activities/options; they cannot add new attractions, detect concurrent edits or provide live shared state. A downloaded file cannot be revoked after a friend receives it.
 
-For live planning, open `/collaborate`, prepare or load a reviewed public planning board, and review it before creating a room. Owners can grant editor or viewer capabilities and revoke future access; editors can add activities and arrange days. The browser checks for changes every four seconds. Revision conflicts preserve the unsaved draft and require explicit review/reload before another save. This board is separate from the sample atlas and `/plan` drafts, and it excludes bookings and private identifiers. [Live setup and limits](docs/LIVE_COLLABORATION.md) · [Collaboration workflow](docs/COLLABORATION.md) · [Agent prompt](prompts/COLLABORATIVE_TRIP_GUIDE.md).
+For live planning, configure durable storage first, then open `/collaborate`, prepare or load a reviewed public planning board, and review it before creating a room. Owners can grant editor or viewer capabilities and revoke future access; editors can add activities and arrange days. The browser checks for changes every four seconds. Revision conflicts preserve the unsaved draft and require explicit review/reload before another save. This board is separate from the sample atlas and `/plan` drafts, and it excludes bookings and private identifiers. [Live setup and limits](docs/LIVE_COLLABORATION.md) · [Collaboration workflow](docs/COLLABORATION.md) · [Agent prompt](prompts/COLLABORATIVE_TRIP_GUIDE.md).
+
+A practical live-room handoff is: **review board → create room → keep owner link private → create an editor or viewer invitation → send it yourself to the intended friend**. Each friend needs access to the same running server; a localhost link on your computer cannot reach their computer. Use an authorized HTTPS hosting setup for remote friends. Keep owner access privately: there is no account-based recovery if it is lost. Test a sample edit, a conflicting save and revocation before relying on the room for a real group.
 
 ## Run it on your own infrastructure
 

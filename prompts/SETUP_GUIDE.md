@@ -46,3 +46,5 @@ Complete local checks, sanitized-artifact review and release prerequisites befor
 ## Handoff
 
 Return the working mode, modules enabled, redacted configuration status, commands completed, tests/results, precise remaining limitations and next trip-planning action. Do not claim publication readiness, a generalized detailed trip atlas, live coverage or confirmed bookings without the evidence required by the repository contract.
+
+For a concrete setup receipt, follow [the acceptance checklist](../docs/AGENT_WORKFLOWS.md#acceptance-checklist). Demonstrate the chosen no-key flow first with sample/invented content, then report each selected integration as configured/tested, configured/untested, unavailable or not requested. State the tested party/cabin/currency and query time. For friends, verify they can reach the same authorized server; loopback on one person's computer is not a remote invitation endpoint. Do not claim a hosted database, remote room or provider path works from local mock tests alone.

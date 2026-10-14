@@ -23,20 +23,20 @@ Optional research modules include **SerpApi** for cash flights, hotels and place
 
 [Setup and keys](prompts/SETUP_GUIDE.md) · [Full trip intake and research](prompts/NEW_TRIP_GUIDE.md) · [Connector onboarding](docs/INTEGRATIONS.md) · [Planning guide](docs/PLANNING_GUIDE.md) · [Live collaboration](docs/LIVE_COLLABORATION.md)
 
-> **Beta · private staging repository.** The detailed atlas demonstrates the reviewed Europe 2026 sample. `/plan` supports your own cities and dates as a validated draft and agent handoff; generic drafts do not yet populate the atlas’s detailed itinerary, map or quote-selection views. Optional `/collaborate` rooms support live activity/day editing with owner, editor and viewer access on a configured durable server. Hosted private-trip accounts and automatic bookings remain future work. [Current capabilities and limits](docs/IMPLEMENTATION_STATUS.md).
+> **Beta · private staging repository.** The detailed atlas demonstrates the reviewed Europe 2026 sample. `/plan` accepts your own cities and dates into a separate manual workspace with route alternatives, maps from supplied coordinates, editable days, stays/transport and research evidence. Optional `/collaborate` rooms support live activity/day editing with owner, editor and viewer access on a configured durable server. Optional private accounts store reviewed planning workspaces on your configured server; automatic bookings remain unsupported. [Current capabilities and limits](docs/IMPLEMENTATION_STATUS.md).
 
 ## Choose your starting path
 
 | Your goal | Start here | What you get today |
 | --- | --- | --- |
 | Explore without accounts | Run locally and open `/` | Detailed reviewed sample, editable days, maps and sanitized atlas exports |
-| Plan different dates or destinations | Open `/plan` or use `trip:init` | Validated generic draft, preview/acceptance, JSON download and agent handoff |
+| Plan different dates or destinations | Open `/plan` or use `trip:init` | Validated manual workspace, routes, days, activities, explicit map pins and reviewed booking records |
 | Research the whole trip | Copy [Start here](prompts/START_HERE.md) | Agent-guided routes, cash/points, stays, city research and booking-gap review within disclosed coverage |
 | Add provider searches | Follow [integrations](docs/INTEGRATIONS.md) | Optional server adapters or your agent host's actual tools, using your own eligible accounts |
-| Let friends edit days | Follow [live collaboration](docs/LIVE_COLLABORATION.md) | A separate reviewed activity/day board on configured durable storage |
+| Let friends edit days | Follow [live collaboration](docs/LIVE_COLLABORATION.md) | A separate reviewed activity/day board, reconciliation, draft recovery and owner lifecycle controls |
 | Operate a hosted instance | Follow [deployment modes](docs/DEPLOYMENT_MODES.md) | Your infrastructure and secrets, with separate authorization before deployment |
 
-**Supported now:** manual sample planning, generic draft creation and handoff, optional research adapters, and configured live activity/day rooms. **Next:** generic drafts in the full atlas, private-trip accounts and cross-device private-trip sync. Comprehensive research is an agent workflow with a coverage ledger; the website does not automatically search every date, connection or program.
+**Supported now:** the sample atlas, a generic manual workspace, recorded quote/research evidence, sanitized exports, configured live boards and optional encrypted accounts. **Next:** consistent per-item evidence, verified hosted/provider operation and deeper integration of generic plans with specialized atlas features. Comprehensive research is an agent workflow with a coverage ledger; the website does not automatically search every date, connection or program.
 
 ## See the app
 
@@ -70,6 +70,18 @@ Open [`/collaborate`](docs/LIVE_COLLABORATION.md) to prepare a board, review its
 </details>
 
 Rooms share activities and day assignments separately from the full atlas's hotels, bookings and flight research. Hosting a room does not provide private-trip identity accounts or automatically connect an agent's travel tools.
+
+### Your own workspace and reading copies
+
+The generic workspace uses your cities and dates, manual coordinates, editable days and recorded evidence. These local QA screenshots use invented planning records, not real traveler confirmations or live quotes.
+
+![Generic manual workspace with arbitrary trip days and routes](public/screenshots/generic-workspace.webp)
+
+![Visual itinerary reading export with city and day chapters](public/screenshots/visual-export.webp)
+
+![Explicit original local and latest shared-board reconciliation](public/screenshots/reconciliation.webp)
+
+[Rich and compact export formats](docs/EXPORTS.md) · [Implemented modules and limits](docs/IMPLEMENTATION_STATUS.md)
 
 ### City maps
 
@@ -121,7 +133,7 @@ Map layers, stay dates, location fit, filters and provider evidence.
 
 ![Hotel comparison workspace with Berlin hotel, transit and attraction map](public/screenshots/hotels.webp)
 
-[**Explore all 20 app screenshots →**](docs/SCREENSHOTS.md) · Route research, transport, activities, Decide/Travel modes, new-trip setup and collaboration.
+[**Explore all 23 app screenshots →**](docs/SCREENSHOTS.md) · Route research, transport, activities, Decide/Travel modes, new-trip setup and collaboration.
 
 Screenshots show historical sample evidence, not current prices or live availability. Map/provider credits and photo terms remain attached to their content. The **156 bundled travel photos** are available in the [separate photo gallery](docs/PHOTO_GALLERY.md). [Media provenance](docs/MEDIA.md).
 
@@ -153,13 +165,13 @@ npm run dev:local
 
 During private staging, cloning requires access to this repository. Open [localhost:3000](http://localhost:3000) for the sample atlas, [localhost:3000/plan](http://localhost:3000/plan) for your own draft, or [localhost:3000/about](http://localhost:3000/about) for the product introduction.
 
-Manual/sample planning needs no provider account, paid plan, Gmail access, agent or deployment account. Atlas edits stay in that browser’s local storage. `/plan` drafts stay in memory and clear on reload; download a draft to retain it. There is no cross-device sync.
+Manual/sample planning needs no provider account, paid plan, Gmail access, agent or deployment account. Atlas edits stay in that browser’s local storage. `/plan` previews stay in memory. Accepted workspaces can be explicitly saved/resumed in this browser, with dates/destinations isolated, or downloaded. Optional account storage adds explicit server save/load on your configured instance; browser edits do not sync automatically.
 
 The [existing redacted demo](https://trippy-travel-optimizer.vercel.app) may lag this source. It was not redeployed as part of repository preparation and is separate from your own instance.
 
 ## Plan your own trip with an agent
 
-1. Open `/plan`, enter cities, origins, dates, travelers, flexibility, pace and interests, then preview and accept the draft. Download the JSON and copy its agent brief.
+1. Open `/plan`, enter cities, origins, dates, travelers, flexibility, pace and interests, then preview and accept the draft. Open the accepted manual workspace, then save/download its trip and itinerary records and use the current agent brief.
 2. Give your agent [the new-trip guide](prompts/NEW_TRIP_GUIDE.md). It asks about fixed anchors, trip length, required/optional/rejected cities, budget/cabin, points programs and balances, transfer rules, access needs, luggage, ground modes, overnight/connection tolerance, cancellations and must-dos.
 3. Review **at least three materially different routes before price research**: change city order/nights, gateways or open jaws, or regional transport strategy. If your hard constraints prevent three routes, the agent explains that instead of inventing options.
 4. Research representative travel dates, compare complete cash and award assumptions, and resolve observed tradeoffs. Keep rejected alternatives and unknowns.
@@ -224,7 +236,7 @@ Build a broad city catalogue, then choose a hotel/base and group activities by n
 
 Plan arrival and departure days around the actual station/airport and hotel. Add transfer and check-in buffers, timed-entry reservations, meals, rest, luggage storage, accessibility needs and weather alternatives. A nearby activity may work better on arrival day than a cheaper attraction across town.
 
-The sample atlas demonstrates maps, city catalogues, itinerary assignments, hotel comparison and booking gaps. New generic drafts currently need agent/manual work; importing one into the full atlas remains an explicit roadmap item. [Detailed workflow](docs/PLANNING_GUIDE.md#7-choose-hotels-and-build-days-geographically).
+The sample atlas demonstrates detailed city catalogues and hotel/transport views. Your generic workspace separately supports manual routes, explicit coordinate maps, day activities and reviewed stay/transport records. Its research ledger records scope/source/time and outstanding work; recorded quote comparisons disclose party, currency, taxes, cancellation and points/transfer assumptions. It does not search inventory or geocode places automatically. [Detailed workflow](docs/PLANNING_GUIDE.md#7-choose-hotels-and-build-days-geographically).
 
 ## Track what still needs booking
 
@@ -234,11 +246,11 @@ Private booking documents and identifiers stay outside shared records. Optional 
 
 ## Share with friends
 
-For reading, export sanitized HTML, PDF or CSV. Bundled photos are embedded in HTML dossiers and supported in visual PDF exports so the itinerary travels with the file.
+For reading, choose the rich visual HTML itinerary or compact travel, transit and hotel HTML/PDF briefs; existing atlas light/dark/visual modes and CSV remain available. Prepared bundled photos can be embedded in HTML dossiers and supported visual PDF exports. Generic plans retain their own entered records without inheriting sample photos. [Export formats and offline limits](docs/EXPORTS.md).
 
 For edits, exchange a normalized `/plan` JSON draft or a supported `.trippy` workspace proposal. The owner validates and previews the proposed record or supported workspace changes, then accepts or rejects them. `/plan` previews the whole record; comparison with the previous draft is manual. Current atlas bundles reference existing activities/options; they cannot add new attractions, detect concurrent edits or provide live shared state. A downloaded file cannot be revoked after a friend receives it.
 
-For live planning, configure durable storage first, then open `/collaborate`, prepare or load a reviewed public planning board, and review it before creating a room. Owners can grant editor or viewer capabilities and revoke future access; editors can add activities and arrange days. The browser checks for changes every four seconds. Revision conflicts preserve the unsaved draft and require explicit review/reload before another save. This board is separate from the sample atlas and `/plan` drafts, and it excludes bookings and private identifiers. [Live setup and limits](docs/LIVE_COLLABORATION.md) · [Collaboration workflow](docs/COLLABORATION.md) · [Agent prompt](prompts/COLLABORATIVE_TRIP_GUIDE.md).
+For live planning, use “Prepare shared activity board” in your generic workspace, then import/preview that JSON in `/collaborate`; you can also prepare a fresh board or load the reviewed public sample. Configure durable storage and review the exact safe board before creating a room. Owners can grant editor or viewer capabilities and revoke future access; editors can add activities and arrange days. The browser checks for changes every four seconds. Revision conflicts preserve drafts and offer field/entity/day reconciliation with explicit choices against the latest revision. Optional consent-based device recovery retains a validated board and base revision, excluding unfinished forms and credentials. Owners can expire/revoke invitations, replace the owner link and delete a room. This board remains separate from the sample atlas and generic workspace after handoff, and excludes bookings, research and private identifiers. [Live setup and limits](docs/LIVE_COLLABORATION.md) · [Collaboration workflow](docs/COLLABORATION.md) · [Agent prompt](prompts/COLLABORATIVE_TRIP_GUIDE.md).
 
 A practical live-room handoff is: **review board → create room → keep owner link private → create an editor or viewer invitation → send it yourself to the intended friend**. Each friend needs access to the same running server; a localhost link on your computer cannot reach their computer. Use an authorized HTTPS hosting setup for remote friends. Keep owner access privately: there is no account-based recovery if it is lost. Test a sample edit, a conflicting save and revocation before relying on the room for a real group.
 
@@ -250,14 +262,20 @@ A practical live-room handoff is: **review board → create room → keep owner 
 | Your Vercel project | A reviewed redacted demo or independent instance | Your Vercel account, billing, project, domains and server secrets; no maintainer account access |
 | Your Node server | Self-hosting on infrastructure you control | You operate HTTPS, updates and process management; no Vercel dependency |
 
-Vercel is optional. Live rooms require `COLLABORATION_ENABLED=true` and persistent SQLite on one Node server, or your own Postgres database on Vercel/multiple servers. Remote room creation also requires a server-owned creation code. No hosted database has been provisioned; enabling rooms does not create private-trip accounts. Keep private-trip/Gmail gates disabled on public instances and never upload `.private/` or `.env.local`. [Live room setup](docs/LIVE_COLLABORATION.md) · [Hosting setup](docs/SETUP.md#vercel-deployment) · [Deployment modes](docs/DEPLOYMENT_MODES.md).
+Vercel is optional. Live rooms require `COLLABORATION_ENABLED=true` and persistent SQLite on one Node server, or your own Postgres database on Vercel/multiple servers. Remote room creation also requires a server-owned creation code. No hosted database has been provisioned; rooms remain separate from optional private-trip accounts. Keep private-trip/Gmail gates disabled on public instances and never upload `.private/` or `.env.local`. [Live room setup](docs/LIVE_COLLABORATION.md) · [Hosting setup](docs/SETUP.md#vercel-deployment) · [Deployment modes](docs/DEPLOYMENT_MODES.md).
+
+## Optional private accounts
+
+Manual/browser planning works without sign-in. On an explicitly configured server, `/account` or the workspace’s Private account section supports signup/signin, previewed load, explicit encrypted save/update, sanitized export and deletion. Upload happens only when you select a private save action. Plans use tenant-qualified access, AES-256-GCM encryption and revision checks; each account may store up to 20 plans.
+
+Use your own persistent Node/SQLite or Postgres, authentication secret and encryption key. Account deletion requires the current password and removes server-owned plans and sessions; local drafts, exports and backups remain your responsibility. Real password recovery and its email transport are not wired. Hosted Postgres/provider access has not been privately validated, and enabling accounts does not grant travel connector access. [Private account setup and limits](docs/PRIVATE_ACCOUNTS.md).
 
 ## Extend the modules
 
 - **Trip data:** `schema/trip.schema.json` and shared normalized-trip creation/validation.
 - **Research:** typed provider adapters, validation, normalization, timeouts and manual fallbacks.
 - **Optimization:** explainable ranking of supplied route/leg alternatives with explicit missing evidence.
-- **Presentation:** sample compatibility adapter, atlas views, generic draft workflow and `/about` introduction.
+- **Presentation:** sample compatibility adapter, atlas views, generic manual workspace and `/about` introduction.
 - **Interchange:** sanitized exports and reviewed workspace proposals.
 - **Live planning:** a bounded share-safe activity/day schema, hashed role capabilities, durable SQLite/Postgres adapters and transactional revision checks.
 - **Media:** private originals → approved metadata-free derivatives → manifest/hash validation.
@@ -279,4 +297,4 @@ The release gate includes lint, types, tests, schema/sample validation, a produc
 
 ## Documentation
 
-[Planning guide](docs/PLANNING_GUIDE.md) · [Setup](docs/SETUP.md) · [Onboarding](docs/ONBOARDING.md) · [Integrations](docs/INTEGRATIONS.md) · [Current implementation](docs/IMPLEMENTATION_STATUS.md) · [Architecture](docs/ARCHITECTURE.md) · [Collaboration](docs/COLLABORATION.md) · [Agent workflow](docs/AGENT_WORKFLOWS.md) · [Research playbook](docs/RESEARCH_PLAYBOOK.md) · [Gallery](docs/PHOTO_GALLERY.md) · [Contributing](CONTRIBUTING.md) · [Security reporting](SECURITY.md)
+[Planning guide](docs/PLANNING_GUIDE.md) · [Setup](docs/SETUP.md) · [Onboarding](docs/ONBOARDING.md) · [Integrations](docs/INTEGRATIONS.md) · [Current implementation](docs/IMPLEMENTATION_STATUS.md) · [Export formats](docs/EXPORTS.md) · [Private accounts](docs/PRIVATE_ACCOUNTS.md) · [Architecture](docs/ARCHITECTURE.md) · [Collaboration](docs/COLLABORATION.md) · [Agent workflow](docs/AGENT_WORKFLOWS.md) · [Research playbook](docs/RESEARCH_PLAYBOOK.md) · [Gallery](docs/PHOTO_GALLERY.md) · [Contributing](CONTRIBUTING.md) · [Security reporting](SECURITY.md)

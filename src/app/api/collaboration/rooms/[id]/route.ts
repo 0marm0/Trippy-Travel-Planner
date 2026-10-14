@@ -9,3 +9,7 @@ export async function GET(request: Request, context: Context) {
 export async function PATCH(request: Request, context: Context) {
   return handle(async () => { const access = token(request), expected = revision(request); const input = await body(request, ["state"]); const { id } = await context.params; const store = await getCollaborationStore(); return json(await store.update(id, access, expected, input.state)); });
 }
+
+export async function DELETE(request: Request, context: Context) {
+  return handle(async () => { sameOrigin(request); const access = token(request), expected = revision(request); const { id } = await context.params; const store = await getCollaborationStore(); return json(await store.deleteRoom(id, access, expected)); });
+}

@@ -1,0 +1,110 @@
+"use client";
+
+import { useMemo, useState } from 'react';
+import Link from 'next/link';
+import IntegrationCenter from './integration-center';
+import { createQuoteComparison, quoteStorageKey } from '@/lib/trip-quote-comparison';
+import { createResearchLedger, researchStorageKey } from '@/lib/research-ledger';
+import GeographicMap from './geographic-map';
+import ResearchLedger from './research-ledger';
+import { AccountWorkspaceControls } from './account-workspace';
+import { agentTripBrief, type NormalizedTrip } from '@/lib/normalized-trip';
+import { renderGenericItineraryHtml, buildGenericTripExportSnapshot } from '@/lib/generic-itinerary-html';
+import { bookingStates, createWorkspace, exportWorkspace, saveWorkspace, validateWorkspace, workspaceConflicts, workspaceKey, type GenericWorkspace } from '@/lib/generic-trip-workspace';
+import { genericCollaborationBoard } from '@/lib/generic-collaboration';
+import TripQuoteComparison from './trip-quote-comparison';
+import type { TripExportScope } from '@/lib/trip-exports';
+import './generic-trip-workspace.css';
+
+function download(name: string, text: string, mime = 'application/json') {
+  const url = URL.createObjectURL(new Blob([text], { type: mime }));
+  const anchor = document.createElement('a'); anchor.href = url; anchor.download = name; anchor.click(); setTimeout(() => URL.revokeObjectURL(url), 1000);
+}
+const field = (data: FormData, key: string) => String(data.get(key) || '').trim();
+const id = () => `manual-${crypto.randomUUID()}`;
+
+export default function GenericTripWorkspace({ initial, onClose }: { initial: GenericWorkspace | NormalizedTrip; onClose: () => void }) {
+  const [workspace, setWorkspace] = useState<GenericWorkspace>(() => 'version' in initial ? structuredClone(initial) : createWorkspace(initial));
+  const [tab, setTab] = useState('route');
+  const [message, setMessage] = useState('Accepted manual planning workspace. Nothing is booked or researched automatically.');
+  const [persist, setPersist] = useState(false);
+  const [reviewBase, setReviewBase] = useState<GenericWorkspace | null>(null);
+  const [review, setReview] = useState<GenericWorkspace | null>(null);
+  const [day, setDay] = useState(workspace.days[0].date);
+  const [editActivity, setEditActivity] = useState<string | null>(null);
+  const [editBooking, setEditBooking] = useState<string | null>(null);
+  const trip = workspace.trip;
+  const [quoteEvidence, setQuoteEvidence] = useState(() => createQuoteComparison(trip));
+  const [researchEvidence, setResearchEvidence] = useState(() => createResearchLedger(trip));
+  const [providerResearch, setProviderResearch] = useState(false);
+  const cityName = (placeId: string) => trip.destinations.find(place => place.id === placeId)?.name || 'Unassigned';
+  const points = useMemo(() => workspace.places.map(pin => ({ id: pin.placeId, name: trip.destinations.find(place => place.id === pin.placeId)?.name || pin.placeId, lat: pin.lat, lng: pin.lng, category: 'city' })), [workspace.places, trip.destinations]);
+  const selectedRoute = trip.routeCandidates.find(route => route.id === workspace.selectedRouteId);
+  const order = selectedRoute?.placeOrder || trip.destinations.map(place => place.id);
+  const segments = order.slice(1).map((to, index) => ({ from: order[index], to, kind: 'other' as const }));
+  const conflicts = workspaceConflicts(workspace);
+  const activity = workspace.activities.find(item => item.id === editActivity);
+  const booking = trip.bookings.find(item => item.id === editBooking);
+  const detail = workspace.bookingDetails.find(item => item.bookingId === editBooking);
+  function apply(next: GenericWorkspace) {
+    if (validateWorkspace(next).length) { setMessage('Invalid or private identifier-shaped content. Changes were not applied. Use planning facts only; dates and destinations must match this trip.'); return false; }
+    setWorkspace(next);
+    if (persist) { try { saveWorkspace(localStorage, next); setMessage('Saved in this browser for this trip.'); } catch { setMessage('Changes kept in memory. Browser save failed; download a copy.'); } }
+    else setMessage('Changes applied in memory. Save in this browser or download to keep them.');
+    return true;
+  }
+  function save() { try { saveWorkspace(localStorage, workspace); setPersist(true); setMessage('Saved locally. Further edits save in this browser. This is not cloud sync; anyone using this browser may access it.'); } catch { setMessage('Browser save unavailable. Use the downloads to keep your work.'); } }
+  async function exportBrief(format: 'html' | 'pdf', scope: TripExportScope) {
+    try {
+      if (format === 'html') download(`${trip.id}-${scope}-brief.html`, renderGenericItineraryHtml(workspace, { visual: false, scope }), 'text/html;charset=utf-8');
+      else {
+        setMessage('Preparing PDF…');
+        const response = await fetch('/api/exports/trip-pdf', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ snapshot: buildGenericTripExportSnapshot(workspace), theme: 'light', scope }) });
+        if (!response.ok) throw new Error('PDF export could not be prepared.');
+        const url = URL.createObjectURL(await response.blob()); const link = document.createElement('a'); link.href = url; link.download = `${trip.id}-${scope}-brief.pdf`; link.click(); setTimeout(() => URL.revokeObjectURL(url), 1000);
+      }
+      setMessage('Downloaded sanitized planning records with recorded states. No new provider verification was performed.');
+    } catch (cause) { setMessage(cause instanceof Error ? cause.message : 'Export blocked by validation.'); }
+  }
+  function bookingPreview(event: React.FormEvent<HTMLFormElement>) {
+    event.preventDefault(); const data = new FormData(event.currentTarget);
+    const record = { id: booking?.id || id(), kind: field(data, 'kind'), status: field(data, 'status'), startAt: field(data, 'start'), endAt: field(data, 'end'), provider: field(data, 'provider') };
+    const next = structuredClone(workspace);
+    next.trip.bookings = [...next.trip.bookings.filter(item => item.id !== record.id), record];
+    next.bookingDetails = [...next.bookingDetails.filter(item => item.bookingId !== record.id), { bookingId: record.id, label: field(data, 'label'), placeId: field(data, 'place'), notes: field(data, 'notes') }];
+    if (validateWorkspace(next).length) { setMessage('Booking preview rejected. Use ISO timestamps with a time zone, valid date order, and safe planning facts only.'); return; }
+    setReviewBase(workspace); setReview(next);
+  }
+  return <section className="generic-workspace" aria-label="Your trip workspace">
+    <header className="workspace-heading"><div><span className="trip-kicker">MANUAL · YOUR BROWSER</span><h2>{trip.name}</h2><p>{trip.dateWindow.earliestDeparture} → {trip.dateWindow.latestReturn} · {trip.travelers.adults} adults · {trip.preferences.pace}</p></div><button onClick={onClose}>Back to trip setup</button></header>
+    <p>Planning window with {trip.dateWindow.flexDays} flexible days. Date allocations are manual proposals. No keys required. Enter planning facts only, without private booking identifiers or personal details.</p>
+    <div className="new-trip-actions"><button className="trip-primary" onClick={save}>Save in this browser</button><button onClick={() => { try { const output = exportWorkspace(workspace); download(`${trip.id}-trip.json`, output.trip); setMessage('Downloaded current schema-valid trip. Download the itinerary separately to retain days and pins.'); } catch { setMessage('Export blocked by validation.'); } }}>Download trip JSON</button><button onClick={() => { try { download(`${trip.id}-itinerary.json`, exportWorkspace(workspace).itinerary); } catch { setMessage('Export blocked by validation.'); } }}>Download itinerary sidecar</button><button onClick={() => { try { download(`${trip.id}-visual-itinerary.html`, renderGenericItineraryHtml(workspace, { quotes: quoteEvidence, research: researchEvidence }), 'text/html;charset=utf-8'); setMessage('Downloaded a visual itinerary with the current days, activities, alternatives and recorded booking states.'); } catch { setMessage('HTML export blocked by validation.'); } }}>Download visual HTML</button></div>
+    <details className="new-trip-card"><summary>Compact travel, transit and hotel exports</summary><p>Keep a lightweight copy with dated transport and stay records, icons and booking states.</p><div className="new-trip-actions">{(['travel', 'transit', 'hotels'] as const).map(scope => <span key={scope}><button onClick={() => void exportBrief('html', scope)}>Download {scope} HTML</button><button onClick={() => void exportBrief('pdf', scope)}>Download {scope} PDF</button></span>)}</div></details>
+    <div className="new-trip-actions"><button onClick={() => { try { download('shared-activity-board.json', JSON.stringify(genericCollaborationBoard(workspace), null, 2)); setMessage('Shared activity board downloaded. Open Plan together, import and review it before creating a room. Bookings and research are excluded.'); } catch (cause) { setMessage(cause instanceof Error ? cause.message : 'Could not prepare the shared board.'); } }}>Prepare shared activity board</button><Link href="/collaborate">Open Plan together →</Link></div>
+    <p role="status" className="workspace-status">{message}</p>
+    <nav className="workspace-tabs" aria-label="Workspace sections">{[['route', 'Route & map'], ['days', 'Days & activities'], ['bookings', 'Stays & transport'], ['research', 'Research coverage'], ['account', 'Private account'], ['handoff', 'Agent handoff']].map(([key, label]) => <button key={key} aria-pressed={tab === key} onClick={() => setTab(key)}>{label}</button>)}</nav>
+    {tab === 'route' && <div>
+      <section className="new-trip-card"><h3>Destinations & geography</h3><p>{selectedRoute ? `Planning route: ${selectedRoute.label}` : "Input order — no route selected"}</p><p>{order.map(cityName).join(' → ')}</p><p>Connections show geographic relationships, not travel directions. Unknown coordinates are never guessed.</p><div>{points.length > 0 ? <GeographicMap points={points} segments={segments} basemap="city" initialFit="all" connect fitKey={`${workspaceKey(trip)}:${JSON.stringify(workspace.places)}`} label="Your manually mapped destinations" styleVariant="night" /> : <p className="workspace-status">No mapped destinations yet. Supply precise latitude and longitude below to open your geographic map.</p>}</div>
+        <ul>{trip.destinations.map(place => <li key={place.id}>{place.name} · {place.priority} · {workspace.places.some(pin => pin.placeId === place.id) ? 'manually mapped' : 'coordinates unknown'}</li>)}</ul>
+        <form onSubmit={event => { event.preventDefault(); const data = new FormData(event.currentTarget), placeId = field(data, 'place'); const next = { ...workspace, places: [...workspace.places.filter(pin => pin.placeId !== placeId), { placeId, lat: Number(field(data, 'lat')), lng: Number(field(data, 'lng')) }] }; apply(next); }}><h4>Add or update a destination pin</h4><div className="new-trip-fields"><label>Destination<select name="place">{trip.destinations.map(place => <option key={place.id} value={place.id}>{place.name}</option>)}</select></label><label>Latitude<input name="lat" type="number" min={-90} max={90} step="any" required /></label><label>Longitude<input name="lng" type="number" min={-180} max={180} step="any" required /></label></div><button>Save manual pin</button></form>
+      </section>
+      <section className="new-trip-card"><h3>Route alternatives</h3><label>Selected planning route<select value={workspace.selectedRouteId} onChange={event => apply({ ...workspace, selectedRouteId: event.target.value })}><option value="">None — input order only</option>{trip.routeCandidates.map(route => <option key={route.id} value={route.id}>{route.label}</option>)}</select></label><p>Keep materially different orders or allocations for review. No automatic optimization or price ranking is implied.</p>{trip.routeCandidates.map(route => <article key={route.id}><strong>{route.label}</strong><p>{route.placeOrder.map(cityName).join(' → ')} · {route.status}</p>{route.scoreReasons?.map(reason => <p key={reason}>{reason}</p>)}</article>)}
+        <form onSubmit={event => { event.preventDefault(); const data = new FormData(event.currentTarget); const indexes = field(data, 'order').split(',').map(value => Number(value.trim()) - 1); const next = structuredClone(workspace); next.trip.routeCandidates.push({ id: id(), label: field(data, 'label'), status: 'recommended', placeOrder: indexes.map(index => trip.destinations[index]?.id || '') }); apply(next); }}><label>Alternative label<input name="label" maxLength={120} required /></label><label>Destination order (numbers separated by commas)<input name="order" placeholder={trip.destinations.map((_, index) => index + 1).join(', ')} required /></label><p>{trip.destinations.map((place, index) => `${index + 1}: ${place.name}`).join(' · ')}</p><button>Add route recommendation</button></form>
+      </section>
+    </div>}
+    {tab === 'days' && <section className="new-trip-card"><h3>Editable day plan</h3><label>Planning day<select value={day} onChange={event => { setDay(event.target.value); setEditActivity(null); }}>{workspace.days.map(item => <option key={item.date}>{item.date}</option>)}</select></label><label>Day destination<select value={workspace.days.find(item => item.date === day)?.placeId || ''} onChange={event => apply({ ...workspace, days: workspace.days.map(item => item.date === day ? { ...item, placeId: event.target.value } : item) })}><option value="">Unassigned — choose manually</option>{trip.destinations.map(place => <option key={place.id} value={place.id}>{place.name}</option>)}</select></label>
+      {trip.anchors.filter(anchor => anchor.date === day).map(anchor => <p key={anchor.id}>Anchor: {anchor.label} · {anchor.locked ? 'locked' : 'proposed'} · {cityName(anchor.placeId || '')}</p>)}
+      {workspace.activities.filter(item => item.date === day).sort((a,b) => a.time.localeCompare(b.time)).map(item => <article key={item.id}><strong>{item.time} · {item.title}</strong><p>{cityName(item.placeId)} · {item.durationMinutes} minutes · {item.notes}</p><button onClick={() => setEditActivity(item.id)}>Edit activity</button><button onClick={() => apply({ ...workspace, activities: workspace.activities.filter(other => other.id !== item.id) })}>Remove activity</button></article>)}
+      <form key={activity?.id || `new-${day}`} onSubmit={event => { event.preventDefault(); const data = new FormData(event.currentTarget); const item = { id: activity?.id || id(), title: field(data, 'title'), date: field(data, 'date'), placeId: field(data, 'place'), time: field(data, 'time'), durationMinutes: Number(field(data, 'duration')), notes: field(data, 'notes') }; if (apply({ ...workspace, activities: [...workspace.activities.filter(other => other.id !== item.id), item] })) { event.currentTarget.reset(); setEditActivity(null); } }}><h4>{activity ? 'Edit activity' : 'Add an activity'}</h4><div className="new-trip-fields"><label>Activity date<select name="date" defaultValue={activity?.date || day}>{workspace.days.map(item => <option key={item.date}>{item.date}</option>)}</select></label><label>Activity title<input name="title" defaultValue={activity?.title} maxLength={120} required /></label><label>Destination<select name="place" defaultValue={activity?.placeId || workspace.days.find(item => item.date === day)?.placeId || trip.destinations[0].id}>{trip.destinations.map(place => <option key={place.id} value={place.id}>{place.name}</option>)}</select></label><label>Local start time<input name="time" type="time" defaultValue={activity?.time || '09:00'} required /></label><label>Duration in minutes<input name="duration" type="number" min={1} max={1440} defaultValue={activity?.durationMinutes || 60} required /></label><label className="new-trip-wide">Planning notes: hours, transfers, rest, fallback<textarea name="notes" maxLength={1000} defaultValue={activity?.notes} /></label></div><button>Save activity</button>{activity && <button type="button" onClick={() => setEditActivity(null)}>Cancel edit</button>}</form><p>Local activity times have no inferred time zone. Verify opening hours, travel buffers, meals, rest and reservations before locking.</p>
+      {conflicts.length > 0 && <div role="alert"><h4>Feasibility conflicts</h4><ul>{conflicts.map(conflict => <li key={conflict}>{conflict}</li>)}</ul></div>}
+    </section>}
+    {tab === 'bookings' && <section className="new-trip-card"><h3>Stays, transport & booking gaps</h3><p>Manual records preserve the state you explicitly review. Recommendation, quote and hold do not establish confirmation. Timestamps require an explicit offset; notes must omit all booking codes, seats and identifiers.</p>{trip.bookings.length === 0 && <p>No records yet. Add each required stay and transport leg as missing or recommended, then track reviewed evidence.</p>}{trip.bookings.map(item => <article key={item.id}><strong>{workspace.bookingDetails.find(value => value.bookingId === item.id)?.label || item.kind}</strong><p>{item.kind} · {item.status} · {item.provider || 'provider unknown'}</p><p>{item.startAt} → {item.endAt}</p><p>{workspace.bookingDetails.find(value => value.bookingId === item.id)?.notes}</p><button onClick={() => { setEditBooking(item.id); setReview(null); }}>Edit record</button></article>)}
+      <form key={booking?.id || 'new-booking'} onSubmit={bookingPreview}><h4>{booking ? 'Review a record change' : 'Add a manual record'}</h4><div className="new-trip-fields"><label>Planning label<input name="label" maxLength={120} required defaultValue={detail?.label || ''} /></label><label>Kind<select name="kind" defaultValue={booking?.kind || 'stay'}>{['stay', 'flight', 'rail', 'car', 'ferry', 'bus', 'activity', 'other'].map(kind => <option key={kind}>{kind}</option>)}</select></label><label>State<select name="status" defaultValue={booking?.status || 'missing'}>{bookingStates.map(state => <option key={state}>{state}</option>)}</select></label><label>Destination<select name="place" defaultValue={detail?.placeId || ''}><option value="">Transport / not assigned</option>{trip.destinations.map(place => <option key={place.id} value={place.id}>{place.name}</option>)}</select></label><label>Start with time zone<input name="start" defaultValue={booking?.startAt || `${day}T15:00:00+00:00`} required /></label><label>End with time zone<input name="end" defaultValue={booking?.endAt || `${day}T16:00:00+00:00`} required /></label><label>Provider / property name<input name="provider" maxLength={120} defaultValue={booking?.provider} /></label><label className="new-trip-wide">Safe evidence / cancellation / all-in cost notes<textarea name="notes" maxLength={1000} defaultValue={detail?.notes} /></label></div><button>Preview booking record</button>{booking && <button type="button" onClick={() => { setEditBooking(null); setReview(null); }}>Cancel edit</button>}</form>
+      {review && <section aria-label="Booking change preview"><h4>Review before applying</h4><pre>{JSON.stringify(review.trip.bookings.at(-1), null, 2)}</pre><pre>{JSON.stringify(review.bookingDetails.at(-1), null, 2)}</pre><p>Accept only the state supported by evidence you reviewed. This action does not contact a provider or make a booking.</p><button className="trip-primary" onClick={() => { if (reviewBase !== workspace) { setReview(null); setMessage("Your workspace changed after this preview. Preview the record again before accepting."); return; } if (apply(review)) { setReview(null); setEditBooking(null); } }}>Accept record change</button><button onClick={() => setReview(null)}>Discard change</button></section>}
+    </section>}
+    <div hidden={tab !== 'account'}><AccountWorkspaceControls workspace={workspace} onLoad={next => { if (validateWorkspace(next).length) { setMessage('Invalid account plan; nothing loaded.'); return; } if (quoteStorageKey(next.trip) !== quoteStorageKey(trip)) setQuoteEvidence(createQuoteComparison(next.trip)); if (researchStorageKey(next.trip) !== researchStorageKey(trip)) setResearchEvidence(createResearchLedger(next.trip)); setWorkspace(next); setDay(next.days[0].date); setPersist(false); setReview(null); setReviewBase(null); setEditActivity(null); setEditBooking(null); setTab('route'); setMessage('Reviewed account plan loaded into memory. Saving locally remains your choice.'); }} /></div>
+    <div hidden={tab !== 'research'}><button onClick={() => setProviderResearch(true)}>Open provider research</button><p>Search configured providers with your own eligible accounts. Review sources and record relevant quotes and coverage below; results never create bookings.</p><TripQuoteComparison key={quoteStorageKey(trip)} trip={trip} onDataChange={setQuoteEvidence} /><ResearchLedger key={researchStorageKey(trip)} trip={trip} onDataChange={setResearchEvidence} /></div>
+    {providerResearch && <IntegrationCenter open onClose={() => setProviderResearch(false)} seed={{kind:'cash-flights',origin:trip.origins.find(origin => origin.kind === 'airport')?.code,date:trip.dateWindow.earliestDeparture}} />}
+    {tab === 'handoff' && <section className="new-trip-card"><h3>Continue with your agent</h3><p>Download both JSON files to retain the trip and its itinerary. Research coverage has its own export. Downloads are planning records, never raw confirmations. No provider inventory has been checked by this workspace.</p><details><summary>Current normalized planning brief</summary><pre>{agentTripBrief(trip)}</pre></details><p>Unknowns: precise route dates, live availability/prices, time zones, transfer buffers, opening hours and actual confirmation evidence remain subject to review.</p></section>}
+  </section>;
+}

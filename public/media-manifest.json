@@ -2247,6 +2247,39 @@
       "privacyStatus": "approved",
       "privacyReview": "Verified sample mode and full-size pixel review; no credentials or booking identifiers; metadata stripped",
       "reviewedAt": "2026-10-14"
+    },
+    {
+      "path": "public/screenshots/generic-workspace.webp",
+      "sha256": "26942d3716a59446c7c0ebe96a278a4572501285ba21947f597e61071000ee41",
+      "credit": "Trippy reviewed public sample or invented planning record screenshot",
+      "sourceUrl": "repository:docs/SCREENSHOTS.md",
+      "license": "MIT app UI; depicted photographs and map/provider content retain their separate terms",
+      "rightsStatus": "approved",
+      "privacyStatus": "approved",
+      "privacyReview": "Full-size pixel review of reviewed public sample or invented records; no credentials, invitation capabilities or booking identifiers; metadata stripped",
+      "reviewedAt": "2026-10-14"
+    },
+    {
+      "path": "public/screenshots/visual-export.webp",
+      "sha256": "9751bf2c8d359ad701a14d860a72bb7fbfd3366c2f9caebe5a00603c34e3093e",
+      "credit": "Trippy reviewed public sample or invented planning record screenshot",
+      "sourceUrl": "repository:docs/SCREENSHOTS.md",
+      "license": "MIT app UI; depicted photographs and map/provider content retain their separate terms",
+      "rightsStatus": "approved",
+      "privacyStatus": "approved",
+      "privacyReview": "Full-size pixel review of reviewed public sample or invented records; no credentials, invitation capabilities or booking identifiers; metadata stripped",
+      "reviewedAt": "2026-10-14"
+    },
+    {
+      "path": "public/screenshots/reconciliation.webp",
+      "sha256": "1f81089fab79805f9eb42c4696fca9d542a56c4f0664987066aaf8fe9e8af8d5",
+      "credit": "Trippy reviewed public sample or invented planning record screenshot",
+      "sourceUrl": "repository:docs/SCREENSHOTS.md",
+      "license": "MIT app UI; depicted photographs and map/provider content retain their separate terms",
+      "rightsStatus": "approved",
+      "privacyStatus": "approved",
+      "privacyReview": "Full-size pixel review of reviewed public sample or invented records; no credentials, invitation capabilities or booking identifiers; metadata stripped",
+      "reviewedAt": "2026-10-14"
     }
   ],
   "remoteAssets": []

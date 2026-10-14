@@ -1,6 +1,6 @@
 import type { Trip2026Payload, TripActivity } from "./trip-model";
 import { createTripPdfReplica } from "./trip-export-pdf.ts";
-import { renderTripHtmlReplica } from "./trip-export-html.ts";
+import { renderTripHtmlReplica, renderTripHtmlCompact } from "./trip-export-html.ts";
 import { buildTripLogistics, calendarDates, logisticsItemsForDate } from "./trip-logistics.ts";
 
 export type TripExportState = {
@@ -11,7 +11,8 @@ export type TripExportState = {
 };
 
 export type TripExportTheme = "light" | "dark";
-export type TripExportKind = "csv" | "html" | "pdf-light" | "pdf-dark" | "pdf-visual";
+export type TripExportKind = "csv" | "html" | "html-travel" | "html-transit" | "html-hotels" | "pdf-light" | "pdf-dark" | "pdf-visual" | "pdf-transit" | "pdf-hotels";
+export type TripExportScope = "all" | "travel" | "transit" | "hotels";
 export type TripExportPrivacy = "share-safe" | "private-operational";
 export type TripPdfIcon = "flight" | "train" | "car" | "hotel" | "activity";
 
@@ -53,11 +54,12 @@ export type TripExportSnapshot = {
   catalogue: ExportCatalogueActivity[];
   transport: Array<{ date: string; from: string; to: string; mode: string; name: string; ride: string; door: string; hours: number; low: number; high: number; note: string }>;
   hotels: Array<{ city: string; name: string; neighborhood: string; tier: string; stars: number; low: number; high: number; why: string; tradeoff: string; image: string }>;
-  bookings: Array<{ kind: string; date: string; dateIso: string; endDate: string; title: string; detail: string; status: "confirmed" | "tbc" | "missing" | "conflict" }>;
+  bookings: Array<{ kind: string; date: string; dateIso: string; endDate: string; title: string; detail: string; status: "recommended" | "quoted" | "held" | "confirmed" | "tbc" | "missing" | "conflict" }>;
 };
 
 export type TripPdfOptions = {
   theme: TripExportTheme;
+  scope?: TripExportScope;
   visual?: boolean;
   imageLoader?: (url: string) => Promise<Uint8Array | null>;
   icons?: Partial<Record<TripPdfIcon, Uint8Array>>;
@@ -106,6 +108,7 @@ function safeImage(value: unknown): string {
     const parsed = new URL(cleanText(value, 2_048));
     if (parsed.protocol !== "https:" || parsed.username || parsed.password || parsed.port || !TRIP_EXPORT_IMAGE_HOSTS.has(parsed.hostname.toLowerCase())) return "";
     if ([...parsed.searchParams.keys()].some((key) => /token|key|auth|signature|credential|email|ref|confirm/i.test(key))) return "";
+    if (exportImageHasPrivateData(parsed.href)) return "";
     if (/\b[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}\b/i.test(decodeURIComponent(parsed.href))) return "";
     parsed.hash = "";
     return parsed.href;
@@ -117,6 +120,18 @@ function safeImage(value: unknown): string {
 function number(value: unknown, min = 0, max = 1_000_000): number {
   const parsed = Number(value);
   return Number.isFinite(parsed) ? Math.max(min, Math.min(max, parsed)) : 0;
+}
+
+/** Decode nested values before retaining or fetching an image URL. */
+export function exportImageHasPrivateData(value: string): boolean {
+  try {
+    let decoded = value.normalize("NFKC");
+    for (let depth = 0; depth < 8; depth++) { const next = decodeURIComponent(decoded).normalize("NFKC"); if (next === decoded) break; decoded = next; }
+    if (/%[a-f0-9]{2}/i.test(decoded)) return true;
+    const labels = decoded.replace(/[_-]+/g, " ");
+    if (/\b(?:sk-|ghp_|github_pat_|AIza|ya29\.)[a-z0-9_-]{12,}/i.test(decoded)) return true;
+    return /\b(?:api\s*key|access\s*token|client\s*secret|oauth|bearer|password|secret|token|confirmation|pnr|booking\s*(?:reference|number|code)|record\s*locator|loyalty|seat\s*(?:assignment|number|\d+[a-z]))\b|\b[a-z0-9._%+-]+@[a-z0-9.-]+\.[a-z]{2,}|mail\.google\.|mailto\x3a|\b(?:sk-|ghp_|github_pat_|AIza|ya29\.)[a-z0-9_-]{12,}/i.test(labels);
+  } catch { return true; }
 }
 
 export function buildTripExportSnapshot(data: Trip2026Payload, state: TripExportState, privacy: TripExportPrivacy = "share-safe"): TripExportSnapshot {
@@ -220,15 +235,15 @@ export function sanitizeTripExportSnapshot(value: unknown): TripExportSnapshot {
     schemaVersion: 1,
     title: redactPrivateExportText(source.title).slice(0, 240), subtitle: redactPrivateExportText(source.subtitle).slice(0, 240), start: redactPrivateExportText(source.start).slice(0, 10), end: redactPrivateExportText(source.end).slice(0, 10),
     stops: array("stops", 40).map(record).map((item) => ({ name: redactPrivateExportText(item.name).slice(0, 160), country: redactPrivateExportText(item.country).slice(0, 100), checkIn: redactPrivateExportText(item.checkIn).slice(0, 10), checkOut: redactPrivateExportText(item.checkOut).slice(0, 10), nights: number(item.nights, 0, 60), stay: redactPrivateExportText(item.stay) })),
-    days: array("days", 62).map(record).map((item) => ({
-      date: redactPrivateExportText(item.date).slice(0, 10), dayNumber: number(item.dayNumber, 1, 62), city: redactPrivateExportText(item.city).slice(0, 160), country: redactPrivateExportText(item.country).slice(0, 100), theme: redactPrivateExportText(item.theme).slice(0, 240), note: redactPrivateExportText(item.note),
+    days: array("days", 366).map(record).map((item) => ({
+      date: redactPrivateExportText(item.date).slice(0, 10), dayNumber: number(item.dayNumber, 1, 366), city: redactPrivateExportText(item.city).slice(0, 160), country: redactPrivateExportText(item.country).slice(0, 100), theme: redactPrivateExportText(item.theme).slice(0, 240), note: redactPrivateExportText(item.note),
       anchors: (Array.isArray(item.anchors) ? item.anchors : []).slice(0, 20).map(record).map((anchor) => ({ status: redactPrivateExportText(anchor.status).slice(0, 40), label: redactPrivateExportText(anchor.label), detail: redactPrivateExportText(anchor.detail) })),
       activities: (Array.isArray(item.activities) ? item.activities : []).slice(0, 50).map(record).map((activity) => ({ title: redactPrivateExportText(activity.title).slice(0, 240), description: redactPrivateExportText(activity.description), details: redactPrivateExportText(activity.details), category: redactPrivateExportText(activity.category).slice(0, 120), priority: priority(activity.priority), image: safeImage(activity.image) })),
     })),
     catalogue: array("catalogue", 500).map(record).map((activity) => ({ city: redactPrivateExportText(activity.city).slice(0, 160), title: redactPrivateExportText(activity.title).slice(0, 240), description: redactPrivateExportText(activity.description), details: redactPrivateExportText(activity.details), category: redactPrivateExportText(activity.category).slice(0, 120), priority: priority(activity.priority), image: safeImage(activity.image) })),
     transport: array("transport", 40).map(record).map((item) => ({ date: redactPrivateExportText(item.date).slice(0, 10), from: redactPrivateExportText(item.from).slice(0, 100), to: redactPrivateExportText(item.to).slice(0, 100), mode: redactPrivateExportText(item.mode).slice(0, 30), name: redactPrivateExportText(item.name).slice(0, 240), ride: redactPrivateExportText(item.ride).slice(0, 100), door: redactPrivateExportText(item.door).slice(0, 100), hours: number(item.hours, 0, 200), low: number(item.low), high: number(item.high), note: redactPrivateExportText(item.note) })),
     hotels: array("hotels", 40).map(record).map((item) => ({ city: redactPrivateExportText(item.city).slice(0, 160), name: redactPrivateExportText(item.name).slice(0, 240), neighborhood: redactPrivateExportText(item.neighborhood).slice(0, 160), tier: redactPrivateExportText(item.tier).slice(0, 100), stars: number(item.stars, 0, 5), low: number(item.low), high: number(item.high), why: redactPrivateExportText(item.why), tradeoff: redactPrivateExportText(item.tradeoff), image: safeImage(item.image) })),
-    bookings: array("bookings", 100).map(record).map((item) => ({ kind: redactPrivateExportText(item.kind), date: redactPrivateExportText(item.date).slice(0, 40), dateIso: redactPrivateExportText(item.dateIso).slice(0, 10), endDate: redactPrivateExportText(item.endDate).slice(0, 10), title: redactPrivateExportText(item.title), detail: redactPrivateExportText(item.detail), status: item.status === "confirmed" || item.status === "missing" || item.status === "conflict" ? item.status : "tbc" })),
+    bookings: array("bookings", 100).map(record).map((item) => ({ kind: redactPrivateExportText(item.kind), date: redactPrivateExportText(item.date).slice(0, 40), dateIso: redactPrivateExportText(item.dateIso).slice(0, 10), endDate: redactPrivateExportText(item.endDate).slice(0, 10), title: redactPrivateExportText(item.title), detail: redactPrivateExportText(item.detail), status: item.status === "confirmed" || item.status === "missing" || item.status === "conflict" || item.status === "recommended" || item.status === "quoted" || item.status === "held" ? item.status : "tbc" })),
   };
 }
 
@@ -252,16 +267,51 @@ export function renderTripCsv(snapshot: TripExportSnapshot): string {
   return `\uFEFF${rows.map((row) => row.map(csvCell).join(",")).join("\r\n")}\r\n`;
 }
 
-export function renderTripHtml(snapshot: TripExportSnapshot, { theme = "dark", visual = true, privacy = "share-safe" }: { theme?: TripExportTheme; visual?: boolean; privacy?: TripExportPrivacy } = {}): string {
+export function filterTripExportSnapshot(input: TripExportSnapshot, scope: TripExportScope = "all"): TripExportSnapshot {
+  const snapshot = sanitizeTripExportSnapshot(input);
+  if (scope === "all") return snapshot;
+  const transit = /flight|train|rail|airport|car\b|driv|transfer|ferry|bus|coach|departure|arrival/i;
+  const stay = /hotel|stay|lodging|check.?in|check.?out/i;
+  type LogisticsCategory = "transit" | "hotels" | "other";
+  // A hotel may be the endpoint of a transfer, never its booking category.
+  const categoryForKind = (kind: string): LogisticsCategory => transit.test(kind) ? "transit" : stay.test(kind) ? "hotels" : "other";
+  const keepsCategory = (category: LogisticsCategory) => category !== "other" && (scope === "travel" || scope === category);
+  const keepBooking = (booking: TripExportSnapshot["bookings"][number]) => keepsCategory(categoryForKind(booking.kind));
+  const anchorCategory = (anchor: TripExportSnapshot["days"][number]["anchors"][number], date: string): LogisticsCategory => {
+    const booking = snapshot.bookings.find(item => item.title === anchor.label && (item.dateIso || item.date.slice(0, 10)) === date);
+    if (booking) return categoryForKind(booking.kind);
+    const movement = snapshot.transport.find(item => item.date === date && (item.name === anchor.label || `${item.from} to ${item.to}` === anchor.label));
+    if (movement) return "transit";
+    // Legacy anchors lack kind metadata. Explicit modes/transfers outrank place
+    // names; general arrival/check-in language still belongs to a hotel stay.
+    if (/flight|train|rail|car\b|driv|transfer|ferry|bus|coach/i.test(anchor.label)) return "transit";
+    if (stay.test(anchor.label)) return "hotels";
+    return transit.test(anchor.label) ? "transit" : "other";
+  };
+  return {
+    ...snapshot, title: `${snapshot.title} · ${scope === "transit" ? "Transit brief" : scope === "hotels" ? "Hotel brief" : "Travel brief"}`,
+    catalogue: [],
+    transport: scope === "hotels" ? [] : snapshot.transport,
+    hotels: scope === "transit" ? [] : snapshot.hotels,
+    bookings: snapshot.bookings.filter(keepBooking),
+    stops: snapshot.stops.map(stop => scope === "transit" ? { ...stop, stay: "" } : stop),
+    days: snapshot.days.map(day => ({ ...day, activities: [], note: "", theme: scope === "transit" ? "Transport and arrival context" : scope === "hotels" ? "Stay and check-in context" : "Travel essentials", anchors: day.anchors.filter(anchor => keepsCategory(anchorCategory(anchor, day.date))) })),
+  };
+}
+
+export function renderTripHtml(snapshot: TripExportSnapshot, { theme = "dark", visual = true, privacy = "share-safe", scope = "all" }: { theme?: TripExportTheme; visual?: boolean; privacy?: TripExportPrivacy; scope?: TripExportScope } = {}): string {
   void privacy;
-  return renderTripHtmlReplica(sanitizeTripExportSnapshot(snapshot), { theme, visual });
+  const safe = filterTripExportSnapshot(snapshot, scope);
+  return visual ? renderTripHtmlReplica(safe, { theme, visual }) : renderTripHtmlCompact(safe, { theme, scope });
 }
 
 export async function createTripPdf(snapshotInput: TripExportSnapshot, options: TripPdfOptions): Promise<Uint8Array> {
-  return createTripPdfReplica(snapshotInput, options);
+  return createTripPdfReplica(filterTripExportSnapshot(snapshotInput, options.scope), options);
 }
 
 export function tripExportFilename(kind: TripExportKind): string {
+  if (kind.startsWith("html-")) return `trippy-2026-${kind.slice(5)}-brief.html`;
+  if (kind === "pdf-transit" || kind === "pdf-hotels") return `trippy-2026-${kind.slice(4)}-brief.pdf`;
   return kind === "csv" ? "trippy-2026-itinerary.csv" : kind === "html" ? "trippy-2026-visual-dossier.html" : kind === "pdf-visual" ? "trippy-2026-visual-dossier.pdf" : `trippy-2026-itinerary-${kind === "pdf-light" ? "light" : "dark"}.pdf`;
 }
 
@@ -277,9 +327,10 @@ export async function downloadTripExport(data: Trip2026Payload, state: TripExpor
   const snapshot = buildTripExportSnapshot(data, state, effectivePrivacy);
   const privateName = effectivePrivacy === "private-operational" ? `trippy-2026-private-operational.${kind === "csv" ? "csv" : "html"}` : tripExportFilename(kind);
   if (kind === "csv") return saveBlob(new Blob([renderTripCsv(snapshot)], { type: "text/csv;charset=utf-8" }), privateName);
-  if (kind === "html") {
-    let html = renderTripHtml(snapshot, { privacy: effectivePrivacy });
-    const images = [...new Set([...snapshot.catalogue.map((item) => item.image), ...snapshot.days.flatMap((day) => day.activities.map((item) => item.image)), ...snapshot.hotels.map((hotel) => hotel.image)].filter(isBundledTripImage))];
+  if (kind === "html" || kind.startsWith("html-")) {
+    const scope: TripExportScope = kind === "html-transit" ? "transit" : kind === "html-hotels" ? "hotels" : kind === "html-travel" ? "travel" : "all";
+    let html = renderTripHtml(snapshot, { privacy: effectivePrivacy, visual: kind === "html", scope });
+    const images = kind === "html" ? [...new Set([...snapshot.catalogue.map((item) => item.image), ...snapshot.days.flatMap((day) => day.activities.map((item) => item.image)), ...snapshot.hotels.map((hotel) => hotel.image)].filter(isBundledTripImage))] : [];
     // Embed reviewed bundled photos so a downloaded dossier works independently
     // of localhost or the maintainer's website. Never embed arbitrary URLs.
     for (let offset = 0; offset < images.length; offset += 8) {
@@ -301,7 +352,7 @@ export async function downloadTripExport(data: Trip2026Payload, state: TripExpor
   }
   const response = await fetch("/api/exports/trip-pdf", {
     method: "POST", headers: { "Content-Type": "application/json" }, cache: "no-store",
-    body: JSON.stringify({ snapshot, theme: kind === "pdf-dark" ? "dark" : "light", visual: kind === "pdf-visual" }),
+    body: JSON.stringify({ snapshot, theme: kind === "pdf-dark" ? "dark" : "light", visual: kind === "pdf-visual", scope: kind === "pdf-transit" ? "transit" : kind === "pdf-hotels" ? "hotels" : "all" }),
   });
   if (!response.ok) { const body = await response.json().catch(() => ({})) as { error?: string }; throw new Error(body.error || "The PDF export could not be created."); }
   saveBlob(await response.blob(), tripExportFilename(kind));

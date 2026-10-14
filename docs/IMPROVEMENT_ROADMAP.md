@@ -1,47 +1,45 @@
 # Improvement roadmap
 
-Trippy has a working sample atlas, generic validated draft creation, sanitized exports and optional shared activity/day rooms. It does not yet offer one complete arbitrary-trip workspace. This roadmap prioritizes the remaining product gaps; it is not a release promise or authorization to provision services, access private records or deploy.
+The local candidate now includes a generic manual trip workspace, research and quote evidence, richer itinerary exports, reviewed shared-board handoff, reconciliation/recovery, room lifecycle and optional encrypted accounts. This roadmap describes remaining work, not a promise of live coverage or authorization to provision, publish or deploy. See [current status](IMPLEMENTATION_STATUS.md), [exports](EXPORTS.md) and [verification](RELEASE_REPORT.md).
 
-For implemented behavior and verification boundaries, see [implementation status](IMPLEMENTATION_STATUS.md). Source audit: 2026-10-13, principally `src/components/new-trip-planner.tsx`, `src/components/collaboration-workspace.tsx`, `src/lib/collaboration/store.ts` and the collaboration API routes. Provider adapters have mock/degradation coverage, not proof of live eligible accounts. Hosted Postgres still needs private integration validation.
+## 1. Carry evidence through every decision
 
-## 1. Connect new-trip drafts to the full workspace
+**Built:** Generic dates/cities, explicit maps, route alternatives, days/activities and previewed booking states; per-trip research coverage and recorded cash/award/stay/transport comparison.
 
-**Gap:** `/plan` can create, validate, preview and accept arbitrary-trip planning records, download JSON and copy an agent brief. It does not feed the detailed atlas's maps, itinerary or quote-selection views. The atlas remains specialized around the 2026 sample.
+**Remaining:** Activity hours, coordinates, duration, stay/transport terms and booking facts need consistently attached per-item sources/checked times. Companion ledgers currently require manual correlation. No automatic geocoding, catalogue discovery or fresh quotes are implied.
 
-**Acceptance:** Two materially different invented trips with different dates, continents and city counts render through the same map/day/hotel/transport views. Loading either never imports sample bookings, cities or dates. Edits and persisted preferences are isolated by trip ID; unknown coordinates and unpriced options remain unknown. Schema validation and a browser flow verify preview → acceptance → workspace editing → sanitized export.
+**Acceptance:** Two materially different invented trips retain sources, uncertainty, price basis and rejected alternatives through editing, JSON interchange and reading exports. Missing taxes, time zones, schedules and quote age remain visible. All selected legs/stays and each retained city have a coverage receipt or explicit gap; repricing changes neither a locked anchor nor a booking state silently.
 
-## 2. Make shared editing easier to recover and reconcile
+## 2. Validate research against eligible live providers
 
-**Built:** Owners and editors add, edit and delete activities; assign, unassign and reorder them within days. Owners manage metadata and invitations; viewers cannot write. Four-second polling and revision-conditional saves detect concurrent changes without silently overwriting them. Conflicts preserve the board and unfinished activity form in the current tab, offer a validated share-safe board JSON download (excluding unfinished form fields), and require confirmation before discarding local edits to load the latest state. Date changes retain in-range day assignments and return out-of-range assignments to the catalogue.
+**Built:** Optional adapters, safe handoffs, manual quote math and a ledger that distinguishes unsearched, researched, unsupported and failed work.
 
-**Gap:** Conflicting states need a clearer, field-level reconciliation workflow. The current room UI reviews the incoming state and offers explicit discard/load, without merging or reimporting downloaded boards. Automatic recovery after reload remains future work. Existing polling, unload and header-link protection does not cover every browser-history navigation.
+**Remaining:** Actual account eligibility, party/cabin/currency coverage, quotas, cached freshness, complete award segments/taxes and dated operator service remain unverified by local mocks. More providers should follow observed coverage gaps.
 
-**Acceptance:** A two-browser scenario with independent activity and day edits displays both versions, preserves the local draft and applies only explicitly accepted changes against the current revision. A second concurrent update interrupts reconciliation safely. Role revocation prevents further writes. Any draft recovery is explicit, share-safe and keeps access capabilities separate from planning data.
+**Acceptance:** An explicitly authorized private environment tests bounded queries and failures without credentials/raw identifiers in artifacts. Comparisons disclose dates/airports/programs/modes searched and omitted, equivalent party/room/terms, transfer ratio/delay and source-point valuation. A failed search never becomes evidence of no inventory. No global-cheapest claim follows a bounded search.
 
-## 3. Complete the room lifecycle
+## 3. Prove hosted persistence and operational custody
 
-**Gap:** Revocable editor/viewer invitations exist; room deletion, invitation expiry and owner-link rotation do not. Hosted Postgres is implemented but has no live database verification receipt.
+**Built:** Durable SQLite room tests, role/expiry/revocation/rotation/deletion, reconciliation and consent-based recovery. Optional Better Auth accounts use tenant predicates, encryption, revision checks and a 20-plan account limit.
 
-**Acceptance:** Owners can revoke or expire invitations, rotate ownership access and delete a room with a clearly stated retention policy. Tests verify old links fail, viewer/editor roles cannot manage ownership, and deleted data is removed according to that policy. A user-authorized private Postgres environment verifies restart persistence, concurrent writes and revocation across separate server instances. Do not label hosted support production-validated until these checks pass.
+**Remaining:** Hosted Postgres tests, real password-reset transport, enrollment/abuse controls, operational backups/retention and encryption-key rotation procedure. Capability rooms remain separate from account identity and booking storage.
 
-## 4. Make research coverage and freshness visible in the trip
+**Acceptance:** User-authorized Postgres tests exercise separate instances, concurrent writes, restart, revoked/expired/deleted access and tenant isolation. Account deletion/password requirements and storage quotas are independently checked. Operator documentation distinguishes logical deletion from local copies/backups, and has a tested key-recovery/rotation plan. No outbound email or cloud resources are created as a side effect of implementation.
 
-**Built:** Optional cash, award, hotel and search adapters coexist with manual entry and safe provider handoffs. Research results require eligibility, attribution and checked-at times; a result never creates a booking.
+## 4. Improve shared planning without silent data loss
 
-**Gap:** A reusable trip-level coverage ledger should make outstanding hotels, city research, flexible dates, gateways, rail/car options and booking gaps easier to inspect from the workspace.
+**Built:** Generic workspace to reviewed board JSON; board import/export; field/entity/day reconciliation; explicit choices; retained local board/base with no credentials; expired invitations and owner lifecycle controls.
 
-**Acceptance:** Each requested research category has a source, checked-at time, evidence state, limitations and unresolved action. A materially different three-route comparison retains rejected alternatives and cash/points assumptions. Missing, stale or unavailable provider results remain visible; unavailable award search never implies no seats exist. Account-backed tests run only in an explicitly authorized private environment, with no credentials or raw response identifiers entering artifacts.
+**Remaining:** Presence, audit history, richer comparison of route/stay proposals and optional controlled synchronization. Unfinished forms are deliberately excluded from retained/exported board data. Lost owner capabilities have no identity-based recovery.
 
-## 5. Add private-trip accounts only with a complete privacy model
+**Acceptance:** Two-browser editing preserves both versions, deletion/reference conflicts fail validation, and another revision interrupts reconciliation. Device recovery is explicitly reviewed; disabling it removes the retained copy. Any future synchronization names exactly which records move, requires review and keeps bookings/private identifiers outside rooms.
 
-**Gap:** Capability-based share-safe rooms are not authenticated private-trip accounts. Private confirmation imports have a read-only candidate preview, without a durable approve/reject ledger.
+## 5. Finish imports and representative release review
 
-**Acceptance:** Document ownership, access, retention, deletion and recovery before introducing a private-trip database. Test tenant isolation, authorization, encrypted storage where required, import deduplication and explicit approve/reject decisions. Raw email and operational booking identifiers remain outside public/exportable records. Provider quotas and budgets are isolated by user, and exports remain sanitized.
+**Built:** Sanitized structured/reading exports, broad local gates, synthetic account/room/model tests and browser flows.
 
-## 6. Verify readiness on representative devices and failures
+**Remaining:** Durable private confirmation candidate approve/reject/retention ledger; independent accessibility and exact-candidate public-release review; broader phone/keyboard/offline/failure coverage. Local reference styling informed the export design; private reference documents are not repository assets.
 
-**Built:** Repository lint, type checks, tests, schema checks, production builds, private-boundary scans and sample browser flows provide a local quality gate.
+**Acceptance:** An authorized import deduplicates and shows redacted changes before writing; raw mail and traveler identifiers never enter exportable records. Exported days, activities, selected routes and recorded states match the current workspace. Verify rich HTML, compact travel/transit/hotel copies, CSV and supported PDF variants, offline limitations and meaningful collection-bound errors. Preserve existing atlas/light/dark modes and photos.
 
-**Acceptance:** Run an independent accessibility and public-release review of the exact candidate, keyboard and phone planning flows, two-browser collaboration, offline/map failures and materially different invented trips. Record which storage/provider modes were exercised and which remain unverified. A passing local gate does not authorize publication or deployment.
-
-The next product milestone should combine priorities 1 and 2: a traveler starts their own trip, edits real days and safely reconciles a friend's suggestions. More providers should follow demonstrated coverage gaps and eligible account access.
+The next milestone is evidence continuity and privately verified hosted/provider operation. The implemented manual path remains usable while these gaps are addressed.

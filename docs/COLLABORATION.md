@@ -4,9 +4,9 @@ TRIPPY supports reviewed file exchange and optional live activity/day rooms. The
 
 ## Live activity/day rooms
 
-Open `/collaborate`, prepare a planning board or load the reviewed public sample, and review the content before publishing. The board contains title, dates, cities, activities and assignments to days. Owners update that trip frame and grant/revoke editor or viewer invitations. Editors add/edit activities and arrange days; viewers read. Booking records, booking-state transitions, raw email, traveler identifiers, provider credentials and private trip DTOs are outside this format.
+Open `/collaborate`, prepare a planning board or load the reviewed public sample, and review the content before publishing. The board contains title, dates, cities, activities and assignments to days. Owners update that frame, issue expiring invitations, revoke access, replace owner links and delete rooms under current-revision checks. Editors add/edit activities and arrange days; viewers read. Booking records, booking-state transitions, raw email, traveler identifiers, provider credentials and private trip DTOs are outside this format.
 
-The browser polls every four seconds. Each save carries its last observed revision. Permission is checked inside the same database transaction as the conditional write. A stale save returns the latest safe state and preserves the draft for explicit review/reload. This is direct editing under the granted role, not a proposal-by-proposal owner approval ledger or automatic three-way merge.
+The browser polls every four seconds. Each save carries its last observed revision. Permission is checked inside the same database transaction as the conditional write. A stale save preserves the draft for explicit original/local/latest field/entity/day reconciliation; choices validate against references and the latest revision before a separate save. Consent-based device recovery excludes credentials and unfinished forms. This is direct editing under the granted role, not a proposal-by-proposal owner approval ledger or unattended merge.
 
 | Storage mode | Supported deployment | Requirements |
 | --- | --- | --- |
@@ -21,16 +21,16 @@ The sample endpoint explicitly loads public-only sample data and projects an all
 
 ## Reviewed file exchange
 
-Downloads are copies. `/plan` validates and previews a proposed normalized draft, then accepts the whole record after manual comparison with the current draft. Supported atlas `.trippy` bundles propose existing activity assignments, priorities and known hotel/transport selections. Their v1 format cannot add activities, rewrite dates/cities, import confirmations or detect concurrent edits. New attractions may be plain-language suggestions or activities added to a separate live board.
+Downloads are copies. Generic workspaces prepare validated city/activity/day board JSON; preview/import it in `/collaborate` before separate reviewed room creation. Bookings and research are excluded, and subsequent changes do not sync automatically. `/plan` validates and previews a proposed normalized draft, then accepts the whole record after manual comparison with the current draft. Supported atlas `.trippy` bundles propose existing activity assignments, priorities and known hotel/transport selections. Their v1 format cannot add activities, rewrite dates/cities, import confirmations or detect concurrent edits. New attractions may be plain-language suggestions or activities added to a separate live board.
 
 The update inbox supports local acceptance or rejection. A day list, saved-items list or evidence list may replace the current list; review each affected value against the latest plan. A bundle ID is not authenticated authorship and a file snapshot is not a saved three-way merge base. Retain rejected alternatives and conflicts. Downloads cannot be revoked.
 
 ## Remaining product work
 
-- Account identity, recovery, private-trip authorization and encrypted private storage.
+- Hosted private-account operation and real recovery transport verification; optional encrypted accounts are implemented separately from room capabilities. See [accounts](PRIVATE_ACCOUNTS.md).
 - Versioned offline operation proposals, saved merge bases, partial decisions, immutable review receipts and history.
-- Presence, comments, reconnect/outbox/rebase, room expiry/deletion and retention controls.
-- Generic detailed atlas rendering and explicit integration among `/plan`, live boards and atlas records.
+- Presence, comments, automatic room expiry, audit history and broader reconnect/outbox behavior; invitation expiry, owner rotation/deletion and consent-based device recovery are implemented.
+- Deeper specialized atlas integration and controlled synchronization; generic manual rendering and reviewed JSON board handoff are implemented.
 - Distributed abuse controls, hosted backup/restore drills and live Postgres integration verification before an operated hosted launch.
 
 These require their own review and operations decisions. Live rooms do not confer authority to publish a repository, deploy, read private files or mail, make a booking, send invitations or mutate a calendar. [Deployment modes](DEPLOYMENT_MODES.md) · [Collaborative agent prompt](../prompts/COLLABORATIVE_TRIP_GUIDE.md).

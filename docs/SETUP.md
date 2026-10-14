@@ -11,7 +11,7 @@ npm ci
 npm run dev
 ```
 
-Visit [http://localhost:3000](http://localhost:3000) for the detailed sample atlas or [http://localhost:3000/plan](http://localhost:3000/plan) to start your own normalized trip. No account, API key, Gmail connection, MCP or paid travel provider is needed. The atlas loads `examples/trips/2026-europe-sample.json`; its edits persist in browser-local storage. The `/plan` draft has no persistence or server upload and clears on reload.
+Visit [localhost:3000](http://localhost:3000) for the reviewed sample or [the generic planner](http://localhost:3000/plan) for your own dates/cities. No provider/account key is needed. Atlas edits are browser-local; `/plan` previews are in memory, while accepted manual workspaces support explicit browser save/resume/download. Optional encrypted account uploads require a separate selected save action.
 
 Run the standard verification suite before sharing code:
 
@@ -29,7 +29,7 @@ For a self-hosted HTTPS reverse proxy, preserve the public Host. If TLS terminat
 
 ## Create your own trip
 
-In `/plan`, enter a name, start/end dates, cities and acceptable origins, then travelers, pace, date flexibility and themes. Preview the validated normalized record, explicitly accept the draft, download its JSON and copy the detailed agent brief. Paste an agent’s normalized response to validate and preview it before another explicit acceptance. Keep downloaded real trips private-local. This creates a structured planning record; it does not populate the sample atlas, research prices, generate route candidates, make bookings or provide recovery after reload.
+In `/plan`, enter your dates/cities/origins/travelers/preferences, validate and preview, then accept into the manual workspace. Add route alternatives, day assignments/activities, explicit coordinate pins and previewed stays/transport. Record sourced research/quotes separately. Save/resume explicitly in this browser or download editable/reading copies; no automated search or confirmation occurs. [Formats](EXPORTS.md).
 
 For a local-file workflow:
 
@@ -127,7 +127,7 @@ NEXT_PUBLIC_CITY_MAP_STYLE_URL=https://your-map-provider.example/style.json
 
 ## Choose hosting you own
 
-Stay local for private trips. For a reviewed redacted website, Vercel offers managed Next.js hosting; a Node server on infrastructure you control avoids requiring a Vercel account. Neither choice adds identity, private cloud storage, sync or host-local connectors. Compare current host terms, quotas, costs and region needs before choosing; no hosting or provider plan is assumed free. See [deployment modes](DEPLOYMENT_MODES.md).
+Local-private is the no-account default. A user-owned hosted instance may separately enable encrypted accounts and reviewed live rooms; hosting alone enables neither feature nor agent-host connectors. Review eligibility, costs, HTTPS, custody/backups and private gates before authorized deployment. [Accounts](PRIVATE_ACCOUNTS.md) · [Deployment modes](DEPLOYMENT_MODES.md).
 
 ## Vercel deployment
 
@@ -139,7 +139,7 @@ Vercel deployment is optional and does not change the public-release gate. It cr
 4. Restrict any browser map key to the deployment domains; use server-side secret storage for private provider keys.
 5. Redeploy after environment-variable changes. Run `npm run check`, then complete the [public release checklist](PUBLIC_RELEASE_CHECKLIST.md) before any source publication.
 
-The deployment must degrade to manual/sample mode when optional providers are unavailable. It must not expose debug errors, account identifiers, raw provider responses, or private imports. Browser edits remain in that browser's local storage: there is no account, durable trip database, cross-device sync, or server-side recovery. Do not use a hosted instance for private itinerary, raw mail, booking-document, or confirmation data.
+The deployment must degrade to manual/sample mode when optional providers are unavailable. It must not expose debug errors, account identifiers, raw provider responses, or private imports. Browser edits remain in that browser's local storage: optional encrypted accounts need separate configuration and explicit save/load; automatic browser-to-server sync and real recovery email remain absent. Do not use a hosted instance for private itinerary, raw mail, booking-document, or confirmation data.
 
 These steps follow the official [Next.js on Vercel guide](https://vercel.com/docs/frameworks/full-stack/nextjs) and [environment-variable guide](https://vercel.com/docs/environment-variables), checked 2026-10-13. Credentials remain yours; the maintainers do not receive them.
 
@@ -176,3 +176,7 @@ Inspect the resulting artifact and staged release tree for email addresses, Gmai
 ## Deployment artifact privacy
 
 The release gate checks Next.js function file traces as well as public bundles. `next.config.ts` excludes ignored private data and environment files from every route trace; `.vercelignore` separately excludes them from local CLI uploads. Run `npm run build:boundary:check` after building and again after creating `.next/standalone` or `.vercel/output` packages. A development-only runtime gate does not make it safe to upload private source files. Never package personal trips or credentials with a hosted deployment.
+
+## Optional encrypted private accounts
+
+Follow [PRIVATE_ACCOUNTS](PRIVATE_ACCOUNTS.md) for `PRIVATE_ACCOUNTS_ENABLED`, `BETTER_AUTH_URL`, `BETTER_AUTH_SECRET`, `PRIVATE_ACCOUNTS_ENCRYPTION_KEY` and optional user-owned Postgres configuration. Enter values privately in ignored local/server settings; preserve existing environment files. No signup, provider access, database provisioning or deployment occurs just from reading setup. Browser/manual mode remains available with accounts disabled. Check tenant isolation, password-confirmed deletion, revision conflicts and the 20-plan account limit using synthetic local data before an operated launch. Hosted persistence and real password recovery still require separate authorized verification.

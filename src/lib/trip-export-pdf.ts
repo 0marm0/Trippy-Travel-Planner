@@ -64,6 +64,7 @@ function dateLabel(value: string, weekday = false): string {
 }
 
 function iconFor(value: string, fallback: TripPdfIcon = "activity"): TripPdfIcon {
+  if (/transfer|taxi|pickup/i.test(value)) return "car";
   if (/train|rail|station|express|sleeper/i.test(value)) return "train";
   if (/car|drive|rental|road|pickup|transfer|taxi/i.test(value)) return "car";
   if (/hotel|stay|room|lodging|airbnb/i.test(value)) return "hotel";
@@ -71,17 +72,24 @@ function iconFor(value: string, fallback: TripPdfIcon = "activity"): TripPdfIcon
   return fallback;
 }
 
+/** Explicit booking kind / selected mode takes precedence over place names. */
+export function tripPdfIconFor(kind: string, context = ""): TripPdfIcon {
+  const explicit = iconFor(kind);
+  return explicit === "activity" && !/^(?:activity|experience)$/i.test(kind.trim()) ? iconFor(context) : explicit;
+}
+
 function classify(status: string, title = "", detail = ""): Tone {
   if (status === "confirmed" || /^confirmed$/i.test(status)) return "confirmed";
+  if (/^(?:recommended|quoted|held)$/i.test(status)) return "planned";
   if (/^(?:missing|tbc|conflict)$/i.test(status)) return "action";
   const value = `${status} ${title} ${detail}`;
   if (/missing|needs? booking|book\b|verify|tbc|conflict|action|cancel|duplicate|ticket first/i.test(value)) return "action";
-  if (/confirmed|booked(?!.*(?:tbc|verify))/i.test(value)) return "confirmed";
   return "planned";
 }
 
 function toneColor(tone: Tone): RGB { return tone === "action" ? RED : tone === "confirmed" ? GREEN : GOLD; }
 function toneLabel(tone: Tone, source = ""): string {
+  if (/^(?:recommended|quoted|held|missing|conflict)$/i.test(source)) return source.toUpperCase();
   if (tone === "action") return /conflict|duplicate/i.test(source) ? "ACTION" : /tbc|verify/i.test(source) ? "VERIFY" : "BOOK / VERIFY";
   return tone === "confirmed" ? "CONFIRMED" : "PLANNED";
 }
@@ -127,14 +135,16 @@ function collectItems(snapshot: TripExportSnapshot): DossierItem[] {
   const items: DossierItem[] = [];
   for (const day of snapshot.days) for (const anchor of day.anchors) {
     const tone = classify(anchor.status, anchor.label, anchor.detail);
-    items.push({ date: day.date, kind: iconFor(`${anchor.label} ${anchor.detail}`), status: toneLabel(tone, anchor.status), title: anchor.label, detail: anchor.detail, tone, source: "anchor" });
+    const booking = snapshot.bookings.find(item => item.title === anchor.label && (item.dateIso || item.date.slice(0, 10)) === day.date);
+    const movement = snapshot.transport.find(item => item.date === day.date && (item.name === anchor.label || `${item.from} to ${item.to}` === anchor.label));
+    items.push({ date: day.date, kind: tripPdfIconFor(booking?.kind || movement?.mode || "", `${anchor.label} ${anchor.detail}`), status: toneLabel(tone, anchor.status), title: anchor.label, detail: anchor.detail, tone, source: "anchor" });
   }
   for (const booking of snapshot.bookings) {
     const tone = classify(booking.status, booking.title, booking.detail);
-    items.push({ date: booking.dateIso || booking.date.slice(0, 10), kind: iconFor(`${booking.kind} ${booking.title} ${booking.detail}`), status: booking.status === "conflict" ? "ACTION" : toneLabel(tone, booking.status), title: booking.title, detail: booking.detail, tone, source: "booking" });
+    items.push({ date: booking.dateIso || booking.date.slice(0, 10), kind: tripPdfIconFor(booking.kind, `${booking.title} ${booking.detail}`), status: toneLabel(tone, booking.status), title: booking.title, detail: booking.detail, tone, source: "booking" });
   }
   for (const transport of snapshot.transport) {
-    items.push({ date: transport.date, kind: iconFor(`${transport.mode} ${transport.name}`), status: "PLANNED", title: `${transport.from} to ${transport.to}`, detail: `${transport.name} | ${transport.ride} | selected planning option`, tone: "planned", source: "transport" });
+    items.push({ date: transport.date, kind: tripPdfIconFor(transport.mode, transport.name), status: "PLANNED", title: `${transport.from} to ${transport.to}`, detail: `${transport.name} | ${transport.ride} | selected planning option`, tone: "planned", source: "transport" });
   }
   return items.sort((a, b) => a.date.localeCompare(b.date) || (a.tone === "action" ? -1 : 1));
 }
@@ -258,7 +268,7 @@ function ledgerItems(snapshot: TripExportSnapshot, stopIndex: number, items: Dos
   const seen = new Set<string>();
   const within = items.filter((item) => {
     if (assignedStopIndex(snapshot, item) !== stopIndex || item.source === "transport" || (item.source !== "booking" && item.tone !== "action")) return false;
-    const key = `${cleanPdfText(item.title).toLowerCase()}|${item.tone}`;
+    const key = `${cleanPdfText(item.title).toLowerCase()}|${item.date}|${item.status}|${item.detail}|${item.source}`;
     if (seen.has(key)) return false;
     seen.add(key);
     return true;
@@ -294,7 +304,6 @@ function drawLedger(dossier: Dossier, allItems: DossierItem[]) {
   };
   newLedgerPage();
   const overflow: DossierItem[] = [];
-  let ledgerRowCount = 0;
   ledgerGroups(dossier.snapshot, allItems).forEach(({ stop, index, rows: sourceRows }) => {
     let rows = sourceRows.length ? sourceRows : [{ date: stop.checkIn, kind: "hotel" as const, status: "PLANNED", title: stop.stay || "Stay not selected", detail: "Planning details not recorded", tone: "planned" as const, source: "hotel" as const }];
     let continued = false;
@@ -304,7 +313,6 @@ function drawLedger(dossier: Dossier, allItems: DossierItem[]) {
       let capacity = Math.floor((columns[column].y - 45 - 41) / 36);
       if (capacity < 1) { newLedgerPage(true); column = 0; capacity = Math.floor((columns[column].y - 45 - 41) / 36); }
       const chunk = rows.slice(0, capacity); rows = rows.slice(chunk.length);
-      ledgerRowCount += chunk.length;
       const { x } = columns[column]; let y = columns[column].y; const color = CITY_COLORS[index % CITY_COLORS.length];
       page.drawRectangle({ x, y: y - 25, width: colW, height: 25, color });
       drawFlag(page, stop.country, x + 11, y - 18, 16, 9.5);
@@ -330,7 +338,7 @@ function drawLedger(dossier: Dossier, allItems: DossierItem[]) {
   // The supplied operational design intentionally keeps the normal itinerary
   // to a compact five-page scan. Only unusually crowded exports receive a
   // full-text continuation appendix.
-  if (ledgerRowCount > 34) drawLedgerAppendix(dossier, overflow);
+  if (overflow.length) drawLedgerAppendix(dossier, overflow);
 }
 
 function drawLedgerAppendix(dossier: Dossier, items: DossierItem[]) {

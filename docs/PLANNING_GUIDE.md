@@ -9,8 +9,8 @@ The goal is the best **feasible value among the alternatives you researched**. A
 | What you want | Current workflow | Persistence and limits |
 | --- | --- | --- |
 | Explore the detailed demonstration | Open `/`; use its atlas, city maps, itinerary, comparisons and booking tracking | Specialized Europe 2026 sample; edits are browser-local. Sample dates/prices are illustrative, not current travel advice. |
-| Create your own trip | Open `/plan`; enter your dates/cities/origins, preview, accept and download planning JSON | Generic normalized draft; no server upload or persistence. Reload clears it. It does not automatically load into the detailed atlas. |
-| Keep a private agent-led record | Use `trip:init`, then `trip:validate` | Ignored `.private/trips/` JSON; agent/manual research follows the schema. Detailed arbitrary-trip rendering remains a separate step. |
+| Create your own trip | Open `/plan`; enter your dates/cities/origins, preview, accept and download planning JSON | Separate manual workspace for routes, days, activities, coordinate maps and booking review; explicit browser save/resume, downloads and optional account uploads. |
+| Keep a private agent-led record | Use `trip:init`, then `trip:validate` | Ignored `.private/trips/` JSON; agent/manual research follows the schema. Preview/accept compatible records in the generic manual workspace; keep itinerary/evidence sidecars separate. |
 | Research a comparison | Use Connections/Search sources, manual links, or the validated provider API | Search results and saved research are evidence, not selected itinerary items or bookings. |
 
 For a private-local CLI draft, substitute your own future dates and destinations:
@@ -129,7 +129,7 @@ Pin verified locations, then cluster nearby activities into realistic days. Comp
 
 For stays, compare the full dated occupancy total, room/bed type, included taxes/fees, breakfast, cancellation, payment timing and transit burden. The starter hotel form searches one adult/room for one night. The API accepts dates, adults/rooms and currency; Booking.com additionally needs an approved city ID and booker country. Award-hotel search uses Rooms.aero; its dates bound possible **check-in** dates, and `nights` specifies length. Cached evidence and optional cash comparison need provider verification. See [integrations](INTEGRATIONS.md).
 
-In the sample atlas, review alternatives, edit supported activity assignments/priorities and transport/stay selections, and inspect the map alongside the day list. For your generic trip, retain the catalogue, clusters and itinerary in schema-compatible agent/manual records; `/plan` does not yet provide this detailed editable atlas for arbitrary records.
+In the sample atlas, review alternatives, edit supported activity assignments/priorities and transport/stay selections, and inspect the map alongside the day list. For your generic trip, use its manual day/activity editor and supplied coordinate map. Record quote comparisons and research coverage with sources/time/unknowns. Preserve broader catalogue detail in compatible companion records; the generic workspace does not infer the sample atlas’s media or enrichments.
 
 ## 8. Track booking gaps and review before export
 
@@ -137,4 +137,4 @@ Use only `recommended`, `quoted`, `held`, `confirmed`, `missing`, and `conflict`
 
 Before locking, review every route leg, stay and activity; recheck prices, schedules, inventory, hours, cancellation rules and door-to-door feasibility. Booking, email sending, calendar mutation, publication and deployment require explicit authorization. Optional Gmail import is a scoped, read-only candidate preview; it does not automatically confirm or write itinerary changes. [Import rules](GMAIL_IMPORT.md).
 
-Export the accepted generic draft as planning JSON. The specialized atlas can export sanitized CSV, HTML and PDF from its current working state. Exports must exclude secrets, email links/addresses, confirmation numbers, references, record locators, loyalty IDs and seat assignments, even for local-private trips. Keep traveler-needed private booking details outside exportable records. See [agent workflow](AGENT_WORKFLOWS.md) and [security](SECURITY.md).
+Export the current generic workspace as trip/itinerary JSON, visual HTML or compact travel/transit/hotel HTML/PDF; research/quote evidence exports separately. The specialized atlas retains sanitized CSV/light/dark/visual HTML/PDF. See [formats](EXPORTS.md). Exports must exclude secrets, email links/addresses, confirmation numbers, references, record locators, loyalty IDs and seat assignments, even for local-private trips. Keep traveler-needed private booking details outside exportable records. See [agent workflow](AGENT_WORKFLOWS.md) and [security](SECURITY.md).

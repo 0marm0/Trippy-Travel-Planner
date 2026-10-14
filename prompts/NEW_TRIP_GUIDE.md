@@ -21,7 +21,9 @@ Use the traveler’s dates, destinations and route length; never silently inheri
 
 ## Choose a supported workspace
 
-Use `/plan` to preview, explicitly accept and download a browser-only normalized draft, or `npm run trip:init -- ...` followed by `npm run trip:validate -- <path>` for a private-local file. Validate against `schema/trip.schema.json`. `/plan` can preview validated pasted agent JSON; it uploads nothing and clears on reload. It leaves candidate generation and research to the agent. Real records belong in private-local custody. The current visual atlas is sample-centered; saving its setup profile does not create a new trip or apply changed stops/dates. The update inbox changes existing selections and assignments only. Keep unsupported route creation and export steps explicit; do not overwrite the tracked sample or invent a completed UI import. See `docs/ONBOARDING.md` and `docs/AGENT_UPDATE_BUNDLES.md`.
+Use `/plan` to validate, preview and accept an arbitrary-trip record into its separate manual workspace, or `trip:init`/`trip:validate` for private-local files. The workspace supports supplied route alternatives, day destinations, timed activities, manual coordinate maps and previewed booking changes. It does not infer geography, schedules, inventory or confirmation. Saving/resuming in this browser is explicit and trip-isolated. Optional accounts separately support reviewed load and explicit encrypted save/update; keep actual trip records out of tracked samples.
+
+Maintain research coverage and recorded cash/award/stay/transport comparisons in their validated sidecars, with source/time/scope/unknowns and equivalent party/currency/terms. Their presence is evidence recorded by the traveler/agent, not automatic provider search. Preserve editable trip/itinerary/evidence exports and a compatible visual or compact reading copy. The 2026 atlas remains a distinct specialized example; its update bundles do not create arbitrary trips. See [status](../docs/IMPLEMENTATION_STATUS.md), [exports](../docs/EXPORTS.md) and [accounts](../docs/PRIVATE_ACCOUNTS.md).
 
 ## Route before prices
 

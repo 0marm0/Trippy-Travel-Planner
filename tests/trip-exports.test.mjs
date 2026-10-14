@@ -1,6 +1,7 @@
+import { tripPdfIconFor } from '../src/lib/trip-export-pdf.ts';
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { PDFDocument } from 'pdf-lib';
+import { PDFDocument, PDFArray, PDFRawStream, decodePDFRawStream } from 'pdf-lib';
 import {
   buildTripExportSnapshot,
   createTripPdf,
@@ -10,6 +11,7 @@ import {
   sanitizeTripExportSnapshot,
   tripExportFilename,
   isBundledTripImage,
+  filterTripExportSnapshot,
 } from '../src/lib/trip-exports.ts';
 
 const trip = {
@@ -36,6 +38,65 @@ const state = {
   selectedTransport: { 'leg-1': 'car' },
   selectedHotel: { berlin: 'hotel-1' },
 };
+
+test('compact travel, transit and hotel scopes preserve their logistics and exclude unrelated records', async () => {
+  const snapshot = buildTripExportSnapshot(trip, state);
+  const transit = filterTripExportSnapshot(snapshot, 'transit');
+  assert.equal(transit.hotels.length, 0);
+  assert.equal(transit.transport.length, snapshot.transport.length);
+  assert.equal(transit.days.every(day => day.activities.length === 0), true);
+  const hotels = filterTripExportSnapshot(snapshot, 'hotels');
+  assert.equal(hotels.transport.length, 0);
+  assert.equal(hotels.hotels[0].name, 'Hotel One');
+  for (const scope of ['travel', 'transit', 'hotels']) {
+    const html = renderTripHtml(snapshot, { visual: false, scope });
+    assert.equal(html.includes('ABC123'), false);
+    assert.equal(html.includes('person@example.com'), false);
+    if (scope === 'transit') { assert.equal(html.includes('Hotel One'), false); assert.match(html, /Car/); }
+    if (scope === 'travel') assert.match(html, /Hotel One/);
+    if (scope === 'hotels') { assert.match(html, /Hotel One/); assert.equal(html.includes('Museum, Island'), false); }
+    const bytes = await createTripPdf(snapshot, { theme: 'light', scope });
+    const pdf = await PDFDocument.load(bytes);
+    assert.ok(pdf.getPageCount() > 0);
+    assert.match(tripExportFilename(scope === 'hotels' ? 'pdf-hotels' : 'pdf-transit'), /brief\.pdf$/);
+  }
+});
+
+test('PDF icons use explicit booking kind and selected mode before hotel or transport prose', () => {
+  assert.equal(tripPdfIconFor('Car', 'Airport to Invented Hotel transfer'), 'car');
+  assert.equal(tripPdfIconFor('Car', 'Invented Hotel to airport'), 'car');
+  assert.equal(tripPdfIconFor('Hotel', 'Airport Hotel near train station'), 'hotel');
+  assert.equal(tripPdfIconFor('Flight', 'Airport express train connection after arrival'), 'flight');
+  assert.equal(tripPdfIconFor('train', 'Hotel shuttle rental car alternative'), 'train');
+  assert.equal(tripPdfIconFor('activity', 'Hotel architecture tour'), 'activity');
+  assert.equal(tripPdfIconFor('', 'Hotel to station transfer'), 'car');
+});
+
+test('hotel scope excludes hotel-named car transfers using booking kind before destination words', () => {
+  const date = '2030-01-02';
+  const transfers = [
+    { kind: 'Car', title: 'Airport to Invented Hotel transfer' },
+    { kind: 'Car', title: 'Invented Hotel to airport' },
+    { kind: 'Hotel transfer', title: 'Hotel pickup' },
+  ];
+  const snapshot = sanitizeTripExportSnapshot({ title: 'Invented trip', start: date, end: '2030-01-03',
+    bookings: [...transfers.map(item => ({ ...item, dateIso: date, status: 'confirmed', detail: 'Reviewed transfer' })), { kind: 'Hotel', title: 'Airport Hotel stay', dateIso: date, status: 'confirmed', detail: 'Reviewed accommodation' }, { kind: 'Activity', title: 'Hotel architecture tour', dateIso: date, status: 'recommended' }],
+    days: [{ date, city: 'Invented City', anchors: [...transfers.map(item => ({ label: item.title, status: 'confirmed', detail: 'Transfer context' })), { label: 'Airport Hotel stay', status: 'confirmed' }, { label: 'Hotel architecture tour', status: 'recommended' }, { label: 'Hotel to station transfer', status: 'recommended' }, { label: 'Hotel check-in', status: 'recommended' }] }],
+  });
+  const hotels = filterTripExportSnapshot(snapshot, 'hotels');
+  assert.deepEqual(hotels.bookings.map(item => item.title), ['Airport Hotel stay']);
+  assert.deepEqual(hotels.days[0].anchors.map(item => item.label), ['Airport Hotel stay', 'Hotel check-in']);
+  for (const scope of ['travel', 'transit']) {
+    const scoped = filterTripExportSnapshot(snapshot, scope);
+    for (const transfer of transfers) {
+      assert.ok(scoped.bookings.some(item => item.title === transfer.title));
+      assert.ok(scoped.days[0].anchors.some(item => item.label === transfer.title));
+    }
+    assert.ok(scoped.days[0].anchors.some(item => item.label === 'Hotel to station transfer'));
+    assert.ok(!scoped.bookings.some(item => item.title === 'Hotel architecture tour'));
+  }
+  assert.doesNotMatch(renderTripHtml(snapshot, { scope: 'hotels' }), /Airport to Invented Hotel transfer|Invented Hotel to airport|Hotel pickup|Hotel to station transfer/);
+});
 
 test('snapshot reflects edited assignments and selections without exporting private identifiers', () => {
   const snapshot = buildTripExportSnapshot(trip, state);
@@ -169,4 +230,35 @@ test('private-text redaction preserves flight numbers but removes booking refere
   assert.match(redactPrivateExportText('B61254, U21234 and 6E123'), /B61254, U21234 and 6E123/);
   assert.equal(redactPrivateExportText('Booking reference ABC123').includes('ABC123'), false);
   assert.equal(redactPrivateExportText('Seat 12A').includes('12A'), false);
+});
+
+
+test('image privacy inspects harmless query values and nested encoded paths', () => {
+  const snapshot = buildTripExportSnapshot(trip, state);
+  for (const image of [
+    'https://images.unsplash.com/photo.jpg?note=booking-reference-invented',
+    'https://images.unsplash.com/booking-reference-invented/photo.jpg',
+    'https://images.unsplash.com/photo.jpg?note='+encodeURIComponent(encodeURIComponent('access-token-invented')),
+    'https://images.unsplash.com/photo.jpg?note='+encodeURIComponent('sk-'+'invented'.repeat(5)),
+  ]) { snapshot.hotels[0].image = image; assert.equal(sanitizeTripExportSnapshot(snapshot).hotels[0].image, ''); }
+  snapshot.hotels[0].image = 'https://images.unsplash.com/photo.jpg?w=960&q=80';
+  assert.equal(sanitizeTripExportSnapshot(snapshot).hotels[0].image, snapshot.hotels[0].image);
+});
+
+test('a short logistics ledger adds an appendix for overflowing detail', async () => {
+  const snapshot = buildTripExportSnapshot(trip, state);
+  const normal = await PDFDocument.load(await createTripPdf(snapshot, { theme: 'light', scope: 'hotels' }));
+  snapshot.bookings.push({kind:'stay',date:'2026-09-22',dateIso:'2026-09-22',endDate:'2026-09-24',title:'Lodging context',status:'recommended',detail:'Invented stay planning details '.repeat(50)+'TAILMARKER'});
+  const expanded = await PDFDocument.load(await createTripPdf(snapshot, { theme: 'light', scope: 'hotels' }));
+  assert.ok(expanded.getPageCount() > normal.getPageCount());
+});
+
+
+test('PDF preserves quotes and holds without inferring confirmation from prose', async () => {
+  const snapshot = sanitizeTripExportSnapshot({title:'State audit',start:'2030-01-01',end:'2030-01-03',stops:[{name:'Example City',checkIn:'2030-01-01',checkOut:'2030-01-03',nights:2}],bookings:['recommended','quoted','held'].map(status=>({kind:'stay',date:'2030-01-01',dateIso:'2030-01-01',endDate:'2030-01-03',status,title:'Title says confirmed',detail:'Prose is not confirmation authority'}))});
+  const doc=await PDFDocument.load(await createTripPdf(snapshot,{theme:'light'}));
+  let operators='';
+  for(const page of doc.getPages()){const contents=page.node.Contents();const refs=contents instanceof PDFArray?contents.asArray():[contents];for(const ref of refs){const stream=doc.context.lookup(ref);if(stream instanceof PDFRawStream)operators+=Buffer.from(decodePDFRawStream(stream).decode()).toString('latin1');}}
+  for(const status of ['RECOMMENDED','QUOTED','HELD'])assert.ok(operators.toUpperCase().includes('<'+Buffer.from(status).toString('hex').toUpperCase()+'>'),status);
+  assert.equal(operators.toUpperCase().includes('<'+Buffer.from('CONFIRMED').toString('hex').toUpperCase()+'>'),false);
 });

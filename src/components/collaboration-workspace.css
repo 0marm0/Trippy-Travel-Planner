@@ -81,3 +81,10 @@ body:has(.collab-shell){background:#03060b;background-image:radial-gradient(elli
 @media print{body:has(.collab-shell){background:#fff;color:#111}.collab-header,.collab-actions,.collab-activity-form,.collab-shell button,.collab-review,.collab-map{display:none}.collab-shell{--collab-ink:#111;--collab-soft:#333;--collab-muted:#555;--collab-line:#ddd;color:#111;padding:0}.collab-panel{background:#fff;box-shadow:none;border-color:#ddd;break-inside:avoid}.collab-grid{grid-template-columns:1fr}.collab-hero h1,.collab-panel h3,.collab-day h3{color:#111}.collab-cities span{background:#fff;border-color:#aaa;color:#333}.collab-shell input,.collab-shell select{background:#fff;color:#111!important;border-color:#ddd;opacity:1}.collab-shell label{color:#333}}
 .collab-sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
 .collab-activity-form fieldset{border:0;padding:0;margin:0;min-width:0;display:flex;flex-direction:column;gap:16px}
+.collab-merge{border:1px solid var(--collab-line);border-radius:12px;padding:16px;margin:18px 0;min-width:0}
+.collab-merge legend{font-size:13px;padding:0 8px;color:#f2d79f}
+.collab-merge-values{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.collab-merge-values label>span{display:flex;align-items:center;gap:10px}
+.collab-merge-values input{width:18px;min-height:18px}
+.collab-merge pre,.collab-panel>.collab-review pre{max-height:240px;overflow:auto;overflow-wrap:anywhere;white-space:pre-wrap;background:#050b15;border-radius:8px;padding:12px;font-size:12px}
+@media(max-width:600px){.collab-merge-values{grid-template-columns:1fr}}

@@ -6,7 +6,7 @@ Onboarding turns an ambiguous trip idea into a constraint ledger and a small rou
 
 ## What is implemented today
 
-The `/plan` page supports arbitrary names, start/end dates, cities, acceptable origins, traveler count, pace, flexibility and themes. It previews a schema-validated normalized draft; the traveler explicitly accepts it, downloads planning JSON and copies an agent brief. Pasted agent JSON must validate and be previewed before acceptance. The page runs in the browser, uploads nothing and clears on reload; downloading the accepted draft is the retention step. It does not research providers, fabricate route candidates, accept raw bookings or change booking states automatically.
+The `/plan` page validates/previews your dates, cities, origins and preferences before acceptance into a separate manual workspace. Add route alternatives, day destinations, timed activities, explicit coordinate maps and previewed stays/transport. Record research scope and sourced cash/award/stay/transport quotes in separate evidence modules. Save/resume explicitly in this browser or download compatible JSON/HTML/PDF; optional accounts require configured storage and an explicit upload/load. No live inventory, geocoding or confirmation is inferred.
 
 The CLI creates a schema-backed record in `.private/trips/<slug>/trip.json` with exclusive, no-overwrite writes. Use `npm run trip:init -- --name "Portugal 2027" --start 2027-04-10 --end 2027-04-18 --cities "Lisbon,Porto" --origins "IAD,DCA"`, then `npm run trip:validate -- .private/trips/portugal-2027/trip.json`. See [setup](SETUP.md#create-your-own-trip) for optional fields.
 
@@ -14,11 +14,11 @@ The detailed atlas at `/` still uses a specialized 2026 Europe loader (`src/lib/
 
 The atlas update inbox can preview supported changes to existing activity assignments, priorities, saved items, transport/stay selections and research evidence. It cannot replace route stops, introduce a new trip, import raw bookings or mutate confirmation state. Follow [the bundle contract](AGENT_UPDATE_BUNDLES.md) and report unsupported changes plainly.
 
-Keep real records private-local, preserve the tracked sample, and use the generic schema as the interchange contract. The agent handles the three-route frontier and source-backed research. Neither `/plan` nor the atlas provides authenticated private-trip accounts or cross-device trip sync. Optional `/collaborate` rooms can persist reviewed share-safe activity/day boards in explicitly configured SQLite or user-owned Postgres; they remain separate from private trips, bookings and generic atlas import. See [live collaboration](LIVE_COLLABORATION.md).
+Keep real records out of tracked samples. Accepted `/plan` records support a separate manual workspace, explicit browser save/resume and optional encrypted account save/load on a configured server. Account storage is not automatic synchronization; source evidence and route research remain traveler/agent work. `/collaborate` receives only a reviewed share-safe activity/day JSON projection, never bookings or private identifiers. [Live rooms](LIVE_COLLABORATION.md) · [Accounts](PRIVATE_ACCOUNTS.md).
 
 ## First-run boundary
 
-Begin with one short choice: **local-private, agent-connected, personal cloud, or public sample**. Recommend local-private for any real trip. Explain the persistence boundary: the sample atlas saves edits in the current browser’s local storage, while `/plan` drafts clear on reload unless downloaded. Neither uses an authenticated trip account or durable trip database, and another browser/device will not receive the trip automatically. Optional collaboration room storage is a separate approved publishing flow.
+Begin with one short choice: **local-private, agent-connected, configured private account, or public sample**. Browser previews stay in memory; accepted manual workspaces can be saved explicitly on this device. Accounts need separate configuration and explicit upload/load. Live rooms publish only reviewed board content. Explain residual browser/export/backup copies and preserve existing authorizations for their exact scope.
 
 An agent-connected session may use only connectors installed in that agent host and explicitly approved by the traveler. Those host-local credentials never become website configuration. A personal-cloud deployment is a separate website instance; its environment secrets may support direct website adapter calls only. Public-sample mode contains only redacted material and must not imply that a provider or connector is live. See [deployment modes](DEPLOYMENT_MODES.md).
 
@@ -65,7 +65,7 @@ Build editable days around fixed anchors, transit, check-in/out, meals, rests, l
 
 ### 5. Review, imports, and exports
 
-Review facts, quotes, preferences, alternatives, recommendation explanations, and booking states before locking each route, leg, stay, activity, or day. The current atlas can export its sanitized working state as CSV, visual HTML and PDF. A generic `/plan` record exports as planning JSON; it needs a compatible renderer for HTML/CSV/PDF. Do not promise that the legacy atlas export supports a new trip automatically.
+Review facts, quotes, preferences, alternatives and booking states before locking each decision. Generic workspaces provide visual HTML, compact travel/transit/hotel HTML/PDF and editable trip/itinerary JSON; evidence sidecars export separately. Atlas CSV/light/dark/visual modes remain. Check the current record, redaction, sources and format limitations before sharing. [Export matrix](EXPORTS.md).
 
 Booking data uses `recommended`, `quoted`, `held`, `confirmed`, `missing`, and `conflict`. Gmail/email/file/calendar imports require a second, scoped consent: declare the read-only minimum scope, read only approved material, normalize/dedupe/redact a review queue, and wait for acceptance before import/write or state change. Gmail is never assumed connected.
 

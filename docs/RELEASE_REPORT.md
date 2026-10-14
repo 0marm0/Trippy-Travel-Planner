@@ -1,6 +1,10 @@
-# Public repository preparation — 2026-10-13
+# Local candidate and preparation receipts
 
-**READY_FOR_OWNER_REVIEW: the local source and production build are prepared.** This is a beta sample atlas plus a generic structured trip-draft workflow, not an authenticated hosted travel service. Publication, repository creation, account settings and deployment remain separate operations.
+**READY_FOR_OWNER_REVIEW: the local source and production build are prepared.** The beta includes a sample atlas, separate generic manual workspace, recorded research/quote evidence, reading exports, live-board lifecycle and optional encrypted accounts. No hosted deployment or real-provider readiness follows from local tests. Publication, repository creation, account settings and deployment remain separate operations.
+
+## Initial preparation — 2026-10-13
+
+The following initial receipts and counts are historical. The current module update appears below and supersedes older capability limitations.
 
 ## Repository identity
 
@@ -45,9 +49,9 @@ The owner explicitly states that licenses have already been acquired for all exi
 
 ## Product limits to disclose
 
-The rich atlas at `/` still contains 2026 sample-specific route, currency, geometry, persistence and research assumptions. `/plan` is the generic draft/review/agent-handoff entry point; it does not yet populate the atlas's detailed maps, daily itinerary or quote-selection views. Agents must research and record at least three materially different routes before pricing, or explain when hard constraints prevent that. The draft schema records route city order but does not prove nightly allocation, anchor timing, transit feasibility or inventory.
+The rich atlas remains sample-specific. `/plan` separately renders arbitrary manual routes, maps from supplied coordinates, days, activities and previewed stay/transport records, with explicit device persistence and optional account save/load. Research/quote sidecars preserve recorded sources and assumptions but do not acquire inventory. Feasibility signals do not prove complete date allocation, service schedules or provider bookability.
 
-Optional shared rooms now provide capability-based owner/editor/viewer access, durable local SQLite or user-owned PostgreSQL, cross-browser activity/day editing, polling and revision conflict checks. There are no hosted identity accounts or automated bookings. The shared planning DTO excludes bookings and is separate from the full atlas. Do not deploy personal trips or Gmail/private-local gates onto a public instance. Provider access and redistribution terms remain separate from code licensing. The existing deployed demo was not redeployed during this work.
+Rooms use reviewed share-safe activity/day records with reconciliation/recovery, invitation expiry/revocation and owner rotation/deletion. Accounts are separately enabled Better Auth storage, with tenant-qualified encrypted plans, revisions, quotas and password-confirmed deletion. Postgres and real recovery transport remain privately unverified. Do not upload raw confirmations, Gmail/private data or credentials to shared/public records. The existing deployed demo was not redeployed by these changes.
 
 ## Release operations still to perform
 
@@ -86,7 +90,27 @@ The screenshot gallery now has 20 captures, including editable itinerary cards, 
 ## Collaboration and product polish pass — 2026-10-14 UTC
 
 - Replaced forest-green collaboration styling with Trippy blue/black panels, the shared globe mark, responsive controls and accessible labels. Refreshed all three collaboration screenshots; reviewed full-size pixels and stripped derivative metadata. About now shows real itinerary controls and shared-board imagery with supported starting paths.
-- Fixed multi-line notes, retained in-range day assignments after date changes, protected unfinished forms from polling and navigation through header links, separated validation from connectivity errors, confirmed destructive actions and added validated board downloads during conflicts. Downloads exclude unfinished form fields; no automatic merging or draft reimport is implemented.
+- Fixed multi-line notes, retained in-range day assignments after date changes, protected unfinished forms from polling and navigation through header links, separated validation from connectivity errors, confirmed destructive actions and added validated board downloads during conflicts. Downloads exclude unfinished form fields; at that checkpoint draft reimport/reconciliation were not yet implemented; the current module update below supersedes that limitation.
 - Production browser exercise used isolated invented records and reviewed public sample rooms: owner/editor/viewer access; activity add/edit; day assignment/reorder; retained assignments after date extension; cross-browser updates; typed activity draft preserved on conflict; valid board download; viewer write rejected with HTTP 403; revoked editor disconnected. Phone viewport had no horizontal overflow. No real provider, mailbox or hosted database was contacted.
 - Independent scoped code review passed. Local release gate passed 88 tests, lint/type/schema/build and boundary/privacy/history/media checks; production dependency audit found zero vulnerabilities. A final rebuild covered the final About copy and explicit notes label.
 - README/agent workflows now provide starting-path and capability matrices plus concrete setup, planning and sharing acceptance receipts. [Improvement roadmap](IMPROVEMENT_ROADMAP.md) prioritizes arbitrary-trip atlas integration, explicit conflict reconciliation, room lifecycle and hosted-storage verification, visible research coverage and private-trip accounts. These are future acceptance criteria, not completed features.
+
+## Current module update — 2026-10-14
+
+- Generic manual workspaces now render two independent invented-trip shapes without sample geography/bookings: supplied routes, explicit pins, day destinations/timed activities, conflicts and reviewed booking records. Device persistence is explicit and trip-isolated; schema/private-text checks apply to exports.
+- Research coverage and sourced cash/award/stay/transport comparison retain scope, timestamps, party/currency/terms, missing amounts and source-points/transfer assumptions. They are recorded evidence, not automatic inventory search.
+- Generic workspaces prepare reviewed activity-board JSON; live boards preview/import/export, reconcile original/local/latest fields/entities/days and optionally retain credential-free board/base recovery. Lifecycle covers expiring invitations, revocation, owner rotation and room deletion with stale-operation checks.
+- Optional Better Auth accounts use database sessions, tenant-qualified AES-GCM encrypted workspaces, revision checks, password-confirmed deletion and a 20-plan quota. Synthetic tests cover actual auth flows and mocked reset transport; no real reset delivery is wired. [Account custody](PRIVATE_ACCOUNTS.md).
+- Shared rich HTML dossier and compact travel/transit/hotel HTML/PDF preserve current recorded states, dates and safe facts. Atlas light/dark/visual/CSV modes and imagery remain. [Format matrix](EXPORTS.md). Styling was informed by examined reference CSS; private source documents were not copied into tracked artifacts.
+
+**Final integrated source gate: PASS — 144/144 tests.** `npm run release:check` completed with lint, TypeScript, schema/sample validation, production build, build/private-boundary checks, privacy/history/media checks and zero production dependency advisories. Earlier counts in this report are historical, not the current total. Scoped code reviews identified and fixed research-tab state loss, explicit credential-label acceptance, private database symlink ancestry and passwordless deletion. This is scoped local review, not an independent public-release or hosted/provider certification. No real secret, mailbox, provider inventory or hosted database was used.
+
+Remaining work includes consistent per-item sources/freshness, deeper specialized-atlas reuse, durable private import review/retention, real recovery transport, hosted Postgres/provider checks and independent accessibility/public-release review. Publication/deployment still require explicit authorization.
+
+## Final browser and export receipts — 2026-10-14
+
+Local browser verification exercised generic workspace editing and isolated browser persistence, optional account save/load and lifecycle, and shared-board review/reconciliation with invitation expiry, owner rotation and room deletion. These checks used reviewed sample or invented records and isolated local storage. No real provider credentials, traveler confirmations, mailbox or hosted database was used.
+
+Rich visual HTML and compact travel/transit/hotel HTML/PDF checks verified conservation of the current supported planning records and recorded states. Existing visual/light/dark atlas modes, CSV and photos remain available; exports do not infer inventory or confirmations. The local gallery now documents 23 screenshots, including three new generic/visual-export/reconciliation captures, and a 187-image local inventory. Screenshot/media registration is checked separately from source tests.
+
+The evidence supports the local candidate and scoped review. Hosted Postgres, actual provider eligibility/inventory, real password recovery and independent public-release/accessibility acceptance remain unverified. No public publication or deployment was performed.

@@ -1,7 +1,7 @@
 import sharp from "sharp";
 import { readFile } from "node:fs/promises";
 import { join } from "node:path";
-import { createTripPdf, sanitizeTripExportSnapshot, TRIP_EXPORT_IMAGE_HOSTS, isBundledTripImage, type TripPdfIcon } from "@/lib/trip-exports";
+import { createTripPdf, sanitizeTripExportSnapshot, TRIP_EXPORT_IMAGE_HOSTS, isBundledTripImage, exportImageHasPrivateData, type TripPdfIcon } from "@/lib/trip-exports";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -17,6 +17,7 @@ function permittedImageUrl(value: string): URL | null {
     const url = new URL(value);
     if (url.protocol !== "https:" || url.username || url.password || url.port || !TRIP_EXPORT_IMAGE_HOSTS.has(url.hostname.toLowerCase())) return null;
     if ([...url.searchParams.keys()].some((key) => /token|key|auth|signature|credential|email|ref|confirm/i.test(key))) return null;
+    if (exportImageHasPrivateData(url.href)) return null;
     if (/\b[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}\b/i.test(decodeURIComponent(url.href))) return null;
     url.hash = "";
     return url;
@@ -86,12 +87,14 @@ export async function POST(request: Request): Promise<Response> {
     if (declaredSize > MAX_BODY_BYTES) return Response.json({ error: "The itinerary is too large to export." }, { status: 413, headers: PRIVATE_HEADERS });
     const rawBody = await readLimitedBody(request.body, MAX_BODY_BYTES);
     if (!rawBody) return Response.json({ error: "The itinerary is too large to export." }, { status: 413, headers: PRIVATE_HEADERS });
-    const body = JSON.parse(rawBody.toString("utf8")) as { snapshot?: unknown; theme?: unknown; visual?: unknown };
+    const body = JSON.parse(rawBody.toString("utf8")) as { snapshot?: unknown; theme?: unknown; visual?: unknown; scope?: unknown };
+    if (body.scope !== undefined && (typeof body.scope !== "string" || !["all", "travel", "transit", "hotels"].includes(body.scope))) return Response.json({ error: "Unsupported export scope." }, { status: 400, headers: PRIVATE_HEADERS });
     const snapshot = sanitizeTripExportSnapshot(body.snapshot);
     if (!snapshot.title || !snapshot.start || !snapshot.end) return Response.json({ error: "The itinerary export is incomplete." }, { status: 400, headers: PRIVATE_HEADERS });
-    const bytes = await createTripPdf(snapshot, { theme: body.theme === "light" ? "light" : "dark", visual: body.visual === true, imageLoader: body.visual === true ? loadImage : undefined, icons: await loadIcons() });
+    const bytes = await createTripPdf(snapshot, { theme: body.theme === "light" ? "light" : "dark", visual: body.visual === true, scope: body.scope as "all" | "travel" | "transit" | "hotels" | undefined, imageLoader: body.visual === true ? loadImage : undefined, icons: await loadIcons() });
+    const filename = body.scope === "transit" ? "trippy-transit-brief.pdf" : body.scope === "hotels" ? "trippy-hotels-brief.pdf" : body.scope === "travel" ? "trippy-travel-brief.pdf" : body.visual === true ? "trippy-2026-visual-dossier.pdf" : `trippy-2026-itinerary-${body.theme === "light" ? "light" : "dark"}.pdf`;
     return new Response(Buffer.from(bytes), {
-      headers: { ...PRIVATE_HEADERS, "Content-Type": "application/pdf", "Content-Length": String(bytes.byteLength), "Content-Disposition": `attachment; filename="${body.visual === true ? "trippy-2026-visual-dossier.pdf" : `trippy-2026-itinerary-${body.theme === "light" ? "light" : "dark"}.pdf`}"` },
+      headers: { ...PRIVATE_HEADERS, "Content-Type": "application/pdf", "Content-Length": String(bytes.byteLength), "Content-Disposition": `attachment; filename="${filename}"` },
     });
   } catch {
     return Response.json({ error: "The PDF export could not be created." }, { status: 500, headers: PRIVATE_HEADERS });

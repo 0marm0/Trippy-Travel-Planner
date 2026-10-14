@@ -1,5 +1,6 @@
 import Ajv2020 from "ajv/dist/2020.js";
 import addFormats from "ajv-formats";
+import { hasPrivatePlanningText } from "./planning-privacy.ts";
 import schema from "../../schema/trip.schema.json" with { type: "json" };
 
 export type NormalizedTrip = {
@@ -57,7 +58,7 @@ export function validateNormalizedTrip(value: unknown): string[] {
     if (Date.parse(booking.endAt) < Date.parse(booking.startAt)) errors.push(`/bookings/${index}: end precedes start`);
   }
   function inspect(item: unknown, path: string) {
-    if (typeof item === "string" && privateText.test(item)) errors.push(`${path}: private identifier or credential-shaped text is forbidden`);
+    if (typeof item === "string" && (privateText.test(item) || hasPrivatePlanningText(item))) errors.push(`${path}: private identifier or credential-shaped text is forbidden`);
     if (Array.isArray(item)) item.forEach((child, index) => inspect(child, `${path}/${index}`));
     else if (item && typeof item === "object") Object.entries(item).forEach(([key, child]) => {
       if (privateText.test(key)) errors.push(`${path}: private identifier in field name is forbidden`);

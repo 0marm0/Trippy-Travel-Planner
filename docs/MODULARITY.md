@@ -1,12 +1,12 @@
 # Module boundaries and arbitrary-trip readiness
 
-The current app combines a substantial sample atlas with a generic `/plan` trip-draft and agent-handoff workflow. Shared schema/relationship validation also powers the `trip:init` and `trip:validate` CLI. Research, optimization, logistics, interchange and export modules are reusable. The detailed atlas is not yet a plug-in renderer for every file matching `schema/trip.schema.json`; generic daily itinerary, quote selection and maps remain the next integration layer.
+The current app combines a substantial sample atlas with a generic `/plan` manual workspace. Shared schema/relationship validation also powers the `trip:init` and `trip:validate` CLI. Research, optimization, logistics, interchange and export modules are reusable. The detailed atlas is not yet a plug-in renderer for every file matching `schema/trip.schema.json`; the separate generic workspace now renders manual days, bookings and coordinate maps, with research and quote comparison sidecars. Deeper reuse of specialized atlas features remains incremental work.
 
 ## Reusable seams today
 
 | Extension | Start here | Verify |
 | --- | --- | --- |
-| Generic draft, validation or agent brief | `src/lib/normalized-trip.ts`, `schema/trip.schema.json`, `src/components/new-trip-planner.tsx` | Arbitrary cities/dates, relationship/privacy validation, preview then accept, browser-memory reset, no invented prices or confirmation; normalized-trip tests |
+| Generic draft, validation or agent brief | `src/lib/normalized-trip.ts`, `schema/trip.schema.json`, `src/components/new-trip-planner.tsx` | Arbitrary cities/dates, relationship/privacy validation, preview then accept, explicit isolated browser persistence, no invented geography/prices or confirmation; normalized-trip tests |
 | New research source | `src/lib/providers/types.ts`, adapter factory, `src/lib/providers/index.ts` | Validated requests, no-key failure, freshness, bounded requests, cancellation, sanitized errors; provider adapter tests |
 | New route scoring behavior | `src/lib/optimization/route-optimizer.ts` | Explicit weights, asymmetric legs, missing evidence, bounded search, invented stop IDs; optimizer tests |
 | Logistics or booking-gap rule | `src/lib/trip-logistics.ts` | Rule explains its evidence and never infers confirmation; logistics tests |
@@ -56,4 +56,13 @@ Removing a label or renaming a type alone does not establish arbitrary-trip supp
 
 ## Scope of public release
 
-The repository can describe and ship a reviewed sample/manual atlas, generic validated draft/handoff and optional separate live activity/day board before this migration is complete. The board has durable SQLite/Postgres state and conflict-safe role capabilities; it does not integrate generic records into the detailed atlas. The generic detailed itinerary renderer, hosted private accounts/sync and import ledger remain future work. TRIPPY does not perform bookings. Public release also requires privacy, history, media-rights and independent review gates; code modularity does not substitute for them.
+The repository now has a separate generic manual workspace, recorded quote/research evidence, reviewed board handoff and optional encrypted account module alongside the sample atlas. These support local planning before deeper specialized atlas migration. Hosted/provider operation and independent public-release acceptance remain unverified; see [status](IMPLEMENTATION_STATUS.md).
+
+## Additional implemented contracts
+
+- `generic-trip-workspace.ts` and its UI separate canonical trip data from days, pins and activity/booking detail sidecars; `generic-itinerary-html.ts` adapts validated input to shared reading exports.
+- Research/quote modules validate independent source/time/scope and cash/points assumptions; they remain recorded evidence, not provider fetchers.
+- Collaboration reconciliation/recovery/lifecycle keep current-revision choices, referential validation and token-free retained records separate from capability custody.
+- `accounts/` uses Better Auth server sessions, tenant-qualified encrypted workspaces, revision checks and an account quota; identity/session records do not enter planning exports. Hosted Postgres and real recovery transport need authorized private verification.
+
+[Status](IMPLEMENTATION_STATUS.md) · [Exports](EXPORTS.md) · [Private accounts](PRIVATE_ACCOUNTS.md).

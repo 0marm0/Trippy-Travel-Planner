@@ -7,6 +7,8 @@ import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import type { Point } from "@/lib/planner";
 import { validateCollaborationState } from "@/lib/collaboration/schema";
+import { reconciliationChanges, resolveReconciliation, recoveryKey, parseRecovery, serializeRecovery, type Choice, type RecoverableBoard, type ReconciliationChange } from "@/lib/collaboration/reconciliation";
+import RoomLifecycle from "./room-lifecycle";
 import BrandMark from "./brand-mark";
 import "./collaboration-workspace.css";
 
@@ -15,7 +17,7 @@ type City = { id: string; name: string; lat?: number; lng?: number };
 type Activity = { id: string; cityId: string; title: string; notes: string; lat?: number; lng?: number; durationMinutes?: number; image?: string; sourceUrl?: string };
 type Plan = { title: string; startDate: string; endDate: string; cities: City[]; activities: Activity[]; days: Record<string, string[]> };
 type Snapshot = { roomId: string; role: "owner" | "editor" | "viewer"; revision: number; state: Plan; invites?: Invite[] };
-type Invite = { inviteId: string; role: "editor" | "viewer"; revoked?: boolean };
+type Invite = { inviteId: string; role: "editor" | "viewer"; revoked?: boolean; expiresAt?: string | null; expired?: boolean };
 type Setup = { configured: boolean; mode: string; message: string; creationCodeRequired?: boolean; creationAvailable?: boolean };
 const empty: Plan = { title: "Our next adventure", startDate: "", endDate: "", cities: [], activities: [], days: {} };
 const sessionKey = (id: string) => `trippy.collaboration.${id}`;
@@ -54,11 +56,22 @@ export default function CollaborationWorkspace({ roomId }: { roomId?: string }) 
   const [connected, setConnected] = useState(false);
   const [creationCode, setCreationCode] = useState("");
   const [draftActivity, setDraftActivity] = useState({ title: "", notes: "", cityId: "", lat: "", lng: "", duration: "" });
+  const [retainDraft, setRetainDraft] = useState(false);
+  const [recovered, setRecovered] = useState<RecoverableBoard | null>(null);
+  const [recoveryStatus, setRecoveryStatus] = useState("");
+  const [importText, setImportText] = useState("");
+  const [importPreview, setImportPreview] = useState<Plan | null>(null);
+  const [reconciliation, setReconciliation] = useState<{ base: Plan; local: Plan; latest: Snapshot; changes: ReconciliationChange[]; choices: Record<string, Choice> } | null>(null);
+  const [inviteReview, setInviteReview] = useState<"editor" | "viewer" | null>(null);
+  const [inviteDays, setInviteDays] = useState(7);
   const [editingId, setEditingId] = useState<string | null>(null);
   const token = useRef("");
+  const [accessToken, setAccessToken] = useState("");
   const activityDraftRef = useRef(false);
   const activityForm = useRef<HTMLFormElement>(null);
   const dirtyRef = useRef(false);
+  const busyRef = useRef(false);
+  const closedRef = useRef(false);
   const revisionRef = useRef(0);
   const id = snapshot?.roomId || roomId;
   const hasEditRole = !id || snapshot?.role === "owner" || snapshot?.role === "editor";
@@ -70,6 +83,72 @@ export default function CollaborationWorkspace({ roomId }: { roomId?: string }) 
     fetch("/api/collaboration/status", { cache: "no-store", signal: AbortSignal.timeout(10000) }).then(responseBody).then(value => { if (!stopped) setSetup(value); }).catch(() => { if (!stopped) setSetup({ configured: false, mode: "disabled", message: "Shared planning is unavailable. Your local draft remains editable." }); });
     return () => { stopped = true; };
   }, []);
+
+  useEffect(() => {
+    const timer = window.setTimeout(() => {
+      try {
+        const raw = window.localStorage.getItem(recoveryKey(roomId));
+        if (raw) { setRecovered(parseRecovery(raw, roomId)); setRecoveryStatus("A validated board draft is available. Review it before restoring."); }
+      } catch { try { window.localStorage.removeItem(recoveryKey(roomId)); } catch { /* Storage unavailable. */ } setRecoveryStatus("Invalid saved board draft or unavailable storage. No draft was restored."); }
+    }, 0);
+    return () => window.clearTimeout(timer);
+  }, [roomId]);
+
+  useEffect(() => {
+    if (!retainDraft) return;
+    let status = "Validated board retained on this device. Unfinished forms and access links are excluded.";
+    try {
+      window.localStorage.setItem(recoveryKey(roomId), serializeRecovery(plan, snapshot?.state || null, snapshot?.revision || 0, roomId));
+    } catch {
+      try { window.localStorage.removeItem(recoveryKey(roomId)); } catch { /* Storage unavailable. */ }
+      status = "This draft is invalid or storage is unavailable; it is not retained. Fix the board or download a validated copy.";
+    }
+    const timer = window.setTimeout(() => setRecoveryStatus(status), 0);
+    return () => window.clearTimeout(timer);
+  }, [retainDraft, plan, snapshot, roomId]);
+
+  function toggleRetention(enabled: boolean) {
+    setRetainDraft(enabled);
+    if (!enabled) { try { window.localStorage.removeItem(recoveryKey(roomId)); } catch { /* Storage unavailable. */ } setRecovered(null); setRecoveryStatus("Device recovery cleared."); }
+  }
+  function restoreRecovered() {
+    if (!recovered || busy || (roomId && (!snapshot || !connected || snapshot.role === "viewer"))) return;
+    if ((dirtyRef.current || activityDraftRef.current) && !window.confirm("Replace this tab’s unsaved changes with the reviewed recovery draft?")) return;
+    update(recovered.state); resetActivity();
+    if (snapshot && recovered.base) {
+      const current = latest || snapshot;
+      setSnapshot({ ...current, revision: recovered.revision, state: recovered.base }); revisionRef.current = recovered.revision;
+      setLatest(current.revision !== recovered.revision ? current : null);
+    }
+    setRecovered(null); setRetainDraft(true); setNotice("Board draft restored locally. Review conflicts and save explicitly when ready.");
+  }
+  function previewImport() {
+    try {
+      if (importText.length > 600000) throw new Error("Board JSON is too large.");
+      setImportPreview(validateCollaborationState(JSON.parse(importText))); setError("");
+    } catch { setImportPreview(null); setError("Invalid share-safe board JSON. Remove unsupported fields, private identifiers and invalid assignments."); }
+  }
+  function applyImport() {
+    if (!importPreview || !canManageTrip) return;
+    if ((dirtyRef.current || activityDraftRef.current) && !window.confirm("Replace this tab’s board and unfinished form with this reviewed import?")) return;
+    update(validateCollaborationState(importPreview)); resetActivity(); setImportPreview(null); setImportText(""); setNotice("Reviewed board imported into your local draft. Nothing has been published or saved to the room.");
+  }
+  function prepareReconciliation() {
+    if (!snapshot || !latest || !canEdit) return;
+    if (activityDraftRef.current) { setError("Finish or cancel the unfinished activity before reconciling."); return; }
+    try {
+      const changes = reconciliationChanges(snapshot.state, plan, latest.state);
+      setReconciliation({ base: snapshot.state, local: plan, latest, changes, choices: Object.fromEntries(changes.filter(change => !change.conflict).map(change => [change.key, change.suggested])) }); setError("");
+    } catch (cause) { setError(cause instanceof Error ? cause.message : "Validate your draft before reconciling."); }
+  }
+  function applyReconciliation() {
+    if (!reconciliation || !latest || !canEdit) return;
+    if (latest.revision !== reconciliation.latest.revision || JSON.stringify(plan) !== JSON.stringify(reconciliation.local)) { setReconciliation(null); setError("The board changed during review. Review reconciliation again."); return; }
+    try {
+      const merged = resolveReconciliation(reconciliation.base, reconciliation.local, reconciliation.latest.state, reconciliation.choices);
+      update(merged); setSnapshot(latest); revisionRef.current = latest.revision; setLatest(null); setReconciliation(null); setNotice("Chosen changes applied locally. Save explicitly against this reviewed revision; another concurrent change will pause saving again."); setError("");
+    } catch { setError("The chosen combination is invalid. Check deleted city/activity references, date ranges and activities assigned to multiple days; choose compatible values before applying."); }
+  }
 
   useEffect(() => {
     if (!roomId) return;
@@ -84,12 +163,12 @@ export default function CollaborationWorkspace({ roomId }: { roomId?: string }) 
     let stopped = false;
     let refreshing = false;
     async function refresh() {
-      if (refreshing || stopped) return;
+      if (refreshing || stopped || busyRef.current || closedRef.current) return;
       refreshing = true;
       try {
         const value: Snapshot = await responseBody(await fetch(`/api/collaboration/rooms/${roomId}`, { headers: { Authorization: `Bearer ${token.current}` }, cache: "no-store", signal: AbortSignal.timeout(10000) }));
-        if (stopped) return;
-        setConnected(true);
+        if (stopped || busyRef.current || closedRef.current) return;
+        setConnected(true); setAccessToken(token.current);
         if (value.revision > revisionRef.current) {
           if (dirtyRef.current || activityDraftRef.current) { setLatest(value); setSnapshot(previous => previous ? { ...previous, role: value.role } : value); }
           else { setPlan(value.state); setSnapshot(value); revisionRef.current = value.revision; }
@@ -112,7 +191,7 @@ export default function CollaborationWorkspace({ roomId }: { roomId?: string }) 
 
   function confirmNavigation(event: React.MouseEvent<HTMLAnchorElement>) {
     if (event.metaKey || event.ctrlKey || event.shiftKey || event.altKey || event.button !== 0) return;
-    if ((dirtyRef.current || activityDraftRef.current) && !window.confirm("Leave this shared board? Unsaved board changes and unfinished activity edits will be lost.")) event.preventDefault();
+    if ((dirtyRef.current || activityDraftRef.current) && !window.confirm("Leave this shared board? Unfinished activity edits are not retained. Board changes can be recovered only if device recovery is enabled and the board is valid.")) event.preventDefault();
   }
   function changeActivity(value: typeof draftActivity) {
     setDraftActivity(value); setActivityDraft(true); activityDraftRef.current = true;
@@ -141,12 +220,12 @@ export default function CollaborationWorkspace({ roomId }: { roomId?: string }) 
       const url = URL.createObjectURL(new Blob([JSON.stringify(safe, null, 2)], { type: "application/json" }));
       const anchor = document.createElement("a"); anchor.href = url; anchor.download = "shared-plan-draft.json"; anchor.click();
       window.setTimeout(() => URL.revokeObjectURL(url), 1000);
-      setNotice("Your share-safe board draft was downloaded. Unfinished activity form edits stay in this tab.");
+      setNotice("Your share-safe board draft was downloaded. Unfinished activity form edits are excluded; you can preview and import the board JSON here later.");
     } catch (cause) { setError(cause instanceof Error ? cause.message : "Remove unsupported or private fields before downloading this board."); }
   }
   function discardAndLoadLatest() {
     if (!latest || !window.confirm("Discard all your unsaved board changes and unfinished activity edits, and load your friend’s latest plan?")) return;
-    setPlan(latest.state); setSnapshot(latest); revisionRef.current = latest.revision; setLatest(null);
+    setPlan(latest.state); setSnapshot(latest); revisionRef.current = latest.revision; setLatest(null); setReconciliation(null);
     dirtyRef.current = false; setDirty(false); resetActivity(); setReview(false); setApproved(false); setError("");
     setNotice("Latest plan loaded. Previous unsaved edits were discarded.");
   }
@@ -185,28 +264,34 @@ export default function CollaborationWorkspace({ roomId }: { roomId?: string }) 
     finally { setBusy(false); }
   }
   async function save() {
-    if (!snapshot || !canEdit || !dirty || busy || latest || activityDraftRef.current) return;
+    if (!snapshot || !canEdit || !dirty || busy || latest || activityDraftRef.current || closedRef.current) return;
     try { validateCollaborationState(plan); } catch (cause) { setError(cause instanceof Error ? cause.message : "Check your shared fields before saving."); return; }
     setBusy(true); setError("");
     try {
       const response = await fetch(`/api/collaboration/rooms/${id}`, { method: "PATCH", headers: { "Content-Type": "application/json", Authorization: `Bearer ${token.current}`, "If-Match": String(snapshot.revision) }, body: JSON.stringify({ state: plan }), signal: AbortSignal.timeout(30000) });
       if (response.status === 412) { const body = await response.json(); setLatest(body.latest || (body.state ? body : null)); setError("A friend saved a newer version. Your edits are still here; review the latest plan before saving."); return; }
+      if (response.status === 403 || response.status === 404) { setConnected(false); setConnectionError("Room access is unavailable. Your local draft remains here."); }
       const value: Snapshot = await responseBody(response);
-      setSnapshot(value); setPlan(value.state); revisionRef.current = value.revision; dirtyRef.current = false; setDirty(false); setNotice("Saved. Everyone in this room will receive the update.");
+      setSnapshot(value); setPlan(value.state); setLatest(previous => previous && previous.revision > value.revision ? previous : null); revisionRef.current = value.revision; dirtyRef.current = false; setDirty(false); setNotice("Saved. Everyone in this room will receive the update.");
     } catch (cause) { setError(cause instanceof Error ? cause.message : "Save failed. Your draft is preserved."); }
     finally { setBusy(false); }
   }
   async function invite(role: "editor" | "viewer") {
-    if (!snapshot || snapshot.role !== "owner") return;
+    if (!snapshot || snapshot.role !== "owner" || !connected || inviteReview !== role) return;
     setBusy(true); setError("");
     try {
-      const value = await responseBody(await fetch(`/api/collaboration/rooms/${id}/invites`, { method: "POST", headers: { "Content-Type": "application/json", Authorization: `Bearer ${token.current}` }, body: JSON.stringify({ role }), signal: AbortSignal.timeout(30000) }));
-      setInvites(previous => [...previous, { inviteId: value.inviteId, role }]);
+      const value = await responseBody(await fetch(`/api/collaboration/rooms/${id}/invites`, { method: "POST", headers: { "Content-Type": "application/json", Authorization: `Bearer ${token.current}` }, body: JSON.stringify({ role, expiresAt: new Date(Date.now() + inviteDays * 86400000).toISOString() }), signal: AbortSignal.timeout(30000) }));
+      setInviteReview(null); setInvites(previous => [...previous, { inviteId: value.inviteId, role, expiresAt: value.expiresAt }]);
       const link = `${window.location.origin}/collaborate/${id}#token=${encodeURIComponent(value.token)}`;
       try { await navigator.clipboard.writeText(link); setNotice(`${role === "editor" ? "Editor" : "Viewer"} invitation copied. Anyone with it can access this plan until revoked.`); }
       catch { setError("Clipboard access is unavailable. The invitation was created; revoke it below and retry in a browser with clipboard access."); }
     } catch (cause) { setError(cause instanceof Error ? cause.message : "Could not create an invitation."); }
     finally { setBusy(false); }
+  }
+  async function copyOwnerAccess() {
+    if (!snapshot || snapshot.role !== "owner" || !connected || busy) return;
+    try { await navigator.clipboard.writeText(`${window.location.origin}/collaborate/${snapshot.roomId}#token=${encodeURIComponent(token.current)}`); setNotice("Current owner link copied. Keep it privately; anyone holding it has owner access."); }
+    catch { setError("Owner link could not be copied. Keep this tab open and allow clipboard access before replacing owner access."); }
   }
   async function revoke(inviteId: string) {
     setBusy(true); setError("");
@@ -242,7 +327,9 @@ export default function CollaborationWorkspace({ roomId }: { roomId?: string }) 
       if (!Number.isInteger(duration) || duration < 1 || duration > 1440) { setError("Duration must be 1–1440 whole minutes."); return; }
       activity.durationMinutes = duration;
     }
-    update({ ...plan, activities: editingId ? plan.activities.map(value => value.id === editingId ? activity : value) : [...plan.activities, activity] });
+    const next = { ...plan, activities: editingId ? plan.activities.map(value => value.id === editingId ? activity : value) : [...plan.activities, activity] };
+    try { validateCollaborationState(next); } catch (cause) { setError(cause instanceof Error ? cause.message : "Check share-safe activity fields."); return; }
+    update(next);
     resetActivity(); setError("");
   }
   function assign(activityId: string, date: string) {
@@ -266,11 +353,14 @@ export default function CollaborationWorkspace({ roomId }: { roomId?: string }) 
     {connectionError && <aside className="collab-banner error" role="alert">{connectionError}</aside>}
     {error && <aside className="collab-banner error" role="alert">{error}</aside>}
     {notice && <p className="collab-banner" role="status">{notice}</p>}
-    {latest && <aside className="collab-banner conflict" role="alert"><strong>A newer plan is available — version {latest.revision}</strong><p>Your unsaved edits have been preserved. Saving is paused to prevent overwriting your friend’s work.</p><details><summary>Review the latest plan</summary><pre>{JSON.stringify(latest.state, null, 2)}</pre><p>{latest.state.title} · {latest.state.activities.length} activities</p>{latest.state.activities.map(activity => <p key={activity.id}>{activity.title} — {activity.notes}</p>)}</details><p>Keep this tab open to retain your unfinished activity. You can download your validated board draft before discarding changes; unfinished form fields are excluded.</p><div className="collab-actions"><button onClick={downloadDraft}>Download my board draft</button><button onClick={discardAndLoadLatest}>Discard my edits and load latest</button></div></aside>}
+    <section className="collab-panel"><h2>Draft recovery & board JSON</h2><p className="collab-muted">With your consent, only the validated board and its base revision are retained in this browser’s local storage. Other users of this device may see it. Access links stay separate in this tab’s session. Unfinished forms, import text and creation codes are never retained.</p><label className="collab-check"><input type="checkbox" checked={retainDraft} onChange={event => toggleRetention(event.target.checked)} />Retain my validated board draft on this device</label>{recoveryStatus && <p role="status">{recoveryStatus}</p>}{recovered && <div className="collab-review"><h3>Review recovered board · version {recovered.revision}</h3><pre>{JSON.stringify(recovered.state, null, 2)}</pre><div className="collab-actions"><button disabled={busy || Boolean(roomId && (!connected || !snapshot || snapshot.role === "viewer"))} onClick={restoreRecovered}>Restore reviewed draft</button><button onClick={() => toggleRetention(false)}>Delete retained draft</button></div></div>}<div className="collab-actions"><button onClick={downloadDraft}>Download validated board JSON</button></div>{canManageTrip && <details><summary>Import share-safe board JSON</summary><label>Board JSON<textarea value={importText} onChange={event => { setImportText(event.target.value); setImportPreview(null); }} /></label><button onClick={previewImport} disabled={!importText.trim()}>Preview board import</button>{importPreview && <div className="collab-review"><h3>Review replacement board</h3><pre>{JSON.stringify(importPreview, null, 2)}</pre><button onClick={applyImport}>Apply reviewed import to local draft</button></div>}</details>}</section>
+    {latest && <aside className="collab-banner conflict" role="alert"><strong>A newer plan is available — version {latest.revision}</strong><p>Your unsaved edits have been preserved. Saving is paused to prevent overwriting your friend’s work.</p><details><summary>Review the latest plan</summary><pre>{JSON.stringify(latest.state, null, 2)}</pre><p>{latest.state.title} · {latest.state.activities.length} activities</p>{latest.state.activities.map(activity => <p key={activity.id}>{activity.title} — {activity.notes}</p>)}</details><p>Finish or cancel unfinished activity edits before reconciliation. Review every proposed change; incompatible assignments remain blocked by validation.</p><div className="collab-actions"><button onClick={prepareReconciliation} disabled={!canEdit || activityDraft}>Review changes together</button><button onClick={downloadDraft}>Download my board draft</button><button onClick={discardAndLoadLatest}>Discard my edits and load latest</button></div></aside>}
+    {reconciliation && <section className="collab-panel"><h2>Choose changes · latest version {reconciliation.latest.revision}</h2><p>Review both versions against the original. Conflicting edits require a choice. Other suggested choices can also be changed. This applies only to your draft.</p>{reconciliation.changes.map(change => <fieldset className="collab-merge" key={change.key}><legend>{change.label}{change.conflict ? " · conflict" : ""}</legend><details><summary>Original value</summary><pre>{JSON.stringify(change.base, null, 2) ?? "Removed / absent"}</pre></details><div className="collab-merge-values">{(["local", "latest"] as const).map(choice => <label key={choice}><span><input type="radio" name={change.key} checked={reconciliation.choices[change.key] === choice} onChange={() => setReconciliation({ ...reconciliation, choices: { ...reconciliation.choices, [change.key]: choice } })} />{choice === "local" ? "My draft" : "Latest shared"}</span><pre>{JSON.stringify(change[choice], null, 2) ?? "Removed / absent"}</pre></label>)}</div><p>Chosen: {reconciliation.choices[change.key] || "Choose one"}</p></fieldset>)}{!reconciliation.changes.length && <p>No board changes to reconcile.</p>}<div className="collab-actions"><button disabled={!canEdit || reconciliation.changes.some(change => !reconciliation.choices[change.key]) || latest?.revision !== reconciliation.latest.revision} onClick={applyReconciliation}>Apply chosen changes to draft</button><button onClick={() => setReconciliation(null)}>Cancel review</button></div></section>}
+    {snapshot && <RoomLifecycle roomId={snapshot.roomId} token={accessToken} role={snapshot.role} revision={snapshot.revision} connected={connected} busy={busy} hasUnsavedChanges={dirty || activityDraft || Boolean(latest)} onBusyChange={value => { busyRef.current = value; setBusy(value); }} onClosed={() => { closedRef.current = true; token.current = ""; setAccessToken(""); setConnected(false); setInvites([]); try { window.sessionStorage.removeItem(sessionKey(snapshot.roomId)); } catch { /* Storage unavailable. */ } setConnectionError("This room was deleted. The board displayed here is a local copy; it cannot be saved to that room."); }} onOwnerRotated={(newToken, revision) => { token.current = newToken; setAccessToken(newToken); revisionRef.current = revision; setSnapshot({ ...snapshot, revision }); setLatest(null); setInviteReview(null); try { window.sessionStorage.setItem(sessionKey(snapshot.roomId), newToken); window.history.replaceState(null, "", window.location.pathname); } catch { window.history.replaceState(null, "", `${window.location.pathname}#token=${encodeURIComponent(newToken)}`); } }} onConflict={value => setLatest(value)} onError={setError} onNotice={setNotice} />}
     {(!id || snapshot) && <>
       <section className="collab-panel"><div className="collab-section-title"><h2>The trip</h2>{!id && <button onClick={() => void loadSample()} disabled={busy}>Load public Europe sample</button>}{snapshot && <button className="collab-primary" onClick={() => void save()} disabled={!canEdit || !dirty || busy || Boolean(latest) || activityDraft}>{busy ? "Working…" : activityDraft ? "Finish activity edit first" : dirty ? "Save changes" : "All changes saved"}</button>}</div><div className="collab-fields"><label>Trip name<input value={plan.title} disabled={!canManageTrip} maxLength={160} onChange={event => update({ ...plan, title: event.target.value })} /></label><label>Start date<input type="date" value={plan.startDate} disabled={!canManageTrip} onChange={event => changeDate("startDate", event.target.value)} /></label><label>End date<input type="date" value={plan.endDate} disabled={!canManageTrip} onChange={event => changeDate("endDate", event.target.value)} /></label></div><p className="collab-muted">Day assignments within your dates are preserved. Ideas outside a changed date range return to the catalogue.</p><div className="collab-cities">{plan.cities.map(city => <span key={city.id}>{city.name}</span>)}</div>{canManageTrip && <div className="collab-inline"><label>Add cities, separated by commas<input value={cityNames} onChange={event => setCityNames(event.target.value)} placeholder="Tokyo, Kyoto, Osaka" /></label><button onClick={addCities} disabled={!cityNames.trim()}>Add cities</button></div>}</section>
       {!id && <section className="collab-panel"><h2>Ready to invite a friend?</h2><p className="collab-muted">Review exactly what you will share. Anyone holding an invitation link can access the room with its assigned role.</p><button className="collab-primary" onClick={prepareReview}>Preview shared content</button>{review && <div className="collab-review"><h3>{plan.title}</h3><p>{plan.startDate} → {plan.endDate}</p><p>{plan.cities.map(city => city.name).join(" · ")}</p>{plan.activities.map(activity => <p key={activity.id}>{activity.title}{activity.notes ? ` — ${activity.notes}` : ""}</p>)}<p>{plan.activities.length} activities · {Object.values(plan.days).flat().length} day assignments · {points.length} map locations</p><details><summary>Inspect all shared fields</summary><pre>{JSON.stringify(plan, null, 2)}</pre></details><label className="collab-check"><input type="checkbox" checked={approved} onChange={event => setApproved(event.target.checked)} />I approve sharing this planning content. It contains no booking references, seats, personal identifiers, email links or secrets.</label>{setup?.creationCodeRequired && <label>Room creation code<input type="password" autoComplete="off" value={creationCode} onChange={event => setCreationCode(event.target.value)} disabled={busy} /><span className="collab-muted">Ask the site owner for this code. It authorizes room creation and is never included in your shared plan.</span></label>}{setup?.creationAvailable === false && <p className="collab-muted">Room creation is unavailable on this host. The site owner must complete collaboration setup.</p>}<button className="collab-primary" disabled={!approved || !setup?.configured || setup.creationAvailable === false || Boolean(setup?.creationCodeRequired && !creationCode) || busy} onClick={() => void create()}>{busy ? "Creating…" : "Create shared plan"}</button></div>}</section>}
-      {snapshot?.role === "owner" && connected && <section className="collab-panel"><h2>Invite your people</h2><p className="collab-muted">Editors can change the plan; viewers can follow along. Keep your owner link private. Copied invitations grant access until revoked.</p><div className="collab-actions"><button onClick={() => void invite("editor")} disabled={busy}>Copy editor invitation</button><button onClick={() => void invite("viewer")} disabled={busy}>Copy viewer invitation</button></div>{invites.map((value, index) => <div className="collab-invite" key={value.inviteId}><span>{value.role} invitation {index + 1}</span><button onClick={() => void revoke(value.inviteId)} disabled={busy}>Revoke</button></div>)}</section>}
+      {snapshot?.role === "owner" && connected && <section className="collab-panel"><h2>Invite your people</h2><p className="collab-muted">Editors can change the plan; viewers can follow along. Keep your owner link private. Copied invitations grant access until revoked.</p><div className="collab-actions"><button onClick={() => void copyOwnerAccess()} disabled={busy}>Copy my current owner link</button><button onClick={() => setInviteReview("editor")} disabled={busy}>Review editor invitation</button><button onClick={() => setInviteReview("viewer")} disabled={busy}>Review viewer invitation</button></div>{inviteReview && <div className="collab-review"><h3>Review {inviteReview} access</h3><p>{inviteReview === "editor" ? "Anyone with this invitation may change activities and day assignments." : "Anyone with this invitation may read and copy the board."} No message is sent. The link will be copied to your clipboard.</p><label>Invitation lifetime<select value={inviteDays} onChange={event => setInviteDays(Number(event.target.value))}><option value={1}>1 day</option><option value={7}>7 days</option><option value={30}>30 days</option></select></label><div className="collab-actions"><button onClick={() => void invite(inviteReview)} disabled={busy}>Create and copy reviewed invitation</button><button onClick={() => setInviteReview(null)}>Cancel</button></div></div>}{invites.map((value, index) => <div className="collab-invite" key={value.inviteId}><span>{value.role} invitation {index + 1}{value.expiresAt ? ` · expires ${new Date(value.expiresAt).toLocaleDateString()}` : ""}{value.expired ? " · expired" : ""}</span><button onClick={() => void revoke(value.inviteId)} disabled={busy}>Revoke</button></div>)}</section>}
       <div className="collab-grid"><section className="collab-panel"><div className="collab-section-title"><h2>Places & activities</h2><span>{plan.activities.length} ideas</span></div>{hasEditRole && <form ref={activityForm} onSubmit={submitActivity} className="collab-activity-form"><fieldset disabled={!canEdit}><div className="collab-form-heading"><h3>{editingId ? "Edit your idea" : "Add a new idea"}</h3>{activityDraft && <span>Unfinished draft</span>}</div><label>Activity title<input required value={draftActivity.title} maxLength={160} onChange={event => changeActivity({ ...draftActivity, title: event.target.value })} placeholder="A morning at the art museum" /></label><label>City<select value={draftActivity.cityId || plan.cities[0]?.id || ""} onChange={event => changeActivity({ ...draftActivity, cityId: event.target.value })}>{!plan.cities.length && <option value="">Add a city first</option>}{plan.cities.map(city => <option key={city.id} value={city.id}>{city.name}</option>)}</select></label><label>Planning notes<textarea aria-label="Planning notes" maxLength={1000} value={draftActivity.notes} onChange={event => changeActivity({ ...draftActivity, notes: event.target.value })} placeholder="Ideas and preferences only — no booking details" /></label><details><summary>Optional map location & duration</summary><div className="collab-fields"><label>Latitude<input type="number" step="any" min="-90" max="90" value={draftActivity.lat} onChange={event => changeActivity({ ...draftActivity, lat: event.target.value })} /></label><label>Longitude<input type="number" step="any" min="-180" max="180" value={draftActivity.lng} onChange={event => changeActivity({ ...draftActivity, lng: event.target.value })} /></label><label>Minutes<input type="number" min="1" max="1440" value={draftActivity.duration} onChange={event => changeActivity({ ...draftActivity, duration: event.target.value })} /></label></div></details><div className="collab-actions"><button className="collab-primary" type="submit" disabled={!plan.cities.length}>{editingId ? "Update activity" : "Add activity"}</button>{activityDraft && <button type="button" onClick={resetActivity}>{editingId ? "Cancel edit" : "Clear draft"}</button>}</div></fieldset></form>}{!plan.activities.length && <p className="collab-empty">Your ideas live here. Add the first place you want to explore.</p>}{plan.activities.map(activity => <article className="collab-activity" key={activity.id}>{activity.image && <Image src={activity.image} alt="" width={480} height={260} className="collab-activity-photo" />}<h3>{activity.title}</h3><p className="collab-muted">{plan.cities.find(city => city.id === activity.cityId)?.name}{activity.durationMinutes ? ` · ${activity.durationMinutes} min` : ""}</p>{activity.notes && <p>{activity.notes}</p>}{activity.sourceUrl && <a href={activity.sourceUrl} target="_blank" rel="noopener noreferrer" className="collab-source">View activity source ↗</a>}<label>Plan for<span className="collab-sr-only"> {activity.title}</span><select disabled={!canEdit} value={Object.entries(plan.days).find(([, ids]) => ids.includes(activity.id))?.[0] || ""} onChange={event => assign(activity.id, event.target.value)}><option value="">Unscheduled idea</option>{tripDates.map(date => <option key={date} value={date}>{date}</option>)}</select></label>{canEdit && <div className="collab-actions"><button onClick={() => beginEdit(activity)}>Edit</button><button aria-label={`Delete ${activity.title}`} onClick={() => { if (!window.confirm(`Remove “${activity.title}” from this board and all days?`)) return; if (editingId === activity.id) resetActivity(); const days = Object.fromEntries(Object.entries(plan.days).map(([date, ids]) => [date, ids.filter(value => value !== activity.id)])); update({ ...plan, activities: plan.activities.filter(value => value.id !== activity.id), days }); }}>Delete</button></div>}</article>)}</section>
       <section className="collab-panel"><div className="collab-section-title"><h2>Your days</h2><button aria-expanded={showMap} aria-controls="collab-map" onClick={() => setShowMap(!showMap)}>{showMap ? "Hide map" : "Show map"}</button></div>{showMap && <div id="collab-map" className="collab-map">{points.length ? <GeographicMap points={points} basemap="city" label="Shared activity locations" /> : <p className="collab-empty">Add optional coordinates to an activity to place it on the map. Your day plan works without map access.</p>}</div>}{!tripDates.length && <p className="collab-empty">Choose your dates to start arranging days.</p>}{tripDates.map(date => <article className="collab-day" key={date}><h3>{new Date(`${date}T12:00:00Z`).toLocaleDateString(undefined, { weekday: "short", month: "short", day: "numeric", timeZone: "UTC" })}</h3>{!(plan.days[date]?.length) && <p className="collab-muted">Room to explore. Assign an idea from the catalogue.</p>}<ol>{(plan.days[date] || []).map((activityId, position, ids) => <li key={activityId}><span>{plan.activities.find(activity => activity.id === activityId)?.title}</span>{canEdit && <div><button aria-label={`Move ${plan.activities.find(activity => activity.id === activityId)?.title || "activity"} earlier on ${date}`} disabled={position === 0} onClick={() => move(date, position, -1)}>↑</button><button aria-label={`Move ${plan.activities.find(activity => activity.id === activityId)?.title || "activity"} later on ${date}`} disabled={position === ids.length - 1} onClick={() => move(date, position, 1)}>↓</button><button aria-label={`Unassign ${plan.activities.find(activity => activity.id === activityId)?.title || "activity"} from ${date}`} onClick={() => assign(activityId, "")}>×</button></div>}</li>)}</ol></article>)}</section></div>
     </>}

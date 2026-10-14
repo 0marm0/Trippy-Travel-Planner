@@ -2,16 +2,12 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { agentTripBrief, createNormalizedTrip, validateNormalizedTrip, type NormalizedTrip } from "@/lib/normalized-trip";
+import { createNormalizedTrip, validateNormalizedTrip, type NormalizedTrip } from "@/lib/normalized-trip";
 import "./new-trip-planner.css";
+import GenericTripWorkspace from "./generic-trip-workspace";
+import { loadWorkspace, removeWorkspace, workspaceKey, type GenericWorkspace } from "@/lib/generic-trip-workspace";
 
 const split = (text: string) => text.split(",").map((item) => item.trim()).filter(Boolean);
-function download(name: string, text: string) {
-  const url = URL.createObjectURL(new Blob([text], { type: "application/json" }));
-  const anchor = document.createElement("a");
-  anchor.href = url; anchor.download = name; anchor.click();
-  setTimeout(() => URL.revokeObjectURL(url), 1000);
-}
 
 export default function NewTripPlanner() {
   const [name, setName] = useState("My next trip");
@@ -24,6 +20,7 @@ export default function NewTripPlanner() {
   const [pace, setPace] = useState<NormalizedTrip["preferences"]["pace"]>("balanced");
   const [themes, setThemes] = useState("");
   const [candidate, setCandidate] = useState<NormalizedTrip | null>(null);
+  const [restored, setRestored] = useState<GenericWorkspace | null>(null);
   const [accepted, setAccepted] = useState<NormalizedTrip | null>(null);
   const [errors, setErrors] = useState<string[]>([]);
   const [json, setJson] = useState("");
@@ -41,15 +38,12 @@ export default function NewTripPlanner() {
       setErrors(issues); setCandidate(issues.length ? null : trip as NormalizedTrip); setMessage("");
     } catch { setErrors(["Invalid JSON; no data imported"]); setCandidate(null); }
   }
-  async function copyBrief() {
-    if (!accepted) return;
-    try { await navigator.clipboard.writeText(agentTripBrief(accepted)); setMessage("Agent brief copied. Review it before sharing with your agent."); }
-    catch { setMessage("Clipboard unavailable. Copy the brief below."); }
-  }
+  if (accepted) return <main className="new-trip-page"><nav><Link href="/">TRIPPY · Sample atlas</Link><Link href="/about">About Trippy</Link><Link href="/collaborate">Plan together</Link></nav><GenericTripWorkspace key={workspaceKey(accepted)} initial={restored || accepted} onClose={() => { setAccepted(null); setRestored(null); }} /></main>;
   return <main className="new-trip-page">
     <nav><Link href="/">TRIPPY · Sample atlas</Link><Link href="/about">About Trippy</Link><Link href="/collaborate">Plan together</Link></nav>
     <header><span className="trip-kicker">YOUR CITIES. YOUR DATES. YOUR ACCOUNTS.</span><h1>Start with the trip you want.</h1><p>Create a structured draft, review it, then take it to your agent for route research. No keys or accounts required.</p></header>
-    <p className="trip-local-note">This form runs in your browser. Drafts stay in memory until you download or copy them; reload clears them. Enter planning facts only—no names, email addresses, booking codes, seats, or API keys.</p>
+    <p className="trip-local-note">This form runs in your browser. Preview drafts stay in memory. Accepted workspaces can be saved explicitly in this browser or downloaded; there is no server upload or cloud sync. Enter planning facts only—no names, email addresses, booking codes, seats, or API keys.</p>
+    <div className="new-trip-actions"><button onClick={() => { try { const saved = loadWorkspace(localStorage); if (saved) { setRestored(saved); setAccepted(saved.trip); } else setMessage("No valid saved workspace found in this browser."); } catch { setMessage("Browser storage is unavailable."); } }}>Resume last saved workspace</button><button onClick={() => { try { const saved = loadWorkspace(localStorage); if (saved) { removeWorkspace(localStorage, saved.trip); setMessage("Last saved workspace removed from this browser."); } else setMessage("No saved workspace found."); } catch { setMessage("Browser storage is unavailable."); } }}>Forget last saved workspace</button></div>
     <form onSubmit={(event) => { event.preventDefault(); preview(); }} className="new-trip-card">
       <h2>Trip frame</h2><div className="new-trip-fields">
         <label>Trip name<input required maxLength={120} value={name} onChange={(event) => setName(event.target.value)} /></label>
@@ -66,9 +60,8 @@ export default function NewTripPlanner() {
     </form>
     <details className="new-trip-card"><summary>Preview normalized JSON from your agent</summary><p>Paste only a reviewed planning record using Trippy’s trip schema. Preview does not replace your accepted draft.</p><label>Trip JSON<textarea value={json} maxLength={1_000_001} onChange={(event) => setJson(event.target.value)} rows={8} spellCheck={false} /></label><button onClick={previewJson}>Validate and preview JSON</button></details>
     {!!errors.length && <section className="new-trip-errors" role="alert"><h2>Review these fields</h2><ul>{errors.map((error, index) => <li key={index}>{error}</li>)}</ul></section>}
-    {candidate && <section className="new-trip-card" aria-label="Proposed normalized trip"><h2>Review before accepting</h2><p>{candidate.name} · {candidate.dateWindow.earliestDeparture} – {candidate.dateWindow.latestReturn} · {candidate.travelers.adults} adults</p><p>{candidate.destinations.map((city) => city.name).join(" → ")}</p><p>City order is input order, not an optimized or booked route. No availability or prices have been researched.</p><details><summary>Inspect every proposed field</summary><pre>{JSON.stringify(candidate, null, 2)}</pre></details><button className="trip-primary" onClick={() => { setAccepted(candidate); setCandidate(null); setMessage("Draft accepted in this browser session."); }}>Accept this draft</button><button onClick={() => setCandidate(null)}>Discard preview</button></section>}
-    {accepted && <section className="new-trip-card"><h2>{accepted.name}: ready for agent planning</h2><p>Ask your agent for at least three materially different routes before price research. This draft has {accepted.routeCandidates.length} recorded candidates and {accepted.bookings.length} booking records.</p><div className="new-trip-actions"><button onClick={() => download(`${accepted.id}-trip.json`, JSON.stringify(accepted, null, 2) + "\n")}>Download planning JSON</button><button onClick={copyBrief}>Copy agent brief</button><button onClick={() => { setAccepted(null); setMessage("Accepted draft cleared."); }}>Clear accepted draft</button></div><details><summary>Review the agent brief</summary><pre>{agentTripBrief(accepted)}</pre></details></section>}
+    {candidate && <section className="new-trip-card" aria-label="Proposed normalized trip"><h2>Review before accepting</h2><p>{candidate.name} · {candidate.dateWindow.earliestDeparture} – {candidate.dateWindow.latestReturn} · {candidate.travelers.adults} adults</p><p>{candidate.destinations.map((city) => city.name).join(" → ")}</p><p>City order is input order, not an optimized or booked route. No availability or prices have been researched.</p><details><summary>Inspect every proposed field</summary><pre>{JSON.stringify(candidate, null, 2)}</pre></details><button className="trip-primary" onClick={() => { setRestored(null); setAccepted(candidate); setCandidate(null); setMessage("Draft accepted in this browser session."); }}>Accept this draft</button><button onClick={() => { try { const saved = loadWorkspace(localStorage, candidate); if (saved) { setRestored(saved); setAccepted(saved.trip); setCandidate(null); } else setMessage("No saved workspace matches these trip dates and destinations. Accept this draft to start a new workspace."); } catch { setMessage("Browser storage is unavailable."); } }}>Resume saved version of this trip</button><button onClick={() => setCandidate(null)}>Discard preview</button></section>}
     {message && <p role="status">{message}</p>}
-    <footer><p>Optional research uses your own provider accounts and keys. Local hosting and an independent Vercel project are supported; nothing connects to the maintainer’s Vercel account.</p><p>This starting workflow is separate from the detailed 2026 sample atlas. Generic daily itinerary, quote selection, and maps are the next integration layer.</p></footer>
+    <footer><p>Optional research uses your own provider accounts and keys. Local hosting and an independent Vercel project are supported; nothing connects to the maintainer’s Vercel account.</p><p>This starting workflow is separate from the detailed 2026 sample atlas. Accept a draft to open its manual routes, maps, day activities, stays, transport and research coverage workspace.</p></footer>
   </main>;
 }

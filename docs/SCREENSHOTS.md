@@ -2,6 +2,8 @@
 
 Original atlas application screenshots captured on 2026-10-13 from the production build of commit e01ffdf, in verified public sample mode. There are no private trip records, booking identifiers, provider keys or invitation capabilities in these captures. New-trip and collaboration setup screenshots show blank local drafts. The three collaboration captures were refreshed on 2026-10-14 UTC from the redesigned production candidate, using a blank board and reviewed public sample only. The additional editor captures show reviewed sample day cards and a sample-only owner room; the production room uses an ephemeral local test creation code and exposes no access values.
 
+The gallery contains **23 screenshots**. The final three captures below come from the 2026-10-14 local candidate and show synthetic generic planning, a visual reading export and reviewed shared-board reconciliation. They contain no real traveler account details, confirmation records, credentials or access capabilities.
+
 [Back to the README](../README.md) · [Travel photo gallery](PHOTO_GALLERY.md)
 
 Screenshots are lossless WebP derivatives with embedded metadata removed. The route view depicts the European route with flight, rail and driving layers. City maps show only places with available coordinates; unknown locations are not invented. Historical rates, saved booking states and the Travel mode date are sample evidence, not current provider checks. The rich atlas and shared planning board remain separate as explained in [current capabilities](IMPLEMENTATION_STATUS.md).
@@ -89,3 +91,21 @@ These editor and invitation views were added after the production-origin fix. Ow
 ## Owner controls: invitations and revocation
 
 ![Editor/viewer invitation creation and revocation controls](../public/screenshots/collaboration-invitations.webp)
+
+## Generic manual workspace: your cities and editable days
+
+![Generic manual workspace using invented dates destinations and planning records](../public/screenshots/generic-workspace.webp)
+
+This is the separate arbitrary-trip workspace, not a renamed sample atlas. Dates, places, activities, maps from supplied coordinates and booking/evidence records remain manually reviewed; no live inventory or geocoding is implied.
+
+## Visual export: a current itinerary reading copy
+
+![Rich visual HTML itinerary export with city and day chapters](../public/screenshots/visual-export.webp)
+
+The reading export preserves current entered days, activities, alternatives and recorded states. It is not a provider confirmation. Compact travel/transit/hotel HTML/PDF, existing atlas light/dark/visual modes and CSV remain available. [Formats and offline limits](EXPORTS.md).
+
+## Shared-board reconciliation: review both versions
+
+![Original local and latest shared-board values with explicit reconciliation choices](../public/screenshots/reconciliation.webp)
+
+The review compares the base, local draft and latest shared revision. Choices apply to a validated local draft before a separate conditional save; conflicting references or another revision pause the flow. [Live collaboration](LIVE_COLLABORATION.md).

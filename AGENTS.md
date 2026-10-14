@@ -18,7 +18,7 @@ Build a provider-neutral, privacy-conscious trip planner from structured data. N
 ## Product behavior
 
 - Work from normalized `trip.json` data and schemas. For a new trip use the traveler’s dates, destinations and constraints; never treat the Europe sample as universal defaults.
-- Use `/plan` or `trip:init`/`trip:validate` for generic normalized drafts. `/plan` requires preview and acceptance and has no server upload/persistence; downloads stay private-local for real trips. The detailed visual atlas has a specialized 2026 loader. Do not claim its planning-profile setup or update bundles create arbitrary trips, rewrite stops/dates or import confirmations. Use the generic schema for separate agent-led records and state UI limitations.
+- Use `/plan` or `trip:init`/`trip:validate` for generic normalized records. `/plan` previews before acceptance, then opens a separate manual workspace for routes, explicit coordinate maps, days/activities and reviewed stays/transport. Browser persistence is explicit and trip-isolated; server upload requires an explicit optional-account save action. Keep real downloads private-local. The detailed atlas still has a specialized 2026 loader; its profile/update bundles do not create arbitrary trips or import confirmations.
 - Separate facts, live quotes, estimates, recommendations, and confirmations.
 - Attach source and checked-at time to external facts and prices.
 - Preserve alternatives, constraints, user rejections, and unknowns.
@@ -26,6 +26,15 @@ Build a provider-neutral, privacy-conscious trip planner from structured data. N
 - Keep manual/sample mode working when providers are absent.
 - Optional `/collaborate` rooms are separate share-safe activity/day records, not atlas imports or private-trip accounts. Require review before publishing a board; keep bookings and all private identifiers outside it. Use owner/editor/viewer capabilities, Authorization headers, fragment-only invitation links, and revision-conditional writes. Preserve drafts on conflicts; never silently retry an overwrite or record access tokens in trip data.
 - Live rooms require explicit `COLLABORATION_ENABLED`, persistent local SQLite on one Node server, or a user-owned Postgres database for Vercel/multiple instances. Remote or production creation requires the server's private `COLLABORATION_CREATE_CODE`; never ask for its value in chat or write it to tracked files. Implementation does not authorize provisioning, invitations sent to others, or deployment. See [live collaboration](docs/LIVE_COLLABORATION.md).
+
+## Current module contracts
+
+- Generic planning is manual: preserve unknown coordinates, schedules, prices and time zones. Validate trip/workspace/evidence independently; research and quote sidecars are not implicit booking evidence or automatically included in account saves.
+- Research coverage and recorded cash/award/stay/transport comparisons must disclose source, checked time, scope, party/room/currency basis, unknowns and points assumptions. They do not prove exhaustive search, provider eligibility or inventory.
+- Generic-to-board JSON is a reviewed city/activity/day projection, excluding bookings/research/private identifiers. Import preview/acceptance and room creation are separate decisions; no automatic room/workspace sync.
+- Room reconciliation requires explicit choices and current-revision checks. Device recovery stores only validated board/base data with consent; capabilities, creation codes and unfinished forms remain separate. Revalidate expired/revoked/deleted access inside transactions. Owner rotation/deletion requires reviewed approval; uncertain outcomes must not be retried blindly.
+- Optional accounts are disabled by default and use user-owned durable storage, Better Auth sessions, tenant predicates, encrypted plan content and revision checks. Respect the 20-plan quota and password-confirmed deletion. Never place authentication identities/session data in trip exports. A mocked password-reset adapter is not a configured recovery service. See [private accounts](docs/PRIVATE_ACCOUNTS.md).
+- Preserve all existing export modes and photos. Generic/atlas rich HTML and compact travel/transit/hotel HTML/PDF are reading copies; JSON/evidence are editable records. Block unsafe or incomplete exports and state network/image/PDF-server limits. See [exports](docs/EXPORTS.md).
 
 ## New-trip workflow
 

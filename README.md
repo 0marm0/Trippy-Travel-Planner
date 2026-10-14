@@ -161,7 +161,7 @@ Map layers, stay dates, location fit, filters and provider evidence.
 
 ![Hotel comparison workspace with Berlin hotel, transit and attraction map](public/screenshots/hotels.webp)
 
-[**Explore all 28 app screenshots →**](docs/SCREENSHOTS.md) · Route research, transport, activities, Decide/Travel modes, new-trip setup and collaboration.
+[**Explore all 30 app screenshots →**](docs/SCREENSHOTS.md) · Route research, transport, activities, Decide/Travel modes, new-trip setup and collaboration.
 
 Screenshots show historical sample evidence, not current prices or live availability. Map/provider credits and photo terms remain attached to their content. The **156 bundled travel photos** are available in the [separate photo gallery](docs/PHOTO_GALLERY.md). [Media provenance](docs/MEDIA.md).
 
@@ -237,7 +237,7 @@ Enter your own values **directly in that ignored local file**, or in your own ho
 
 Configured keys do not prove account access, broad coverage or live availability. Personal provider access does not automatically authorize a commercial or shared public service. Each result retains a source, checked time and limitation. Production quota spending is gated by your server-side `TRIPPY_ACCESS_CODE` and `TRIPPY_SESSION_SECRET`; those are not multi-user trip accounts.
 
-The Connections interface is a bounded starter: cash searches currently use one adult/economy/EUR, awards one seat with `program: "any"`, and hotels one adult/room/night. Its Sort selector is not wired to ranking. Use the [validated API request examples](docs/PLANNING_GUIDE.md#3-search-cash-flights), agent research or manual comparisons for your actual party/cabin/currency. Cached award summaries do not guarantee enough seats or complete taxes.
+Connections exposes editable party, supported cabin/room/currency/date and award-seat/program controls, initialized from available trip facts. Sorting uses returned price/time evidence with explicit currency, unit and missing-value limits; changed controls cancel stale requests. Unsupported child/award occupancy constraints remain disclosed. The generic cash matrix prepares up to 24 exact one-way airport/date queries before an explicit run and coverage review; other search families remain separate. Use the [validated API request examples](docs/PLANNING_GUIDE.md#3-search-cash-flights), agent research or manual comparisons for unsupported scope. Cached award summaries do not guarantee enough seats or complete taxes.
 
 Read [the complete planning guide](docs/PLANNING_GUIDE.md) for request examples, provider limits and official sources; [setup](docs/SETUP.md) covers configuration and [integrations](docs/INTEGRATIONS.md) describes permissions, coverage, freshness and failures.
 

@@ -2027,6 +2027,193 @@
       "privacyStatus": "approved",
       "privacyReview": "Contact-sheet pixel review and metadata stripping",
       "reviewedAt": "2026-10-13"
+    },
+    {
+      "path": "public/screenshots/route.webp",
+      "sha256": "d87478885bfbe4f1c8fdb1720c0c213a6b37cf29333358984881eca771740dde",
+      "credit": "Trippy app screenshot; map attributions retained where shown",
+      "sourceUrl": "repository:docs/SCREENSHOTS.md",
+      "license": "MIT app UI; depicted photographs and map/provider content retain their separate terms",
+      "rightsStatus": "approved",
+      "privacyStatus": "approved",
+      "privacyReview": "Reviewed public sample only; screenshot pixel review and metadata stripping",
+      "reviewedAt": "2026-10-13"
+    },
+    {
+      "path": "public/screenshots/city-nurburgring.webp",
+      "sha256": "6e947ce5d6897d7c9f7a1b88dbbf3429063ba68ab13cd5c7de81fcd97ada4335",
+      "credit": "Trippy app screenshot; map attributions retained where shown",
+      "sourceUrl": "repository:docs/SCREENSHOTS.md",
+      "license": "MIT app UI; depicted photographs and map/provider content retain their separate terms",
+      "rightsStatus": "approved",
+      "privacyStatus": "approved",
+      "privacyReview": "Reviewed public sample only; screenshot pixel review and metadata stripping",
+      "reviewedAt": "2026-10-13"
+    },
+    {
+      "path": "public/screenshots/city-wroclaw.webp",
+      "sha256": "7b79559a788e22aef5290ec8cfe4360db970d6838603e0c9e03138099f1cd3f3",
+      "credit": "Trippy app screenshot; map attributions retained where shown",
+      "sourceUrl": "repository:docs/SCREENSHOTS.md",
+      "license": "MIT app UI; depicted photographs and map/provider content retain their separate terms",
+      "rightsStatus": "approved",
+      "privacyStatus": "approved",
+      "privacyReview": "Reviewed public sample only; screenshot pixel review and metadata stripping",
+      "reviewedAt": "2026-10-13"
+    },
+    {
+      "path": "public/screenshots/city-krakow.webp",
+      "sha256": "402d4c5f3d55c9149031bc19cd18c54f9db59836b7ef8381298dfae7ad138189",
+      "credit": "Trippy app screenshot; map attributions retained where shown",
+      "sourceUrl": "repository:docs/SCREENSHOTS.md",
+      "license": "MIT app UI; depicted photographs and map/provider content retain their separate terms",
+      "rightsStatus": "approved",
+      "privacyStatus": "approved",
+      "privacyReview": "Reviewed public sample only; screenshot pixel review and metadata stripping",
+      "reviewedAt": "2026-10-13"
+    },
+    {
+      "path": "public/screenshots/city-brussels.webp",
+      "sha256": "a2e957d484eca8d40fc7ac406eafa370c5ab504ffedf1b1f76622d3173ae227b",
+      "credit": "Trippy app screenshot; map attributions retained where shown",
+      "sourceUrl": "repository:docs/SCREENSHOTS.md",
+      "license": "MIT app UI; depicted photographs and map/provider content retain their separate terms",
+      "rightsStatus": "approved",
+      "privacyStatus": "approved",
+      "privacyReview": "Reviewed public sample only; screenshot pixel review and metadata stripping",
+      "reviewedAt": "2026-10-13"
+    },
+    {
+      "path": "public/screenshots/city-amsterdam.webp",
+      "sha256": "6194ec147044ff3a1b1a4b2e35078faa98183e348a1cc04366f70abbd3dc58ab",
+      "credit": "Trippy app screenshot; map attributions retained where shown",
+      "sourceUrl": "repository:docs/SCREENSHOTS.md",
+      "license": "MIT app UI; depicted photographs and map/provider content retain their separate terms",
+      "rightsStatus": "approved",
+      "privacyStatus": "approved",
+      "privacyReview": "Reviewed public sample only; screenshot pixel review and metadata stripping",
+      "reviewedAt": "2026-10-13"
+    },
+    {
+      "path": "public/screenshots/city-berlin.webp",
+      "sha256": "efe32cb071cbe90ef6b07cf409f6ce8c2ab92b9252293ea736a60e68f942aeb4",
+      "credit": "Trippy app screenshot; map attributions retained where shown",
+      "sourceUrl": "repository:docs/SCREENSHOTS.md",
+      "license": "MIT app UI; depicted photographs and map/provider content retain their separate terms",
+      "rightsStatus": "approved",
+      "privacyStatus": "approved",
+      "privacyReview": "Reviewed public sample only; screenshot pixel review and metadata stripping",
+      "reviewedAt": "2026-10-13"
+    },
+    {
+      "path": "public/screenshots/city-munich.webp",
+      "sha256": "6b57eaf735f96b554b7e38b3bec7c0ef0b2b42cd2f84e5bf0d0448cb2c469d5f",
+      "credit": "Trippy app screenshot; map attributions retained where shown",
+      "sourceUrl": "repository:docs/SCREENSHOTS.md",
+      "license": "MIT app UI; depicted photographs and map/provider content retain their separate terms",
+      "rightsStatus": "approved",
+      "privacyStatus": "approved",
+      "privacyReview": "Reviewed public sample only; screenshot pixel review and metadata stripping",
+      "reviewedAt": "2026-10-13"
+    },
+    {
+      "path": "public/screenshots/hotels.webp",
+      "sha256": "0bef626d6476e33e127013ae223eb854e4d4732d514d38184d74af672edaa5c1",
+      "credit": "Trippy app screenshot; map attributions retained where shown",
+      "sourceUrl": "repository:docs/SCREENSHOTS.md",
+      "license": "MIT app UI; depicted photographs and map/provider content retain their separate terms",
+      "rightsStatus": "approved",
+      "privacyStatus": "approved",
+      "privacyReview": "Reviewed public sample only; screenshot pixel review and metadata stripping",
+      "reviewedAt": "2026-10-13"
+    },
+    {
+      "path": "public/screenshots/itinerary.webp",
+      "sha256": "22f4cc31eb7f94528d32ac4afdc7ff09d4a546824a4bed714aa7ef483cc39703",
+      "credit": "Trippy app screenshot; map attributions retained where shown",
+      "sourceUrl": "repository:docs/SCREENSHOTS.md",
+      "license": "MIT app UI; depicted photographs and map/provider content retain their separate terms",
+      "rightsStatus": "approved",
+      "privacyStatus": "approved",
+      "privacyReview": "Reviewed public sample only; screenshot pixel review and metadata stripping",
+      "reviewedAt": "2026-10-13"
+    },
+    {
+      "path": "public/screenshots/research.webp",
+      "sha256": "eb8fbf438df4e11094b92c025ccc7b5a619c8ec57787b71b5944936bc4eca36a",
+      "credit": "Trippy app screenshot; map attributions retained where shown",
+      "sourceUrl": "repository:docs/SCREENSHOTS.md",
+      "license": "MIT app UI; depicted photographs and map/provider content retain their separate terms",
+      "rightsStatus": "approved",
+      "privacyStatus": "approved",
+      "privacyReview": "Reviewed public sample only; screenshot pixel review and metadata stripping",
+      "reviewedAt": "2026-10-13"
+    },
+    {
+      "path": "public/screenshots/transport.webp",
+      "sha256": "0f7f407ec5ce9c7953eaad84f8db9a3e2b7892424cb6e73f6396b9ee65d6fa95",
+      "credit": "Trippy app screenshot; map attributions retained where shown",
+      "sourceUrl": "repository:docs/SCREENSHOTS.md",
+      "license": "MIT app UI; depicted photographs and map/provider content retain their separate terms",
+      "rightsStatus": "approved",
+      "privacyStatus": "approved",
+      "privacyReview": "Reviewed public sample only; screenshot pixel review and metadata stripping",
+      "reviewedAt": "2026-10-13"
+    },
+    {
+      "path": "public/screenshots/activities.webp",
+      "sha256": "df71fc1ed3c7560c54532b7e11d12440b759dbaaaac9a17d1e53afb58db78b1b",
+      "credit": "Trippy app screenshot; map attributions retained where shown",
+      "sourceUrl": "repository:docs/SCREENSHOTS.md",
+      "license": "MIT app UI; depicted photographs and map/provider content retain their separate terms",
+      "rightsStatus": "approved",
+      "privacyStatus": "approved",
+      "privacyReview": "Reviewed public sample only; screenshot pixel review and metadata stripping",
+      "reviewedAt": "2026-10-13"
+    },
+    {
+      "path": "public/screenshots/decide.webp",
+      "sha256": "a96bc35a4857a2affe768c3a718d8c13d7dc54147c189f29024ddd04c8302a85",
+      "credit": "Trippy app screenshot; map attributions retained where shown",
+      "sourceUrl": "repository:docs/SCREENSHOTS.md",
+      "license": "MIT app UI; depicted photographs and map/provider content retain their separate terms",
+      "rightsStatus": "approved",
+      "privacyStatus": "approved",
+      "privacyReview": "Reviewed public sample only; screenshot pixel review and metadata stripping",
+      "reviewedAt": "2026-10-13"
+    },
+    {
+      "path": "public/screenshots/travel.webp",
+      "sha256": "66292be949c28e9ba0edd870eea06c9cce36088a3c09422994a69baecc9b4283",
+      "credit": "Trippy app screenshot; map attributions retained where shown",
+      "sourceUrl": "repository:docs/SCREENSHOTS.md",
+      "license": "MIT app UI; depicted photographs and map/provider content retain their separate terms",
+      "rightsStatus": "approved",
+      "privacyStatus": "approved",
+      "privacyReview": "Reviewed public sample only; screenshot pixel review and metadata stripping",
+      "reviewedAt": "2026-10-13"
+    },
+    {
+      "path": "public/screenshots/plan.webp",
+      "sha256": "d98b4aeff0fea9d1c9b41dc04f42c2c0800bd2be7833ad944bbe77994afd307e",
+      "credit": "Trippy app screenshot; map attributions retained where shown",
+      "sourceUrl": "repository:docs/SCREENSHOTS.md",
+      "license": "MIT app UI; depicted photographs and map/provider content retain their separate terms",
+      "rightsStatus": "approved",
+      "privacyStatus": "approved",
+      "privacyReview": "Reviewed public sample only; screenshot pixel review and metadata stripping",
+      "reviewedAt": "2026-10-13"
+    },
+    {
+      "path": "public/screenshots/collaboration.webp",
+      "sha256": "08c58a8971ec5a4a75d9546367ac6642ec93c0bcb32f872be43b41ebbb786ff4",
+      "credit": "Trippy app screenshot; map attributions retained where shown",
+      "sourceUrl": "repository:docs/SCREENSHOTS.md",
+      "license": "MIT app UI; depicted photographs and map/provider content retain their separate terms",
+      "rightsStatus": "approved",
+      "privacyStatus": "approved",
+      "privacyReview": "Reviewed public sample only; screenshot pixel review and metadata stripping",
+      "reviewedAt": "2026-10-13"
     }
   ],
   "remoteAssets": []

@@ -43,3 +43,7 @@ Runtime rendering and release readiness are separate. A working gallery does not
 ## Portable itinerary photos
 
 The dashboard serves the restored guide photos from this checkout's `public/guide-images` and `public/media` directories. Downloaded HTML dossiers embed reviewed bundled WebP images so they do not depend on the maintainer's website. Visual PDF exports read only approved public filename patterns and convert local WebP to JPEG in memory; Next.js file tracing includes those assets for hosted functions. Remote provider photos retain their source URLs and may become unavailable; bundling them requires a separate reviewed media plan and license/credit mapping.
+
+## App screenshots
+
+The README showcases the application itself, with 17 captures listed in [the screenshot gallery](SCREENSHOTS.md). Captures use verified sample mode or blank new-trip/shared-room forms. They were reviewed at full size for the primary screens and in contact sheets for the complete set; no visible private identifiers, credentials, confirmation codes or invitation capabilities were found. Lossless WebP encoding preserves map labels and UI text and removes embedded metadata. These 17 registered screenshot assets bring the local image inventory to 181; the 156 travel photos remain in their separate gallery. Map credits remain visible and depicted photography retains its separate terms.

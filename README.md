@@ -16,20 +16,65 @@ A cheaper flight can change your arrival city. A hotel can change how much time 
 
 > **Beta · private staging repository.** The detailed atlas demonstrates the reviewed Europe 2026 sample. `/plan` supports your own cities and dates as a validated draft and agent handoff; generic drafts do not yet populate the atlas’s detailed itinerary, map or quote-selection views. Optional `/collaborate` rooms support live activity/day editing with owner, editor and viewer access on a configured durable server. Hosted private-trip accounts and automatic bookings remain future work. [Current capabilities and limits](docs/IMPLEMENTATION_STATUS.md).
 
+## See the app
+
+**The complete route in one workspace:** flights, trains, driving, city order and booking gaps. These are screenshots of the working app using the reviewed public sample.
+
+![Trippy overall Europe route with flight, train and driving layers](public/screenshots/route.webp)
+
+**City maps:** mapped sights, stays, airports and stations where coordinates are available.
+
 <table>
 <tr>
-<td width="33%"><img src="public/guide-images/89c741ed219491ab.webp" alt="Lisbon overlooking the waterfront" width="320" /><br /><b>Lisbon</b> · Waterfront and city views</td>
-<td width="33%"><img src="public/guide-images/39ac0d24830cee4b.webp" alt="Dom Luís I Bridge in Porto" width="320" /><br /><b>Porto</b> · Ribeira and the bridge</td>
-<td width="33%"><img src="public/guide-images/aa6abcc21ffaa82b.webp" alt="Grand Place in Brussels" width="320" /><br /><b>Brussels</b> · Grand Place</td>
-</tr>
-<tr>
-<td><img src="public/guide-images/d58a91927dc0323f.webp" alt="Amsterdam buildings beside a canal at night" width="320" /><br /><b>Amsterdam</b> · The canals after dark</td>
-<td><img src="public/guide-images/511c31258a672925.webp" alt="Glass and steel inside Berlin's Reichstag dome" width="320" /><br /><b>Berlin</b> · The Reichstag dome</td>
-<td><img src="public/guide-images/c236d47a6202744c.webp" alt="Colorful towers of Pena Palace in Sintra" width="320" /><br /><b>Sintra</b> · Pena Palace</td>
+<td width="50%"><a href="public/screenshots/city-berlin.webp"><img src="public/screenshots/city-berlin.webp" alt="Berlin city map with attraction and station markers" width="440" /></a><br /><b>Berlin</b> · Sights and station context</td>
+<td width="50%"><a href="public/screenshots/city-amsterdam.webp"><img src="public/screenshots/city-amsterdam.webp" alt="Amsterdam city map with sights, station and airport markers" width="440" /></a><br /><b>Amsterdam</b> · Sights and arrival context</td>
 </tr>
 </table>
 
-These are six of the **156 bundled travel photos**. Explore the [complete gallery](docs/PHOTO_GALLERY.md), the sample atlas, or the app’s `/about` page. Images retain their own terms; the MIT code license does not license third-party photos. [Photo provenance and adding images](docs/MEDIA.md).
+<details>
+<summary><b>See maps for all seven sample cities</b></summary>
+
+**Nürburgring places map**
+
+![Nürburgring places map](public/screenshots/city-nurburgring.webp)
+
+**Wrocław places map**
+
+![Wrocław places map](public/screenshots/city-wroclaw.webp)
+
+**Kraków places map**
+
+![Kraków places map](public/screenshots/city-krakow.webp)
+
+**Brussels places map**
+
+![Brussels places map](public/screenshots/city-brussels.webp)
+
+**Amsterdam places map**
+
+![Amsterdam places map](public/screenshots/city-amsterdam.webp)
+
+**Berlin places map**
+
+![Berlin places map](public/screenshots/city-berlin.webp)
+
+**Munich places map**
+
+![Munich places map](public/screenshots/city-munich.webp)
+
+</details>
+
+**Build your days around the map:** assign and reorder activities, keep arrivals and stays visible, and preserve alternatives.
+
+![Daily itinerary builder with map, logistics and activity catalogue](public/screenshots/itinerary.webp)
+
+**Compare hotels in geographic context:** map layers, stay dates, location fit, filters and provider evidence.
+
+![Hotel comparison workspace with Berlin hotel, transit and attraction map](public/screenshots/hotels.webp)
+
+[**Explore all 17 app screenshots →**](docs/SCREENSHOTS.md) · Route research, transport, activities, Decide/Travel modes, new-trip setup and collaboration.
+
+Screenshots show historical sample evidence, not current prices or live availability. Map/provider credits and photo terms remain attached to their content. The **156 bundled travel photos** are available in the [separate photo gallery](docs/PHOTO_GALLERY.md). [Media provenance](docs/MEDIA.md).
 
 ## What you can plan
 

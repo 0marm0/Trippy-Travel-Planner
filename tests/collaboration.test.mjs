@@ -101,9 +101,33 @@ test("remote room creation requires a configured bounded creation code, never in
   assert.doesNotThrow(() => authorizeRoomCreation(new Request(remote, { headers: { "X-Trippy-Create-Code": env.COLLABORATION_CREATE_CODE } }), env));
   assert.throws(() => authorizeRoomCreation(remote, { COLLABORATION_CREATE_CODE: "short" }), fails(503));
   assert.throws(() => authorizeRoomCreation(new Request("http://localhost:3000"), { VERCEL: "1" }), fails(503));
+  for (const host of ["localhost:3000", "127.0.0.1:3000", "[::1]:3000"]) {
+    assert.throws(() => authorizeRoomCreation(new Request("http://localhost:3000", { headers: { Host: host } }), { NODE_ENV: "production" }), fails(503));
+  }
+  assert.equal(creationConfiguration(new Request("http://localhost:3000", { headers: { Host: "public.example" } }), {}).creationCodeRequired, true);
   const status = creationConfiguration(remote, env);
   assert.deepEqual(status, { creationCodeRequired: true, creationAvailable: true });
   assert.equal(JSON.stringify(status).includes(env.COLLABORATION_CREATE_CODE), false);
+});
+
+test("public incoming Host admits same-site Next requests while foreign origins and untrusted proxy schemes fail", () => {
+  const local = new Request("http://localhost:3108/api/collaboration/rooms", { headers: { Host: "127.0.0.1:3108", Origin: "http://127.0.0.1:3108", "Sec-Fetch-Site": "same-origin" } });
+  assert.doesNotThrow(() => sameOrigin(local, {}));
+  const remote = new Request("http://localhost:3108/api/collaboration/rooms", { headers: { Host: "planner.example", Origin: "http://planner.example" } });
+  assert.doesNotThrow(() => sameOrigin(remote, {}));
+  const foreign = new Request(local, { headers: { Host: "127.0.0.1:3108", Origin: "http://elsewhere.example" } });
+  assert.throws(() => sameOrigin(foreign, {}), fails(403));
+  assert.throws(() => sameOrigin(new Request(local, { headers: { Host: "127.0.0.1:3108", Origin: "http://127.0.0.1:3108", "Sec-Fetch-Site": "cross-site" } }), {}), fails(403));
+  const httpsProxy = new Request("http://localhost:3108", { headers: { Host: "planner.example", Origin: "https://planner.example", "X-Forwarded-Proto": "https" } });
+  assert.throws(() => sameOrigin(httpsProxy, {}), fails(403));
+  assert.doesNotThrow(() => sameOrigin(httpsProxy, { COLLABORATION_TRUST_PROXY: "true" }));
+  assert.doesNotThrow(() => sameOrigin(httpsProxy, { VERCEL: "1" }));
+  assert.throws(() => sameOrigin(new Request(httpsProxy, { headers: { Host: "planner.example", Origin: "https://planner.example", "X-Forwarded-Proto": "https,http" } }), { COLLABORATION_TRUST_PROXY: "true" }), fails(400));
+  for (const host of [["planner.example", "foreign.example"].join("@"), "planner.example/path", "planner.example,foreign.example", "planner.example:99999"]) {
+    assert.throws(() => sameOrigin(new Request("http://localhost:3108", { headers: { Host: host, Origin: "https://planner.example" } }), {}), fails(400));
+  }
+  const forgedForwardedHost = new Request("http://localhost:3108", { headers: { Host: "planner.example", Origin: "http://foreign.example", "X-Forwarded-Host": "foreign.example" } });
+  assert.throws(() => sameOrigin(forgedForwardedHost, { COLLABORATION_TRUST_PROXY: "true" }), fails(403));
 });
 
 test("production SQLite path refuses symbolic-link ancestors, files and escaping paths", async () => {

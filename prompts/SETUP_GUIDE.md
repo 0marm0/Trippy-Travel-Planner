@@ -21,11 +21,27 @@ For each selected module explain purpose, owner, minimum permission, current cov
 
 Have the user enter secrets only in ignored `.env.local` or their own host secret settings. Never request secret text in chat, print values, add `NEXT_PUBLIC_` to private keys, or copy host credentials into the website. Report `configured`, `not configured` or `not checked`; configuration alone does not establish valid access. Use bounded authorized test requests only when needed.
 
+## Guide the user through account/key setup
+
+Use the exact [SerpApi](../docs/INTEGRATIONS.md#serpapi-user-owned-account-and-key) and [Seats.aero](../docs/INTEGRATIONS.md#seatsaero-choose-api-or-host-mcp) steps. Give the official account/settings links, explain current eligibility/quotas/permitted uses and let the user enter their own key locally. Create `.env.local` from `.env.example` only when it is absent; preserve existing settings. Never read/print values or ask for them in chat. Restart the server and report redacted configuration status. Within existing research authorization, test one bounded query; state precisely what worked and what remains untested. Leave cached award mode enabled unless separate commercial Live Search access is established.
+
+## Discover and authorize host tools
+
+Inventory tools actually exposed in this host/session before relying on them. Follow [the host guide](../docs/INTEGRATIONS.md#agent-guided-host-setup): directory discovery, publisher/source check, user-selected install/connect, trusted OAuth/sign-in, minimum search/read permissions, session refresh and one bounded tested query. Use official host/provider instructions; never invent an MCP URL or treat an old plugin announcement as current access.
+
+Check KAYAK, Expedia, Booking.com, trivago and any other requested hotel/flight tools individually. Discover rental-car, activity/maps, rail/coach/ferry tools separately; a hotel connection implies none of them. Seats.aero API credentials and host MCP OAuth are different routes. A host listing may vary by account/region and may require no login; use its actual flow rather than asking for a key unnecessarily. Preserve manual/operator-site research for missing, unverified, limited or stale tools.
+
+For every enabled tool record: host/provider, callable search types, authentication/configuration status, tested query and date, coverage/party/currency limits, approved actions, cost/quota information and fallback. Keep host tokens outside the website environment and trip JSON. Do not book, create award alerts, send invitations/email or mutate calendars as part of setup.
+
+## Normalize the comparison
+
+Before ranking, match flight party/seat/cabin/dates or hotel property/room/occupancy/stay dates, full-stay total, currency, mandatory fees and cancellation terms. Evaluate hotel location against selected activities and stations using verified coordinates and travel-time evidence; price alone does not establish value. Keep unknown fees/seat counts/hours explicit, sources/timestamps separate, provider rates deduplicated and alternatives retained. Use [the comparison checklist](../docs/INTEGRATIONS.md#compare-like-for-like-results).
+
 ## Hosting the user owns
 
 Local-private is the default for real trips. For a redacted website, offer the user's own Vercel project or a full Next.js Node server on infrastructure they control. Explain current pricing/quotas from official sources before choosing; do not invent a free plan. Static-file hosting cannot replace server APIs.
 
-Complete local checks, sanitized-artifact review and release prerequisites before requesting the separately required deployment/publication approval. When already authorized, use only the exact approved project/source/environment. Never deploy private trip files or `.env.local`; keep private gates off. Hosting adds no accounts, cloud trip sync, durable approval ledger or access to connectors installed in an agent host.
+Complete local checks, sanitized-artifact review and release prerequisites before requesting the separately required deployment/publication approval. When already authorized, use only the exact approved project/source/environment. Never deploy private trip files or `.env.local`; keep private gates off. Hosting alone adds no private-trip accounts, automatic trip sync or access to connectors installed in an agent host. Optional `/collaborate` rooms use explicit persistent SQLite or user-owned Postgres configuration for reviewed share-safe activity/day boards; they are separate from private trip/booking storage and have no authenticated account identity or audit-history ledger. Follow [live collaboration](../docs/LIVE_COLLABORATION.md); implementation does not authorize database provisioning, publishing a board, sending invitations or deployment.
 
 ## Handoff
 

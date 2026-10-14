@@ -25,22 +25,41 @@ export function revision(request: Request) {
   if (!Number.isSafeInteger(number)) throw new CollaborationError(400, "Invalid revision.");
   return number;
 }
-export function sameOrigin(request: Request) {
+function publicRequestOrigin(request: Request, env = process.env) {
+  const internal = new URL(request.url);
+  let protocol = internal.protocol;
+  // Only explicitly trusted reverse proxies (or Vercel's managed ingress) may
+  // supply the public scheme. Never trust forwarded host or an arbitrary chain.
+  if (env.COLLABORATION_TRUST_PROXY === "true" || env.VERCEL) {
+    const forwarded = request.headers.get("x-forwarded-proto");
+    if (forwarded !== null) {
+      if (forwarded !== "http" && forwarded !== "https") throw new CollaborationError(400, "Invalid public request scheme.");
+      protocol = `${forwarded}:`;
+    }
+  }
+  if (protocol !== "http:" && protocol !== "https:") throw new CollaborationError(400, "Invalid public request scheme.");
+  const authority = request.headers.get("host") ?? internal.host;
+  if (!/^(?:\[[a-f0-9:.]+\]|[a-z0-9](?:[a-z0-9.-]*[a-z0-9])?)(?::[0-9]{1,5})?$/i.test(authority)) throw new CollaborationError(400, "Invalid public request host.");
+  try { return new URL(`${protocol}//${authority}`).origin; }
+  catch { throw new CollaborationError(400, "Invalid public request host."); }
+}
+export function sameOrigin(request: Request, env = process.env) {
   const url = new URL(request.url);
   if (url.search) throw new CollaborationError(400, "Query parameters are not supported.");
+  const expectedOrigin = publicRequestOrigin(request, env);
   const origin = request.headers.get("origin");
-  if ((origin && origin !== url.origin) || request.headers.get("sec-fetch-site") === "cross-site") throw new CollaborationError(403, "Cross-origin collaboration requests are not allowed.");
+  if ((origin && origin !== expectedOrigin) || request.headers.get("sec-fetch-site") === "cross-site") throw new CollaborationError(403, "Cross-origin collaboration requests are not allowed.");
 }
 export function creationConfiguration(request: Request, env = process.env) {
-  const hostname = new URL(request.url).hostname;
+  const hostname = new URL(publicRequestOrigin(request, env)).hostname;
   const loopback = ["localhost", "127.0.0.1", "[::1]", "::1"].includes(hostname);
-  const creationCodeRequired = !loopback || Boolean(env.VERCEL || env.AWS_LAMBDA_FUNCTION_NAME || env.FUNCTION_TARGET || env.COLLABORATION_CREATE_CODE);
+  const creationCodeRequired = env.NODE_ENV === "production" || !loopback || Boolean(env.VERCEL || env.AWS_LAMBDA_FUNCTION_NAME || env.FUNCTION_TARGET || env.COLLABORATION_CREATE_CODE);
   const code = env.COLLABORATION_CREATE_CODE;
   const valid = typeof code === "string" && code.length >= 16 && code.length <= 256 && !/\s/.test(code);
   return { creationCodeRequired, creationAvailable: !creationCodeRequired || valid };
 }
 export function authorizeRoomCreation(request: Request, env = process.env) {
-  sameOrigin(request);
+  sameOrigin(request, env);
   const config = creationConfiguration(request, env);
   if (!config.creationAvailable) throw new CollaborationError(503, "Room creation requires a configured server creation code.");
   if (!config.creationCodeRequired) return;

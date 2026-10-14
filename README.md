@@ -4,25 +4,63 @@
 
 # Trippy Travel Planner
 
-**Compare cash and points. Shape a multi-city route. Build days worth taking.**
+**Find better cash and points value. Shape the whole route. Build feasible days. Plan together.**
 
-Trippy is a privacy-conscious planning workspace that connects the decisions behind a trip: where to go, how to get between cities, where to stay, what to see, and what still needs booking. Use it manually or work with an agent that researches options and proposes changes for your review.
+Trippy connects flight and award research, multi-city route decisions, ground transport, hotel location, things to do, daily itineraries and booking gaps in one planning workflow. Start manually or give an agent your trip brief; keep sources, checked times, alternatives and unknowns attached to the plan.
 
-A cheaper flight can change your arrival city. A hotel can change how much time you spend crossing town. A timed attraction can shape a whole day. Trippy keeps those tradeoffs together, with sources, timestamps, alternatives and unknowns visible.
+- **Cash and points flights:** compare fares with award points plus taxes, baggage, positioning and transfer costs. Research flexible dates, alternate airports, gateways, connections and open jaws using supported APIs or your authorized agent tools.
+- **Routes between cities:** compare flight, train, car and plausible coach/ferry options by all-in cost, door-to-door time, hotel/station/airport transfers, overnight travel and disruption risk. Rank supplied route alternatives with explicit assumptions.
+- **Hotels and bases:** research comparable stay quotes through configured APIs or available host travel connectors; compare total price, room/cancellation terms, points options and location against sights and transport. Choose value across the whole stay, not only the nightly rate.
+- **Things to do and editable days:** research a broad city catalogue, map verified locations, cluster activities, assign/reorder days, and plan around hotels, arrivals, reservations, opening hours, luggage and rest.
+- **Booking tracking:** keep recommendations, quotes, holds, confirmations, missing bookings and conflicts distinct across flights, rail, rental cars, stays and activities. Review confirmations before changing state.
+- **Plan with friends:** optional live rooms let owners invite editors/viewers, add activities, arrange days, revoke access and review conflicting edits. Share-safe rooms use your own durable storage and remain separate from the rich atlas.
 
-**No API keys required to start. Optional research uses your own accounts. You review confirmations and book with the provider.**
+**No API keys required to start. Optional research uses your own accounts. An agent discovers the connectors actually available in your host; the website does not inherit their credentials or tools. You review and book with the provider.**
 
-[Planning guide](docs/PLANNING_GUIDE.md) · [Setup](docs/SETUP.md) · [Agent setup prompt](prompts/SETUP_GUIDE.md) · [Collaboration plan](docs/COLLABORATION.md) · [Full photo gallery](docs/PHOTO_GALLERY.md)
+Optional research modules include **SerpApi** for cash flights, hotels and places, **Seats.aero / Rooms.aero** for award leads, and authorized **host MCP/connectors** for additional travel comparisons. Follow [user-owned key and connector setup](docs/INTEGRATIONS.md); provider eligibility and actual host availability apply.
+
+[**Start here: copy the complete setup + trip-planning prompt →**](prompts/START_HERE.md)
+
+[Setup and keys](prompts/SETUP_GUIDE.md) · [Full trip intake and research](prompts/NEW_TRIP_GUIDE.md) · [Connector onboarding](docs/INTEGRATIONS.md) · [Planning guide](docs/PLANNING_GUIDE.md) · [Live collaboration](docs/LIVE_COLLABORATION.md)
 
 > **Beta · private staging repository.** The detailed atlas demonstrates the reviewed Europe 2026 sample. `/plan` supports your own cities and dates as a validated draft and agent handoff; generic drafts do not yet populate the atlas’s detailed itinerary, map or quote-selection views. Optional `/collaborate` rooms support live activity/day editing with owner, editor and viewer access on a configured durable server. Hosted private-trip accounts and automatic bookings remain future work. [Current capabilities and limits](docs/IMPLEMENTATION_STATUS.md).
 
 ## See the app
 
+[Route map](#overall-route) · [Itinerary builder](#itinerary-builder) · [Collaborative editing](#collaborative-editing) · [City maps](#city-maps) · [Hotels](#hotels-and-location) · [All screenshots](docs/SCREENSHOTS.md)
+
+### Overall route
+
 **The complete route in one workspace:** flights, trains, driving, city order and booking gaps. These are screenshots of the working app using the reviewed public sample.
 
 ![Trippy overall Europe route with flight, train and driving layers](public/screenshots/route.webp)
 
-**City maps:** mapped sights, stays, airports and stations where coordinates are available.
+### Itinerary builder
+
+Assign activities to days, drag or move them up/down, change priorities and dates, and keep arrival/stay logistics alongside the plan. The map and catalogue stay connected to your selected city.
+
+![Daily itinerary map and activity catalogue](public/screenshots/itinerary.webp)
+
+![Editable day cards with priorities, date selectors and reorder controls](public/screenshots/itinerary-editor.webp)
+
+### Collaborative editing
+
+Open [`/collaborate`](docs/LIVE_COLLABORATION.md) to prepare a board, review its share-safe content, and create an owner-controlled room. Friends with editor links can add activities and edit days; viewers follow along. Owners can revoke invitations. Revision checks preserve drafts when edits collide. Enable persistent local SQLite or your own PostgreSQL for Vercel; see the [setup](docs/LIVE_COLLABORATION.md) and [agent collaboration prompt](prompts/COLLABORATIVE_TRIP_GUIDE.md).
+
+![Shared activity catalogue and editable day assignments](public/screenshots/collaboration-editor.webp)
+
+<details>
+<summary>Owner invitation and revocation controls</summary>
+
+![Owner controls for editor/viewer invitations and revocation](public/screenshots/collaboration-invitations.webp)
+
+</details>
+
+Rooms share activities and day assignments separately from the full atlas's hotels, bookings and flight research. Hosting a room does not provide private-trip identity accounts or automatically connect an agent's travel tools.
+
+### City maps
+
+Mapped sights, stays, airports and stations where coordinates are available.
 
 <table>
 <tr>
@@ -64,15 +102,13 @@ A cheaper flight can change your arrival city. A hotel can change how much time 
 
 </details>
 
-**Build your days around the map:** assign and reorder activities, keep arrivals and stays visible, and preserve alternatives.
+### Hotels and location
 
-![Daily itinerary builder with map, logistics and activity catalogue](public/screenshots/itinerary.webp)
-
-**Compare hotels in geographic context:** map layers, stay dates, location fit, filters and provider evidence.
+Map layers, stay dates, location fit, filters and provider evidence.
 
 ![Hotel comparison workspace with Berlin hotel, transit and attraction map](public/screenshots/hotels.webp)
 
-[**Explore all 17 app screenshots →**](docs/SCREENSHOTS.md) · Route research, transport, activities, Decide/Travel modes, new-trip setup and collaboration.
+[**Explore all 20 app screenshots →**](docs/SCREENSHOTS.md) · Route research, transport, activities, Decide/Travel modes, new-trip setup and collaboration.
 
 Screenshots show historical sample evidence, not current prices or live availability. Map/provider credits and photo terms remain attached to their content. The **156 bundled travel photos** are available in the [separate photo gallery](docs/PHOTO_GALLERY.md). [Media provenance](docs/MEDIA.md).
 

@@ -22,7 +22,7 @@ Provider data is evidence, not a guarantee. Prices, award availability, inventor
 | Need or named provider | Safe use if a host-local connector/API is actually available | Required disclosure and fallback |
 | --- | --- | --- |
 | Booking.com | Qualified partner API access or a user-installed host connector | Partner eligibility, geography/inventory coverage, terms, cost; manual stay and permitted booking link |
-| Expedia, trivago, Priceline, TripAdvisor | A connector the user has independently installed and authorized | Scope, commercial ranking/affiliate effects, market coverage, timestamps; manual comparison and links |
+| KAYAK, Expedia, trivago, Priceline, TripAdvisor | A connector the user has independently installed and authorized | Scope, commercial ranking/affiliate effects, market coverage, timestamps; manual comparison and links |
 | Gmail | Explicit, read-only booking-candidate import | Account, narrow query/date range, retention/redaction; manual entry or file import |
 | Maps/place discovery | Map, geocoder, routing, or places connector | Attribution, tile/geocoder limits, freshness; list/text route and manual address entry |
 | Rail and ground transport | Rail, coach, ferry, or multimodal connector | Countries/operators/timetable coverage and fares; manual schedule/estimate entry |
@@ -31,6 +31,39 @@ Provider data is evidence, not a guarantee. Prices, award availability, inventor
 | Calendar | Explicit, least-privilege calendar read/import connector | Calendar selected, read scope, time zone, retention; manual fixed-anchor entry |
 
 The table names common planning surfaces; it is not a claim that any provider has an official MCP or that a connector is enabled here. Keep connector configuration and credentials untracked and local to the chosen host.
+
+## Agent-guided host setup
+
+Start by identifying the actual host and session: ChatGPT, Codex desktop/CLI, Claude web/Desktop/Code, or another MCP client. Ask the agent to inventory available tools without accessing private data. A provider in a recommendation or a list of installed packages is not evidence that its search tool is callable in this session.
+
+1. Search the host’s current plugin/connector directory for the chosen provider. Inspect publisher, official provider documentation, supported host/region/account, authentication, read/write tools and privacy terms. Treat a missing result as unavailable here; do not invent an MCP address or substitute an unreviewed community package.
+2. Install/connect only after the user chooses the integration. The user completes provider sign-in/OAuth in the host’s trusted authorization flow; no password, API key or token goes into chat or trip JSON. Request search/read access, not booking, alert creation, email sending or calendar writes. If the host cannot limit scopes, explain its actual access and allow only the approved tools.
+3. Refresh the connection/start a new supported session as the host requires. Discover the exposed tool names and argument schema. Record an inventory: provider, host, callable search kinds, authentication status, party/date/market limits, permission boundary and manual fallback.
+4. Within already authorized research, run one bounded search with real trip dates/party or a clearly labeled public test. Verify returned dates, traveler count, currency, source timestamp and evidence type. Installation or a health status alone is not tested access. Record `not checked`, `unavailable`, `configured but untested`, `tested with limits`, or `tested for this query`; do not generalize one successful search to all inventory.
+5. Normalize only decision-useful facts into the comparison. Keep raw responses and host tokens outside trip data. Retry a failure only when a changed input or documented transient condition justifies it; otherwise preserve manual/provider-site research.
+
+### Platform paths
+
+- **ChatGPT/Codex directory:** open Plugins, search/open the listing, select its install control, then complete any connection/authentication prompt. Start a new chat and select the installed tool with `@` or request it by name. Labels and access vary with the host/account; follow the actual directory. [Official plugin guide](https://learn.chatgpt.com/docs/plugins).
+- **Codex MCP:** use `codex mcp list` or `/mcp` in the CLI session to inspect configured/active servers. Add a custom server only from the provider’s documented command/URL; use `codex mcp login <server-name>` when it supports OAuth. Do not put a secret value in shell arguments, tracked config or command output. [Official MCP guide](https://learn.chatgpt.com/docs/extend/mcp?surface=cli).
+- **Claude:** browse Customize → Connectors or the chat’s connector management entry, open the listing and select Connect/Install. Review detected authentication and tool permissions. For a custom remote connector, use only the provider-documented URL. Remote connections may run from Anthropic’s cloud rather than the local computer, so “host-connected” is not a claim of local-only processing. [Official connector guide](https://support.claude.com/en/articles/11176164-use-connectors-to-extend-claude-s-capabilities).
+
+### Provider paths and evidence limits
+
+| Provider/category | Practical path | Verified boundary or fallback |
+| --- | --- | --- |
+| Seats.aero | Follow [official MCP setup](https://seats.aero/mcp); documented remote URL is `https://seats.aero/mcp`. Use host OAuth if offered. | Official docs distinguish account-free public searches from Pro-authorized expanded access. MCP access is separate from the website’s API key and commercial Live Search entitlement. Enable search only; alerts are actions. |
+| Expedia | In supported Claude hosts, find Expedia in the connector directory, connect and inspect Search Hotels/Search Flights. | [Expedia’s guide](https://www.expedia.com/playground/mcp/doc/) documents US availability, no Expedia account needed for search, one search type per call and website handoff for booking. Other hosts/regions must be checked independently. |
+| Booking.com | Look for the provider’s app in the actual host directory; review its current search capabilities and authorize that host flow. | [Booking.com documents a ChatGPT accommodation app](https://news.booking.com/bookingcom-debuts-agentic-ai-innovations-adding-to-its-robust-suite-of-genai-tools-for-customers/). This does not establish availability in a particular account or provide a Demand API key. Do not guess a remote MCP URL. |
+| KAYAK | Search the actual host directory; if no verified connector is available, use KAYAK’s own site or Ask AI and enter reviewed results manually. | [KAYAK’s current help](https://www.kayak.com/c/help/search/) documents native flight/hotel/car/activity search. That native AI service is not evidence of an external host MCP, and this repo supplies no KAYAK adapter or custom endpoint. |
+| trivago, Priceline, TripAdvisor | Search the actual host directory and inspect the current publisher/listing before use. | No custom MCP endpoint or account-wide availability is established here. If absent or unverified, use their ordinary sites/manual quotes. Historical plugin announcements do not prove a current connector. |
+| Rental cars | Discover installed rental tools, such as a named supplier or aggregator, and inspect supported pickup/drop-off locations, dates and filters. | A hotel/flight connector does not imply car inventory. Keep age, insurance, deposit and one-way/extra-driver assumptions explicit; no reservation action. |
+| Activities/maps | Discover installed attraction/event/place/routing tools separately; use official venue evidence for hours/closures and admissions. | Search discovery does not guarantee ticket inventory, walking-time accuracy or redistribution rights to images. Retain list/manual coordinates and venue links. |
+| Rail/coach/ferry | Discover a tool covering the actual operators/countries and requested date; otherwise consult official operator timetables and fares. | No direct live adapter is implemented here. Distinguish an actual dated fare from a generic schedule or estimate. |
+
+Host tools do not become website integrations by installing them. The TRIPPY website uses only its direct implemented adapters and its own server environment. Do not copy an agent host’s OAuth/session credentials into `.env.local` or a deployment.
+
+These host/provider references were checked on **2026-10-13**. Recheck the listing and permissions at setup time; the inventory and bounded result are the evidence of this session’s access.
 
 ## Credentials and configuration
 
@@ -48,6 +81,23 @@ SEATS_AERO_API_KEY=<your Seats.aero key>
 Production live requests are additionally protected by `TRIPPY_ACCESS_CODE` and `TRIPPY_SESSION_SECRET`. Without a valid private session, `/api/providers/search` returns locked live outcomes and useful manual handoffs rather than spending quota. `/api/providers/health` reports only redacted configuration and capability states.
 
 Never expose a value in a browser bundle, `NEXT_PUBLIC_*` variable, request URL, client error, log, test fixture, screenshot, or export. A safe configuration check reports only `configured`, `not configured`, or `not checked`; it never prints, hashes, or otherwise reproduces a value. See [setup](SETUP.md#verify-configuration-without-exposing-values).
+
+### SerpApi: user-owned account and key
+
+1. Decide whether general cash-flight/hotel/place/web research is useful; manual mode remains available.
+2. The user creates/signs into their own [SerpApi account](https://serpapi.com/users/sign_up), checks [current plans/quotas](https://serpapi.com/pricing), and opens [Manage API Key](https://serpapi.com/manage-api-key). Do not promise a free allowance, fixed price or suitability for a shared/commercial site without current terms.
+3. If `.env.local` does not exist, create it from `.env.example`; otherwise preserve the existing ignored file. The user enters the key locally under `SERPAPI_API_KEY`; it never goes into chat. Never overwrite their other module settings.
+4. Restart the local server. Check only redacted presence through Connections/provider health (`configured`/`not configured`/`not checked`). With research authorization, make one bounded request using the actual airport codes/dates and inspect normalized timestamps/limitations. A configured key is not validated access.
+
+The website adapter covers the search kinds listed below; it does not implement every filter or multi-city flow in [SerpApi’s Flights API](https://serpapi.com/google-flights-api). Search/cache snapshots require verification at the airline/hotel before a decision involving purchase. Check quotas before broad date/provider sweeps.
+
+### Seats.aero: choose API or host MCP
+
+For the website API module, the user reviews [official eligibility](https://developers.seats.aero/reference/getting-started-p), signs into their own Seats.aero account and checks whether the API tab in their personal settings is available. Eligible Pro access is for non-commercial use; not every Pro user can generate a key, and commercial use needs written agreement. If unavailable, use authorized host/public searches or manual award research instead of bypassing eligibility.
+
+The user enters an available personal key locally as `SEATS_AERO_API_KEY`, preserving other settings, and restarts the server. Keep `SEATS_AERO_SEARCH_MODE=cached` (the default); set `live` only with the separate commercial Live Search entitlement. Verify a bounded query and exact seat count, cabin, taxes and program restrictions before transfer/purchase; cached summaries are incomplete availability evidence. Rooms.aero uses the same key with separate quotas, not universal hotel coverage. The host MCP path above uses its own provider authorization; Pro MCP live features do not establish partner API live entitlement.
+
+Never ask the user to paste either key. Record only configuration status and the tested query’s result/limits. Provider accounts, billing and API permitted uses stay with the user. These account/key references were checked **2026-10-13**.
 
 ### Key classes
 
@@ -70,7 +120,18 @@ The Connections form is a starter research surface, not a full traveler-specific
 
 Cash and award adapters are separate inputs. Normalize origin/destination, dates, cabin, segments, currency, cash amount, points program/amount, taxes/fees, checked time, observed availability, and limitations. TRIPPY must use the traveler’s explicit point valuation; no provider supplies a universal cents-per-point truth.
 
-Show at least one of the following when a source cannot answer the question: a manual cash/points entry, a non-binding estimate, an alternate source with its own timestamp/coverage, or an `unknown` state. Do not collapse a missing award result into “no award exists,” and do not infer `booked` from a search result, hold, suggested link, or email parser candidate.
+Show at least one of the following when a source cannot answer the question: a manual cash/points entry, a non-binding estimate, an alternate source with its own timestamp/coverage, or an `unknown` state. Do not collapse a missing award result into “no award exists,” and do not infer `confirmed` from a search result, hold, suggested link, or email parser candidate.
+
+## Compare like-for-like results
+
+An agent may combine approved host tools, website adapters and manual quotes, but must keep sources separate and normalize each candidate before ranking:
+
+- **Flights/awards:** origin/destination and positioning legs, exact dates/time zones, party/seat count, cabin, baggage, segments/connections, cash currency and total fees, points program/amount, transfer assumptions and cancellation/change conditions. Unknown seat counts or taxes stay unknown.
+- **Hotels:** exact property/address or verified coordinates, room/rate type, check-in/out and number of nights, adults/children ages/rooms, full-stay total and currency, taxes/resort/mandatory fees, meal inclusion, payment timing, cancellation deadline/time zone and refundable status. Do not compare a nightly headline, one-person rate and multi-night family total as equal quotes. Record missing fee/term data visibly.
+- **Location:** verify proximity to the traveler’s actual attractions, station/airport, accessibility needs and evening plans. Report neighborhood, route/time basis and transit cost alongside price; straight-line distance is not a walking/routing estimate. Combine hotel and activity maps only with verified coordinates.
+- **Car/ground/activity:** match dates, passenger/luggage capacity, pickup/drop-off or station, operator, inclusion/exclusion, total fees and cancellation; include transfers, insurance/deposit/age rules and door-to-door burden where relevant.
+
+Retain source, checked-at and provider-observed time, returned query assumptions, cache/freshness basis, limitations and safe source link. Flag incompatible currencies or incomplete terms before scoring. Deduplicate matching properties/itineraries while keeping distinct provider rates. Rank on explicit price/time/location/cancellation/points preferences, show the leading tradeoff and preserve alternatives/rejections. Search results remain quotes/estimates, never holds or confirmations. See [planning guide](PLANNING_GUIDE.md).
 
 ## Map stack
 
@@ -86,7 +147,7 @@ The whole-trip overview uses a bundled atlas and requires no key. City and itine
 | Seats.aero | Cached award-flight summaries; optional commercial Live Search | Cached summaries do not invent flight-level itinerary detail |
 | Rooms.aero | Award-hotel research with points and optional cash comparison | Cached results may be old and use a separate quota |
 | Booking.com Demand | Qualified-partner hotel availability | Requires numeric city ID; not a mirror of the consumer site |
-| Expedia, trivago, Priceline, TripAdvisor | Safe manual comparison links | No scraping or live-coverage claim |
+| KAYAK, Expedia, trivago, Priceline, TripAdvisor | Manual/provider-site or authorized host-tool comparison; website links only where implemented | No direct live adapter, scraping or universal host-coverage claim |
 
 ### Provider documentation and eligibility
 

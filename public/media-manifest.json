@@ -2214,6 +2214,39 @@
       "privacyStatus": "approved",
       "privacyReview": "Reviewed public sample only; screenshot pixel review and metadata stripping",
       "reviewedAt": "2026-10-13"
+    },
+    {
+      "path": "public/screenshots/itinerary-editor.webp",
+      "sha256": "6c1d37ac931522b6c7d788c4632d1960793b1c9439e4a4d3afa40872cdb3ae66",
+      "credit": "Trippy reviewed sample app screenshot",
+      "sourceUrl": "repository:docs/SCREENSHOTS.md",
+      "license": "MIT app UI; depicted photographs and map/provider content retain their separate terms",
+      "rightsStatus": "approved",
+      "privacyStatus": "approved",
+      "privacyReview": "Verified sample mode and full-size pixel review; no credentials or booking identifiers; metadata stripped",
+      "reviewedAt": "2026-10-13"
+    },
+    {
+      "path": "public/screenshots/collaboration-editor.webp",
+      "sha256": "4cb2748d0633a0dfbed55d07ff01764babfdf277061373d188bb96f6df2acfb7",
+      "credit": "Trippy reviewed sample app screenshot",
+      "sourceUrl": "repository:docs/SCREENSHOTS.md",
+      "license": "MIT app UI; depicted photographs and map/provider content retain their separate terms",
+      "rightsStatus": "approved",
+      "privacyStatus": "approved",
+      "privacyReview": "Verified sample mode and full-size pixel review; no credentials or booking identifiers; metadata stripped",
+      "reviewedAt": "2026-10-13"
+    },
+    {
+      "path": "public/screenshots/collaboration-invitations.webp",
+      "sha256": "91d5f485df1dde8e66beb4ced61104caca74d0c4dcd3a3d922dd6ec0b8f97875",
+      "credit": "Trippy reviewed sample app screenshot",
+      "sourceUrl": "repository:docs/SCREENSHOTS.md",
+      "license": "MIT app UI; depicted photographs and map/provider content retain their separate terms",
+      "rightsStatus": "approved",
+      "privacyStatus": "approved",
+      "privacyReview": "Verified sample mode and full-size pixel review; no credentials or booking identifiers; metadata stripped",
+      "reviewedAt": "2026-10-13"
     }
   ],
   "remoteAssets": []

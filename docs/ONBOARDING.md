@@ -14,11 +14,11 @@ The detailed atlas at `/` still uses a specialized 2026 Europe loader (`src/lib/
 
 The atlas update inbox can preview supported changes to existing activity assignments, priorities, saved items, transport/stay selections and research evidence. It cannot replace route stops, introduce a new trip, import raw bookings or mutate confirmation state. Follow [the bundle contract](AGENT_UPDATE_BUNDLES.md) and report unsupported changes plainly.
 
-Keep real records private-local, preserve the tracked sample, and use the generic schema as the interchange contract. The agent handles the three-route frontier and source-backed research. Neither `/plan` nor hosting creates an authenticated account, cloud storage, sync or a generalized detailed atlas.
+Keep real records private-local, preserve the tracked sample, and use the generic schema as the interchange contract. The agent handles the three-route frontier and source-backed research. Neither `/plan` nor the atlas provides authenticated private-trip accounts or cross-device trip sync. Optional `/collaborate` rooms can persist reviewed share-safe activity/day boards in explicitly configured SQLite or user-owned Postgres; they remain separate from private trips, bookings and generic atlas import. See [live collaboration](LIVE_COLLABORATION.md).
 
 ## First-run boundary
 
-Begin with one short choice: **local-private, agent-connected, personal cloud, or public sample**. Recommend local-private for any real trip. Explain the persistence boundary: the sample atlas saves edits in the current browser’s local storage, while `/plan` drafts clear on reload unless downloaded. Neither uses an account or database, and another browser/device will not receive the trip automatically.
+Begin with one short choice: **local-private, agent-connected, personal cloud, or public sample**. Recommend local-private for any real trip. Explain the persistence boundary: the sample atlas saves edits in the current browser’s local storage, while `/plan` drafts clear on reload unless downloaded. Neither uses an authenticated trip account or durable trip database, and another browser/device will not receive the trip automatically. Optional collaboration room storage is a separate approved publishing flow.
 
 An agent-connected session may use only connectors installed in that agent host and explicitly approved by the traveler. Those host-local credentials never become website configuration. A personal-cloud deployment is a separate website instance; its environment secrets may support direct website adapter calls only. Public-sample mode contains only redacted material and must not imply that a provider or connector is live. See [deployment modes](DEPLOYMENT_MODES.md).
 
@@ -28,7 +28,7 @@ An agent-connected session may use only connectors installed in that agent host 
 
 Use [the setup prompt](../prompts/SETUP_GUIDE.md) to confirm installation and mode, then enable optional modules independently. Explain the credential owner, minimum scope, coverage/freshness, provider charges/limits, permitted uses and manual fallback before configuration. The traveler enters keys into an ignored local file or their own hosting secret settings; the agent checks redacted configuration status only.
 
-Do not ask for credentials merely to begin planning. An existing authorization covers the named scope until the traveler changes it; ask again when adding a private source, expanding permissions, importing records, or deploying. Host connectors and website adapters are separate systems.
+Do not ask for credentials merely to begin planning. An existing authorization covers the named scope until the traveler changes it; ask again when adding a private source, expanding permissions, importing records, or deploying. Host connectors and website adapters are separate systems. Use [agent-guided host setup](INTEGRATIONS.md#agent-guided-host-setup) to discover/install/authenticate only actual tools, [the SerpApi steps](INTEGRATIONS.md#serpapi-user-owned-account-and-key) and [the Seats.aero choice](INTEGRATIONS.md#seatsaero-choose-api-or-host-mcp) for user-owned access. Never overwrite an existing `.env.local` or ask for a key in chat.
 
 ### 1. Frame the trip
 
@@ -53,7 +53,7 @@ For each candidate show the route thesis, date allocation, gateway plan, expecte
 
 ### 3. Evidence pass and reactive calibration
 
-With explicit research authorization and actual provider access, compare candidate-date ranges, direct versus reasonable connection options, positioning/open-jaw options, rail/car/coach/ferry alternatives, and lodging bands. Attach source, retrieval time, currency, fees, cabin, coverage, cancellation terms, and a `quote`, `estimate`, `manual`, `sample`, `historic`, or `unavailable` label.
+With explicit research authorization and actual provider access, compare candidate-date ranges, direct versus reasonable connection options, positioning/open-jaw options, rail/car/coach/ferry alternatives, and lodging bands. Normalize like-for-like party/date/cabin/room/stay totals, mandatory fees, cancellation conditions and location/transit burden across sources before scoring. Use [the comparison checklist](INTEGRATIONS.md#compare-like-for-like-results). Attach source, retrieval time, currency, fees, cabin, coverage, cancellation terms, and a `quote`, `estimate`, `manual`, `sample`, `historic`, or `unavailable` label.
 
 Ask questions anchored in actual deltas: “The direct option costs $310 more and saves six hours; which wins?” “This award uses 35,000 transferable points plus $77 and takes a day to transfer; should cash lead?” “Moving two nights shifts the museum closure risk and reduces hotel cost 18%; acceptable?” Preserve prior selections and explain a re-rank.
 

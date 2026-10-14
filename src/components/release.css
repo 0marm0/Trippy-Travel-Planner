@@ -392,19 +392,18 @@ body:has(.premium-shell) {
 }
 
 .route-atlas-shell .atlas-route-lines .flight {
-  stroke: #67c8ff;
+  stroke: #60a5fa;
 }
 
 .route-atlas-shell .atlas-route-lines .train {
-  stroke: #8ab9ff;
+  stroke: #facc15;
 }
 
 .route-atlas-shell .atlas-route-lines .drive {
-  stroke: #b7c7ed;
+  stroke: #c084fc;
 }
 
 .route-atlas-shell .atlas-route-lines path.booking-missing {
-  stroke: var(--release-missing);
   stroke-width: 3.5;
   stroke-dasharray: 5 7;
 }

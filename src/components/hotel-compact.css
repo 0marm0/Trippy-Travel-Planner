@@ -1,0 +1,25 @@
+/* Scoped hotel density: all comparisons and actions remain available. */
+.hotel-card .hotel-gallery{height:190px;grid-template-columns:minmax(0,1fr) 64px}
+.hotel-card .hotel-gallery.single{grid-template-columns:1fr}
+.hotel-card .hotel-body{padding:14px}
+.hotel-card .rating-line h3{font-size:17px;line-height:1.25}
+.hotel-card .hotel-rating-chips{margin:9px 0;gap:5px}
+.hotel-card .hotel-rating-chip{padding:6px 8px;min-width:84px}
+.hotel-card .amenity-row{margin:8px 0;gap:4px}
+.hotel-card .hotel-fit-summary{margin:8px 0}
+.hotel-card .hotel-stay-facts{gap:5px;margin:8px 0}
+.hotel-card .hotel-stay-facts>span{padding:7px;border-radius:8px}
+.hotel-card .hotel-details{margin:8px 0;padding-top:8px}
+.hotel-card .hotel-details summary{min-height:24px;display:list-item;align-content:center}
+.hotel-card .stay-proof{margin-top:8px;padding:9px 0}
+.hotel-card .price-line{padding:10px 0}
+.hotel-card .price-line strong{font-size:17px}
+.hotel-card .hotel-actions{margin:10px 0;gap:6px}
+.hotel-card .hotel-actions button{min-height:36px;padding:8px}
+.hotel-card .hotel-provider-details{margin-bottom:0}
+.hotel-card .hotel-provider-details .provider-links{padding-top:10px;gap:12px}
+.hotel-card .hotel-gallery-pending>div{padding:44px 16px 18px}
+.hotel-refresh .market-hotel-photo small{max-width:calc(100% - 12px);white-space:normal;line-height:1.35;font-size:8px}
+@media(max-width:760px){.hotel-card .hotel-gallery{height:180px}.hotel-card .hotel-stay-facts{grid-template-columns:1fr}.hotel-card .hotel-stay-facts>span{display:grid;grid-template-columns:58px 1fr;gap:6px;align-items:center}.hotel-card .hotel-stay-facts em{grid-column:2}.hotel-card .hotel-stay-facts b,.hotel-card .hotel-stay-facts em{margin-top:0}}
+/* Only the existing positioned activity photo button gets a visible context chip. */
+.activity-card .photo-button:has(>img[data-photo-context="city"]):before{content:"City context · photo unavailable";position:absolute;z-index:3;left:10px;bottom:10px;max-width:calc(100% - 20px);padding:4px 7px;border-radius:6px;background:#07101bd9;color:#c5d1e0;font-size:8px;line-height:1.3;pointer-events:none}

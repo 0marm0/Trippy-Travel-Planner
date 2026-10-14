@@ -7,9 +7,22 @@ import { renderTripHtml, sanitizeTripExportSnapshot } from '../src/lib/trip-expo
 import { renderTripHtmlCompact } from '../src/lib/trip-export-html.ts';
 import { createNormalizedTrip } from '../src/lib/normalized-trip.ts';
 import { createWorkspace } from '../src/lib/generic-trip-workspace.ts';
-import { renderGenericItineraryHtml } from '../src/lib/generic-itinerary-html.ts';
+import { renderGenericItineraryHtml, buildGenericTripExportSnapshot } from '../src/lib/generic-itinerary-html.ts';
 
 const workspace = () => createWorkspace(createNormalizedTrip({ name: 'Invented island journey', start: '2030-01-01', end: '2030-01-04', cities: ['Bay City', 'Hill City'], origins: ['AAA'], adults: 2, pace: 'balanced', flexDays: 2, themes: ['art'] }));
+
+test('generic day chapters carry recorded stay ranges and transport kinds without changing held states', () => {
+  const value = workspace();
+  value.trip.bookings.push({id:'invented-stay',kind:'stay',status:'held',provider:'Invented stay',startAt:'2030-01-01T15:00:00Z',endAt:'2030-01-03T10:00:00Z'});
+  value.trip.bookings.push({id:'invented-car',kind:'car',status:'quoted',provider:'Invented airport transfer',startAt:'2030-01-02T10:00:00Z',endAt:'2030-01-02T11:00:00Z'});
+  const snapshot=buildGenericTripExportSnapshot(value);
+  assert.ok(snapshot.days[1].anchors.some(item=>item.kind==='stay'&&item.status==='held'));
+  assert.ok(snapshot.days[1].anchors.some(item=>item.kind==='car'&&item.status==='quoted'));
+  assert.equal(snapshot.days[3].anchors.length,0);
+  const html=renderGenericItineraryHtml(value);
+  assert.match(html,/2030-01-01 15:00:00 UTC/);
+  assert.match(html,/travel-glyph mode-car/);
+});
 
 test('rich dossier exports assigned day activities, nested keyboard details and offline controls without executing data', () => {
   const attack = '</script><img src=x onerror="alert(1)">';
@@ -56,7 +69,8 @@ test('generic dossier conserves long planning windows rather than silently trunc
 test('compact companions preserve dates, full travel details, icons and booking states with scoped rows', () => {
   const snapshot = sanitizeTripExportSnapshot({ title: 'Invented journey', start: '2030-01-01', end: '2030-01-04', transport: [{ mode: 'train', date: '2030-01-02', from: 'Bay City', to: 'Hill City', name: 'Regional rail', ride: '2 hours', door: '3 hours', note: 'Transfer allowance unknown' }], bookings: [{ kind: 'Flight', dateIso: '2030-01-01', title: 'Airline route', status: 'quoted', detail: 'Cash quote requires recheck' }, { kind: 'Car rental', dateIso: '2030-01-03', title: 'Rental collection', status: 'held', detail: 'Expiry requires recheck' }], hotels: [{ city: 'Bay City', name: 'Invented stay', why: 'Central', tradeoff: 'Noise possible' }] });
   const all = renderTripHtmlCompact(snapshot);
-  for (const label of ['✈', '🚆', '🚗', '▣', 'Jan 2', '3 hours', 'Transfer allowance unknown', 'Quoted', 'Held', 'Noise possible']) assert.ok(all.includes(label), label);
+  for (const mode of ['flight', 'train', 'car', 'stay']) assert.match(all, new RegExp(`class="travel-glyph mode-${mode}" aria-hidden="true"><svg`));
+  for (const label of ['Jan 2', '3 hours', 'Transfer allowance unknown', 'Quoted', 'Held', 'Noise possible']) assert.ok(all.includes(label), label);
   const transit = renderTripHtmlCompact(snapshot, { scope: 'transit' });
   assert.ok(transit.includes('Regional rail')); assert.ok(transit.includes('Rental collection')); assert.ok(!transit.includes('Airline route')); assert.ok(!transit.includes('Invented stay'));
   const hotels = renderTripHtmlCompact(snapshot, { scope: 'hotels' });

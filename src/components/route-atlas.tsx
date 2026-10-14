@@ -108,7 +108,7 @@ export default function RouteAtlas({ points, segments = [], onSelect, label = "T
     <div className="atlas-context"><span><i />Live route canvas</span><b>{points.length} stops · {segments.length} legs</b>{openSegments > 0 && <em>{openSegments} open decision{openSegments === 1 ? "" : "s"}</em>}</div>
     <div className="atlas-controls"><button onClick={() => setView(fitRoute(points))} aria-label="Fit route" title="Fit the complete route"><Icon name="globe" /><span>Fit</span></button><button onClick={() => zoom(.78)} aria-label="Zoom in" title="Zoom in">+</button><button onClick={() => zoom(1.28)} aria-label="Zoom out" title="Zoom out">−</button></div>
     <span className="atlas-gesture-hint">Drag to explore · scroll to zoom</span>
-    {showLegend ? <div className="map-legend"><span className="air">Flight</span><span className="rail">Train</span><span className="road">Drive</span>{segments.some((segment) => segment.status === "missing") && <span className="needs-booking">Needs booking</span>}</div> : null}
+    {showLegend ? <div className="map-legend"><span className="air">Flight</span><span className="rail">Train</span><span className="road">Drive</span>{segments.some((segment) => segment.status === "missing") && <span className="needs-booking">Short dashes: needs booking</span>}</div> : null}
     {!countries.length ? <span className="map-loading">Drawing Europe…</span> : null}
   </div>;
 }

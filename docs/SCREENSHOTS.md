@@ -2,7 +2,7 @@
 
 Original atlas application screenshots captured on 2026-10-13 from the production build of commit e01ffdf, in verified public sample mode. There are no private trip records, booking identifiers, provider keys or invitation capabilities in these captures. New-trip and collaboration setup screenshots show blank local drafts. The three collaboration captures were refreshed on 2026-10-14 UTC from the redesigned production candidate, using a blank board and reviewed public sample only. The additional editor captures show reviewed sample day cards and a sample-only owner room; the production room uses an ephemeral local test creation code and exposes no access values.
 
-The gallery contains **23 screenshots**. The final three captures below come from the 2026-10-14 local candidate and show synthetic generic planning, a visual reading export and reviewed shared-board reconciliation. They contain no real traveler account details, confirmation records, credentials or access capabilities.
+The gallery contains **28 screenshots**. The final three captures below come from the 2026-10-14 local candidate and show synthetic generic planning, a visual reading export and reviewed shared-board reconciliation. They contain no real traveler account details, confirmation records, credentials or access capabilities.
 
 [Back to the README](../README.md) · [Travel photo gallery](PHOTO_GALLERY.md)
 
@@ -109,3 +109,29 @@ The reading export preserves current entered days, activities, alternatives and 
 ![Original local and latest shared-board values with explicit reconciliation choices](../public/screenshots/reconciliation.webp)
 
 The review compares the base, local draft and latest shared revision. Choices apply to a validated local draft before a separate conditional save; conflicting references or another revision pause the flow. [Live collaboration](LIVE_COLLABORATION.md).
+
+## Flight cash and points comparison
+
+![Manual cash and award flight comparisons](../public/screenshots/flight-comparison.webp)
+
+Illustrative manual inputs in the working comparison panel, not provider quotes.
+
+## Multimodal transport alternatives
+
+![Flight rail and car option cards](../public/screenshots/transport-comparison.webp)
+
+## Daily travel logistics
+
+![Selected-day transport and stays](../public/screenshots/daily-logistics.webp)
+
+## Hotel stay cards
+
+![Photographic hotel stay comparisons](../public/screenshots/hotel-stays.webp)
+
+## Photographic itinerary cover
+
+![Glass itinerary dossier with a reviewed route panorama](../public/screenshots/visual-export-overview.webp)
+
+The 2026-10-14 design refresh replaces the core route, planning, collaboration and export captures. Transport hues are blue for flights, yellow for rail and purple for driving; status remains a separate label or dash pattern. The gallery now contains 28 captures. Invented generic plans contain no traveler identifiers.
+
+The 2026-10-14 visual pass refreshed the route mode colors, itinerary editor, trip setup, generic workspace, collaboration layout, hotels and dossier chapters. Reconciliation and invitation screenshots retain their earlier functional snapshots; their current surfaces use the shared charcoal/glass styles.

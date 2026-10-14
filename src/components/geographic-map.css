@@ -11,13 +11,13 @@
 .vector-map.map-tone-bright .maplibregl-canvas,
 .vector-map.map-tone-liberty .maplibregl-canvas,
 .vector-map.map-tone-configured .maplibregl-canvas {
-  filter: saturate(.9) contrast(1.03) brightness(.96);
+  filter: none;
 }
 
 .vector-map.map-tone-fiord .maplibregl-canvas,
 .vector-map.map-tone-dark .maplibregl-canvas,
 .vector-map.map-tone-night .maplibregl-canvas {
-  filter: saturate(.88) contrast(1.06);
+  filter: none;
 }
 
 .vector-map .trippy-map-command-deck {
@@ -260,9 +260,9 @@
 .vector-map .trippy-map-marker.stay { --marker-accent: #5fd39d; }
 .vector-map .trippy-map-marker.station,
 .vector-map .trippy-map-marker.rail,
-.vector-map .trippy-map-marker.train { --marker-accent: #f0b85b; }
+.vector-map .trippy-map-marker.train { --marker-accent: #facc15; }
 .vector-map .trippy-map-marker.airport,
-.vector-map .trippy-map-marker.flight { --marker-accent: #65bfff; }
+.vector-map .trippy-map-marker.flight { --marker-accent: #60a5fa; }
 .vector-map .trippy-map-marker.activity-must { --marker-accent: #ff668f; }
 .vector-map .trippy-map-marker.activity-should { --marker-accent: #f0b85b; }
 .vector-map .trippy-map-marker.activity-could { --marker-accent: #65bfff; }
@@ -366,3 +366,12 @@
   .route-atlas-shell .atlas-route-points g:hover .point-halo,
   .route-atlas-shell .atlas-route-points g:focus-visible .point-halo { animation: none; }
 }
+
+/* Travel hues describe the mode; booking status remains in labels and line patterns. */
+.vector-map .trippy-control-icon { mask-position: center; mask-repeat: no-repeat; mask-size: 37px 37px; -webkit-mask-position: center; -webkit-mask-repeat: no-repeat; -webkit-mask-size: 37px 37px; background: #b9cce2; }
+.vector-map .trippy-control-icon.layer-flights { background: #60a5fa; }
+.vector-map .trippy-control-icon.layer-rail { background: #facc15; }
+.vector-map .trippy-control-icon.layer-drive { background: #c084fc; }
+.vector-map .trippy-map-marker.car, .vector-map .trippy-map-marker.drive { --marker-accent: #c084fc; }
+
+.vector-map .trippy-marker-mode-icon { display: block; width: 100%; height: 100%; background: var(--marker-accent); mask: center / 47px 47px no-repeat; -webkit-mask: center / 47px 47px no-repeat; }

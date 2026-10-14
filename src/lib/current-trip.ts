@@ -6,6 +6,9 @@ import type { BookingRecord, CityDayPlan, HotelOffer, MapPlace, TransportLeg, Tr
 import { applyAuthoritative2026Corrections } from "./authoritative-trip-corrections";
 import { reviewedCoordinateForActivity } from "./activity-map-coordinates";
 import { canonicalCityKey } from "./city-key";
+import { preferredActivityPhoto, usableTripPhoto } from "./trip-photo";
+import { cachedHotelPhoto } from "./hotel-photo-cache.generated";
+import { cachedActivityPhoto } from "./activity-photo-cache.generated";
 import { hotelEnrichmentFor } from "./hotel-enrichment";
 import { hotelProviderMediaFor } from "./hotel-provider-media.generated";
 
@@ -88,6 +91,8 @@ export async function loadCurrentTrip({ allowPrivate = false }: { allowPrivate?:
     const override = imageOverrides[activity.id] || {};
     const city = canonicalCityKey(String(activity.city || ""));
     const coordinate = reviewedCoordinateForActivity(String(activity.id), city);
+    const image = preferredActivityPhoto(activity.image, override.image);
+    const imageMetadata = image === override.image ? override : activity;
     return {
       id: activity.id,
       city,
@@ -97,15 +102,15 @@ export async function loadCurrentTrip({ allowPrivate = false }: { allowPrivate?:
       url: activity.url || "",
       category: activity.category || "Explore",
       priority: priority(activity.priority || "Could do"),
-      image: absoluteImage(override.image || activity.image || "", city),
+      image: cachedActivityPhoto(image),
       status: activity.status || "Planning option",
       lat: activity.lat ?? coordinate?.lat,
       lng: activity.lon ?? activity.lng ?? coordinate?.lng,
       closed: Boolean(activity.closed),
       fit: activity.fit,
       access: activity.access,
-      imageSource: override.imageSource,
-      imageCredit: override.imageCredit,
+      imageSource: imageMetadata.imageSource,
+      imageCredit: imageMetadata.imageCredit,
     };
   });
 
@@ -156,7 +161,7 @@ export async function loadCurrentTrip({ allowPrivate = false }: { allowPrivate?:
       ].filter((rating, index, all) => all.findIndex((candidate) => candidate.provider === rating.provider && candidate.score === rating.score) === index),
       lat: details.lat ?? provider.lat ?? base.lat ?? providerMedia?.lat,
       lng: details.lon ?? provider.lon ?? base.lon ?? providerMedia?.lng,
-      images: (details.images?.length ? details.images : provider.image ? [provider.image] : providerMedia?.photos?.map((photo) => photo.src) || []).map((image: string) => absoluteImage(image, city)),
+      images: (details.images?.length ? details.images : provider.image ? [provider.image] : providerMedia?.photos?.map((photo) => photo.src) || []).filter(usableTripPhoto).map((image: string) => cachedHotelPhoto(absoluteImage(image, city))),
       photos: [
         ...(enrichment?.photos || []),
         ...(providerMedia?.photos || []),
@@ -168,7 +173,7 @@ export async function loadCurrentTrip({ allowPrivate = false }: { allowPrivate?:
         sourceUrl: offers[0]?.url || provider.booking,
         verified: true,
       }))),
-      ].filter((photo, index, all) => all.findIndex((candidate) => candidate.src === photo.src) === index),
+      ].filter((photo) => usableTripPhoto(photo.src)).map((photo) => ({ ...photo, src: cachedHotelPhoto(photo.src) })).filter((photo, index, all) => all.findIndex((candidate) => candidate.src === photo.src) === index).sort((a, b) => Number(b.src.startsWith("/media/hotel-")) - Number(a.src.startsWith("/media/hotel-"))),
       facts: enrichment?.facts,
       pros: enrichment?.pros,
       tradeoffs: enrichment?.tradeoffs,
@@ -187,7 +192,7 @@ export async function loadCurrentTrip({ allowPrivate = false }: { allowPrivate?:
         : id === "amsterdam"
           ? "Room Mate Aitana (Oct 2–3) · Avani Museum Quarter (Oct 3–5)"
           : city.stay;
-    return { id, name: city.name, country, flag: flags[code], checkIn, checkOut, nights: Math.round((Date.parse(checkOut) - Date.parse(checkIn)) / 86400000), lat: city.lat, lng: city.lon, stay, hero: cityFallbacks[id] };
+    return { id, name: city.name, country, flag: flags[code], checkIn, checkOut, nights: Math.round((Date.parse(checkOut) - Date.parse(checkIn)) / 86400000), lat: city.lat, lng: city.lon, stay, hero: id === "ring" ? cityFallbacks.ring : activities.find((activity) => activity.city === id && activity.image.startsWith("/guide-images/"))?.image || cachedActivityPhoto(cityFallbacks[id]) };
   });
   const legDates: Record<string, string> = { "frankfurt-ring": "2026-09-22", "ring-frankfurt": "2026-09-24", "frankfurt-wroclaw": "2026-09-24", "wroclaw-krakow": "2026-09-27", "krakow-brussels": "2026-09-30", "brussels-amsterdam": "2026-10-02", "amsterdam-berlin": "2026-10-05", "berlin-munich": "2026-10-09" };
   const legOrder = ["frankfurt-ring", "ring-frankfurt", "frankfurt-wroclaw", "wroclaw-krakow", "krakow-brussels", "brussels-amsterdam", "amsterdam-berlin", "berlin-munich"];

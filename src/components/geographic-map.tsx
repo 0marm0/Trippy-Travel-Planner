@@ -114,6 +114,7 @@ function storedStyle(configuredStyle: string | undefined): MapStyleChoice {
 function pointLayer(category = ""): LayerKey | undefined {
   if (category === "airport" || category === "flight") return "flights";
   if (category === "station" || category === "rail" || category === "train") return "rail";
+  if (category === "car" || category === "drive") return "drive";
   if (category === "hotel" || category === "stay") return "stays";
   if (category === "activity" || category.startsWith("activity-")) return "activities";
   return undefined;
@@ -325,7 +326,14 @@ function TiledGeographicMap({ points, connect = false, segments = emptySegments,
           image.src = icon;
           image.alt = "";
           image.draggable = false;
-          symbol.append(image);
+          const travelLayer = pointLayer(category);
+          if (travelLayer === "flights" || travelLayer === "rail" || travelLayer === "drive") {
+            const coloredIcon = document.createElement("span");
+            coloredIcon.className = "trippy-marker-mode-icon";
+            coloredIcon.style.maskImage = `url(${icon})`;
+            coloredIcon.style.webkitMaskImage = `url(${icon})`;
+            symbol.append(coloredIcon);
+          } else symbol.append(image);
         } else {
           symbol.textContent = point.number ? String(point.number) : "•";
         }
@@ -356,8 +364,8 @@ function TiledGeographicMap({ points, connect = false, segments = emptySegments,
     });
     if (connect && features.length) {
       map.addSource(sourceId, { type: "geojson", data: { type: "FeatureCollection", features } });
-      map.addLayer({ id: `${sourceId}-glow`, type: "line", source: sourceId, paint: { "line-width": 7, "line-blur": 6, "line-opacity": .16, "line-color": ["match", ["get", "kind"], "drive", "#7da7d9", "train", "#a7d7ff", "#60b8ff"] } });
-      map.addLayer({ id: sourceId, type: "line", source: sourceId, paint: { "line-width": 2, "line-opacity": .88, "line-dasharray": [2, 2.2], "line-color": ["match", ["get", "kind"], "drive", "#7da7d9", "train", "#a7d7ff", "#60b8ff"] } });
+      map.addLayer({ id: `${sourceId}-glow`, type: "line", source: sourceId, paint: { "line-width": 7, "line-blur": 6, "line-opacity": .16, "line-color": ["match", ["get", "kind"], "flight", "#60a5fa", "train", "#facc15", "drive", "#c084fc", "#94a3b8"] } });
+      map.addLayer({ id: sourceId, type: "line", source: sourceId, paint: { "line-width": 2, "line-opacity": .88, "line-dasharray": [2, 2.2], "line-color": ["match", ["get", "kind"], "flight", "#60a5fa", "train", "#facc15", "drive", "#c084fc", "#94a3b8"] } });
     }
     return () => {
       disposed = true;
@@ -397,7 +405,7 @@ function TiledGeographicMap({ points, connect = false, segments = emptySegments,
     {ready && !points.length ? <div className="map-empty-state"><span><Icon name="pin" /></span><b>No mapped places yet</b><small>Add a precise location to place it on this canvas.</small></div> : null}
     <div className="trippy-map-command-deck">
       <label className="trippy-style-control"><span>Map</span><GlassSelect value={activeStyle} disabled={Boolean(explicitStyle)} onChange={(event) => chooseStyle(event.target.value as MapStyleChoice)} aria-label="Map style">{availableStyleChoices.map((choice) => <option value={choice.id} key={choice.id}>{choice.label}</option>)}{activeStyle === "satellite" ? <option value="satellite">Satellite</option> : null}</GlassSelect></label>
-      {availableLayers.length > 1 ? <div className="trippy-layer-controls" role="group" aria-label="Map layers">{availableLayers.map((layer) => <button type="button" key={layer} className={layers[layer] ? "on" : ""} aria-pressed={layers[layer]} title={`${layers[layer] ? "Hide" : "Show"} ${layerMeta[layer].label}`} onClick={() => setLayers((current) => ({ ...current, [layer]: !current[layer] }))}><span className="trippy-control-icon" style={{ backgroundImage: `url(${layerMeta[layer].icon})` }} /><span>{layerMeta[layer].label}</span></button>)}</div> : null}
+      {availableLayers.length > 1 ? <div className="trippy-layer-controls" role="group" aria-label="Map layers">{availableLayers.map((layer) => <button type="button" key={layer} className={layers[layer] ? "on" : ""} aria-pressed={layers[layer]} title={`${layers[layer] ? "Hide" : "Show"} ${layerMeta[layer].label}`} onClick={() => setLayers((current) => ({ ...current, [layer]: !current[layer] }))}><span className={`trippy-control-icon layer-${layer}`} style={{ maskImage: `url(${layerMeta[layer].icon})`, WebkitMaskImage: `url(${layerMeta[layer].icon})` }} /><span>{layerMeta[layer].label}</span></button>)}</div> : null}
     </div>
     <div className="map-tools trippy-map-tools"><span className="map-zoom-readout" aria-hidden="true">{mapZoom.toFixed(1)}×</span><button type="button" onClick={() => fitCity()} title="Fit the active city" aria-label="Fit city">City</button><button type="button" onClick={() => fitAll()} title="Fit every exact pin" aria-label="Fit all pins">All</button><button type="button" onClick={() => mapRef.current?.zoomIn()} aria-label="Zoom in">+</button><button type="button" onClick={() => mapRef.current?.zoomOut()} aria-label="Zoom out">−</button></div>
     {showLegend ? <div className="map-legend"><span className="air">Flight</span><span className="rail">Train</span><span className="road">Drive</span></div> : null}

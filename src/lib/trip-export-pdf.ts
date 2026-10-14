@@ -64,10 +64,11 @@ function dateLabel(value: string, weekday = false): string {
 }
 
 function iconFor(value: string, fallback: TripPdfIcon = "activity"): TripPdfIcon {
+  if (/^(?:apartment|airbnb)$/i.test(value.trim())) return "hotel";
   if (/transfer|taxi|pickup/i.test(value)) return "car";
   if (/train|rail|station|express|sleeper/i.test(value)) return "train";
   if (/car|drive|rental|road|pickup|transfer|taxi/i.test(value)) return "car";
-  if (/hotel|stay|room|lodging|airbnb/i.test(value)) return "hotel";
+  if (/hotel|stay|room|lodging|accommodation|apartment|airbnb/i.test(value)) return "hotel";
   if (/flight|fly|airport|airline|\b[A-Z]{2,3}\d{1,4}\b/i.test(value)) return "flight";
   return fallback;
 }
@@ -77,6 +78,20 @@ export function tripPdfIconFor(kind: string, context = ""): TripPdfIcon {
   const explicit = iconFor(kind);
   return explicit === "activity" && !/^(?:activity|experience)$/i.test(kind.trim()) ? iconFor(context) : explicit;
 }
+
+/** Mode colors are separate from the red/green booking-state labels. */
+export function tripPdfModeColor(kind: TripPdfIcon): RGB | undefined {
+  if (kind === "flight") return rgb(96 / 255, 165 / 255, 250 / 255);
+  if (kind === "train") return rgb(250 / 255, 204 / 255, 21 / 255);
+  if (kind === "car") return rgb(192 / 255, 132 / 255, 252 / 255);
+  return undefined;
+}
+
+const modeIconPaths: Partial<Record<TripPdfIcon, string>> = {
+  flight: "M22 2 L15 22 L10 14 L2 9 Z M10 14 L22 2",
+  train: "M4 15.5 V6 C4 4.3 5.3 3 7 3 H17 C18.7 3 20 4.3 20 6 V15.5 C20 17.2 18.7 18.5 17 18.5 H7 C5.3 18.5 4 17.2 4 15.5 Z M8 21 L10 18.5 M16 21 L14 18.5 M7 7 H17 M7 12 H8 M16 12 H17",
+  car: "M5 17 H19 L18 11 L16 8 H8 L6 11 Z M5 17 V20 M19 17 V20 M7 13 H17 M8 17 H9 M15 17 H16",
+};
 
 function classify(status: string, title = "", detail = ""): Tone {
   if (status === "confirmed" || /^confirmed$/i.test(status)) return "confirmed";
@@ -182,6 +197,12 @@ class Dossier {
   }
 
   icon(page: PDFPage, name: TripPdfIcon, x: number, y: number, size = 14) {
+    const color = tripPdfModeColor(name);
+    const path = modeIconPaths[name];
+    if (color && path) {
+      page.drawSvgPath(path, { x, y: y + size, scale: size / 24, borderColor: color, borderWidth: 1.8 });
+      return;
+    }
     const icon = this.icons.get(name);
     if (icon) page.drawImage(icon, { x, y, width: size, height: size });
     else page.drawCircle({ x: x + size / 2, y: y + size / 2, size: size / 3, borderColor: BLUE, borderWidth: .8 });

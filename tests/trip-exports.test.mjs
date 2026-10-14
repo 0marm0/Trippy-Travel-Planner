@@ -1,4 +1,4 @@
-import { tripPdfIconFor } from '../src/lib/trip-export-pdf.ts';
+import { tripPdfIconFor, tripPdfModeColor } from '../src/lib/trip-export-pdf.ts';
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { PDFDocument, PDFArray, PDFRawStream, decodePDFRawStream } from 'pdf-lib';
@@ -261,4 +261,28 @@ test('PDF preserves quotes and holds without inferring confirmation from prose',
   for(const page of doc.getPages()){const contents=page.node.Contents();const refs=contents instanceof PDFArray?contents.asArray():[contents];for(const ref of refs){const stream=doc.context.lookup(ref);if(stream instanceof PDFRawStream)operators+=Buffer.from(decodePDFRawStream(stream).decode()).toString('latin1');}}
   for(const status of ['RECOMMENDED','QUOTED','HELD'])assert.ok(operators.toUpperCase().includes('<'+Buffer.from(status).toString('hex').toUpperCase()+'>'),status);
   assert.equal(operators.toUpperCase().includes('<'+Buffer.from('CONFIRMED').toString('hex').toUpperCase()+'>'),false);
+});
+
+
+test('PDF mode colors remain distinct from booking status and always draw colored travel glyphs', async () => {
+  const expected = { flight: [96, 165, 250], train: [250, 204, 21], car: [192, 132, 252] };
+  for (const [mode, values] of Object.entries(expected)) {
+    const color = tripPdfModeColor(mode);
+    assert.deepEqual([color.red, color.green, color.blue], values.map(value => value / 255));
+  }
+  assert.equal(tripPdfModeColor('hotel'), undefined);
+  const snapshot = sanitizeTripExportSnapshot({ title: 'Invented mode colors', start: '2030-01-01', end: '2030-01-02',
+    bookings: ['Flight', 'Train', 'Car'].map(kind => ({ kind, dateIso: '2030-01-01', title: `${kind} journey`, status: 'missing', detail: 'Needs review' })) });
+  for (const scope of ['all', 'travel', 'transit']) {
+    const pdf = await PDFDocument.load(await createTripPdf(snapshot, { theme: 'dark', scope }));
+    const decoded = pdf.getPages().flatMap(page => {
+      const contents = page.node.Contents();
+      const refs = contents instanceof PDFArray ? contents.asArray() : [contents];
+      return refs.map(ref => pdf.context.lookup(ref)).filter(stream => stream instanceof PDFRawStream).map(stream => new TextDecoder().decode(decodePDFRawStream(stream).decode()));
+    }).join('\n');
+    for (const mode of Object.keys(expected)) {
+      const color = tripPdfModeColor(mode);
+      assert.ok(decoded.includes(`${color.red} ${color.green} ${color.blue} RG`), `${scope} includes ${mode} glyph color even when missing`);
+    }
+  }
 });

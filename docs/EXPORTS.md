@@ -33,3 +33,7 @@ Rich HTML includes city/day chapters, flight/train/car/hotel logistics, catalogu
 - Once received, files cannot be revoked. Deleting an account or room does not erase exports, screenshots, browser copies or private backups.
 
 Before sharing, verify the exact artifact with synthetic/sample data or reviewed safe planning facts, then obtain any separately required publication/sending authorization.
+
+## Visual design and transport identity
+
+Rich reading copies use photo-led city panoramas, charcoal glass surfaces and daily timelines. Explicit mode metadata takes precedence over venue names: flights are blue, rail is yellow and driving is purple in HTML and PDF. Booking state stays a separate badge. Generic days include recorded stay ranges and dated movements, without promoting a quote or hold to confirmed. The generic workspace groups downloads under **Export & download**.

@@ -767,8 +767,8 @@ body:has(.premium-shell)::before {
 }
 
 .workspace-tabs button svg { width: 14px; height: 14px; color: currentColor; opacity: .82; }
-.workspace-tabs button svg[data-travel-icon] { filter: grayscale(1) saturate(0) brightness(1.35); }
-.workspace-tabs button.active svg[data-travel-icon] { filter: grayscale(1) saturate(0) brightness(1.85); }
+.workspace-tabs button svg[data-travel-icon] { filter: none; }
+.workspace-tabs button.active svg[data-travel-icon] { filter: none; }
 .workspace-tabs button.active { color: #e1ebf7; }
 .workspace-tabs button.active::after {
   right: 24%;

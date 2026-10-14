@@ -40,7 +40,7 @@ Optional research modules include **SerpApi** for cash flights, hotels and place
 
 ## See the app
 
-[Route map](#overall-route) · [Itinerary builder](#itinerary-builder) · [Collaborative editing](#collaborative-editing) · [City maps](#city-maps) · [Hotels](#hotels-and-location) · [All screenshots](docs/SCREENSHOTS.md)
+[Route map](#overall-route) · [Flight comparisons](#flight-comparisons) · [Transport](#transport-options) · [Itinerary builder](#itinerary-builder) · [Collaborative editing](#collaborative-editing) · [City maps](#city-maps) · [Hotels](#hotels-and-location) · [All screenshots](docs/SCREENSHOTS.md)
 
 ### Overall route
 
@@ -77,11 +77,33 @@ The generic workspace uses your cities and dates, manual coordinates, editable d
 
 ![Generic manual workspace with arbitrary trip days and routes](public/screenshots/generic-workspace.webp)
 
+![Photographic itinerary dossier overview](public/screenshots/visual-export-overview.webp)
+
 ![Visual itinerary reading export with city and day chapters](public/screenshots/visual-export.webp)
 
-![Explicit original local and latest shared-board reconciliation](public/screenshots/reconciliation.webp)
+Conflicting edits open an explicit comparison of your original draft, local changes and the latest shared board. Review each choice before saving; recovery tools preserve unfinished work.
 
 [Rich and compact export formats](docs/EXPORTS.md) · [Implemented modules and limits](docs/IMPLEMENTATION_STATUS.md)
+
+### Flight comparisons
+
+Compare cash and points assumptions, taxes and positioning costs beside the flight route and alternatives. This screenshot uses illustrative manual inputs, not live fares.
+
+![Cash and points flight comparison workbench](public/screenshots/flight-comparison.webp)
+
+### Transport options
+
+Compare flight, rail and driving alternatives by travel time and planning allowance. Flights are blue, trains yellow and cars purple; booking status remains a separate label.
+
+![Multimodal transport option comparisons](public/screenshots/transport-comparison.webp)
+
+### Daily travel and stays
+
+Keep the selected day’s activities, arrivals, hotel context and unresolved logistics together.
+
+![Daily itinerary with travel and stay logistics](public/screenshots/daily-logistics.webp)
+
+![Hotel stays and location comparison cards](public/screenshots/hotel-stays.webp)
 
 ### City maps
 
@@ -133,7 +155,7 @@ Map layers, stay dates, location fit, filters and provider evidence.
 
 ![Hotel comparison workspace with Berlin hotel, transit and attraction map](public/screenshots/hotels.webp)
 
-[**Explore all 23 app screenshots →**](docs/SCREENSHOTS.md) · Route research, transport, activities, Decide/Travel modes, new-trip setup and collaboration.
+[**Explore all 28 app screenshots →**](docs/SCREENSHOTS.md) · Route research, transport, activities, Decide/Travel modes, new-trip setup and collaboration.
 
 Screenshots show historical sample evidence, not current prices or live availability. Map/provider credits and photo terms remain attached to their content. The **156 bundled travel photos** are available in the [separate photo gallery](docs/PHOTO_GALLERY.md). [Media provenance](docs/MEDIA.md).
 

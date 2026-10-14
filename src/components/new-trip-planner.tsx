@@ -2,12 +2,17 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import { Icon } from "./planner-icon";
 import { createNormalizedTrip, validateNormalizedTrip, type NormalizedTrip } from "@/lib/normalized-trip";
 import "./new-trip-planner.css";
 import GenericTripWorkspace from "./generic-trip-workspace";
 import { loadWorkspace, removeWorkspace, workspaceKey, type GenericWorkspace } from "@/lib/generic-trip-workspace";
 
 const split = (text: string) => text.split(",").map((item) => item.trim()).filter(Boolean);
+
+function PlannerNavigation() {
+  return <nav className="planning-navigation" aria-label="Trippy navigation"><Link className="planning-brand" href="/"><span className="planning-brand-mark"><Icon name="globe" /></span><span>TRIPPY<small>Make room for discovery.</small></span></Link><div className="planning-navigation-links"><Link href="/">Sample atlas</Link><Link href="/about">About</Link><Link href="/collaborate"><Icon name="activities" /> Plan together</Link></div></nav>;
+}
 
 export default function NewTripPlanner() {
   const [name, setName] = useState("My next trip");
@@ -38,14 +43,14 @@ export default function NewTripPlanner() {
       setErrors(issues); setCandidate(issues.length ? null : trip as NormalizedTrip); setMessage("");
     } catch { setErrors(["Invalid JSON; no data imported"]); setCandidate(null); }
   }
-  if (accepted) return <main className="new-trip-page"><nav><Link href="/">TRIPPY · Sample atlas</Link><Link href="/about">About Trippy</Link><Link href="/collaborate">Plan together</Link></nav><GenericTripWorkspace key={workspaceKey(accepted)} initial={restored || accepted} onClose={() => { setAccepted(null); setRestored(null); }} /></main>;
+  if (accepted) return <main className="new-trip-page"><PlannerNavigation /><GenericTripWorkspace key={workspaceKey(accepted)} initial={restored || accepted} onClose={() => { setAccepted(null); setRestored(null); }} /></main>;
   return <main className="new-trip-page">
-    <nav><Link href="/">TRIPPY · Sample atlas</Link><Link href="/about">About Trippy</Link><Link href="/collaborate">Plan together</Link></nav>
-    <header><span className="trip-kicker">YOUR CITIES. YOUR DATES. YOUR ACCOUNTS.</span><h1>Start with the trip you want.</h1><p>Create a structured draft, review it, then take it to your agent for route research. No keys or accounts required.</p></header>
+    <PlannerNavigation />
+    <header className="planning-intro"><div className="planning-intro-content"><span className="trip-kicker">YOUR CITIES. YOUR DATES. YOUR ACCOUNTS.</span><h1>Start with the trip you want.</h1><p>Create a structured draft, review it, then take it to your agent for route research. No keys or accounts required.</p><div className="planning-intro-tags"><span><Icon name="route" /> Routes that fit you</span><span><Icon name="shield" /> Private by choice</span></div></div><div className="planning-orbit" aria-hidden="true"><Icon name="globe" /><span>YOUR NEXT CHAPTER</span></div></header>
     <p className="trip-local-note">This form runs in your browser. Preview drafts stay in memory. Accepted workspaces can be saved explicitly in this browser or downloaded; there is no server upload or cloud sync. Enter planning facts only—no names, email addresses, booking codes, seats, or API keys.</p>
     <div className="new-trip-actions"><button onClick={() => { try { const saved = loadWorkspace(localStorage); if (saved) { setRestored(saved); setAccepted(saved.trip); } else setMessage("No valid saved workspace found in this browser."); } catch { setMessage("Browser storage is unavailable."); } }}>Resume last saved workspace</button><button onClick={() => { try { const saved = loadWorkspace(localStorage); if (saved) { removeWorkspace(localStorage, saved.trip); setMessage("Last saved workspace removed from this browser."); } else setMessage("No saved workspace found."); } catch { setMessage("Browser storage is unavailable."); } }}>Forget last saved workspace</button></div>
     <form onSubmit={(event) => { event.preventDefault(); preview(); }} className="new-trip-card">
-      <h2>Trip frame</h2><div className="new-trip-fields">
+      <div className="planning-card-heading"><span className="planning-section-icon"><Icon name="route" /></span><div><span className="trip-kicker">01 · THE ESSENTIALS</span><h2>Trip frame</h2></div></div><div className="new-trip-fields">
         <label>Trip name<input required maxLength={120} value={name} onChange={(event) => setName(event.target.value)} /></label>
         <label>Adults<input type="number" required min={1} max={20} value={adults} onChange={(event) => setAdults(Number(event.target.value))} /></label>
         <label>Earliest departure<input type="date" required value={start} onChange={(event) => setStart(event.target.value)} /></label>

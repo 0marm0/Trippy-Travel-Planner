@@ -31,3 +31,7 @@ Exports are derived from the current structured itinerary and labelled honestly:
 ## Acceptance checkpoints
 
 Before calling a workflow ready, verify: route candidates existed before pricing; price/points math is reproducible; selected values flow into calendar/timeline/list/maps/exports; map and no-map states work; every research fact has source/freshness; no booking state is inferred; and private data cannot enter sample, screenshots, commits, or exports. See [Onboarding](ONBOARDING.md), [Agent workflows](AGENT_WORKFLOWS.md), and [Research playbook](RESEARCH_PLAYBOOK.md).
+
+## Implemented visual pass · 2026-10-14
+
+Planning, research, account and shared-board surfaces now use the Trippy brand, charcoal glass panels, compact actions and day cards. Shared boards offer city/search filters and a focused day view; all-day viewing remains available. Secondary exports, recovery tools and hotel comparisons expand on demand. Dashboard section changes return to the top. Mode colors are flight blue, rail yellow and driving purple across maps, artwork and reading exports; booking status uses separate text and dashes.

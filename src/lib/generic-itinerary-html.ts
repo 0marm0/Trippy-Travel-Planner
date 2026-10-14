@@ -3,6 +3,7 @@ import { validateResearchLedger, type ResearchLedgerData } from './research-ledg
 import { validateWorkspace, workspaceConflicts, type GenericWorkspace } from './generic-trip-workspace.ts';
 import { renderTripHtml, sanitizeTripExportSnapshot, redactPrivateExportText, type TripExportSnapshot, type TripExportScope } from './trip-exports.ts';
 
+const displayTimestamp = (value: string) => value.replace('T', ' ').replace('Z', ' UTC');
 const escape = (value: unknown) => redactPrivateExportText(value).replace(/[&<>"']/g, character => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[character]!);
 const nextDate = (value: string) => new Date(Date.parse(value) + 86400000).toISOString().slice(0, 10);
 
@@ -27,7 +28,7 @@ export function buildGenericTripExportSnapshot(workspace: GenericWorkspace): Tri
       date: day.date, dayNumber: index + 1, city: destinationName(day.placeId), country: '',
       theme: destinationName(day.placeId) || 'Destination to be assigned',
       note: 'Manual planning record. Timing and duration are traveler inputs; allow time for transport, meals, and opening-hour checks.',
-      anchors: trip.anchors.filter(anchor => anchor.date === day.date).map(anchor => ({ status: 'recommended', label: anchor.label, detail: `${anchor.locked ? 'Fixed planning constraint' : 'Flexible planning anchor'}${anchor.placeId ? ` · ${destinationName(anchor.placeId)}` : ''}; confirmation evidence is separate.` })),
+      anchors: [...trip.anchors.filter(anchor => anchor.date === day.date).map(anchor => ({ status: 'recommended', label: anchor.label, detail: `${anchor.locked ? 'Fixed planning constraint' : 'Flexible planning anchor'}${anchor.placeId ? ` · ${destinationName(anchor.placeId)}` : ''}; confirmation evidence is separate.` })), ...trip.bookings.filter(booking => booking.kind === 'stay' ? day.date >= booking.startAt.slice(0, 10) && day.date <= booking.endAt.slice(0, 10) : day.date === booking.startAt.slice(0, 10) || day.date === booking.endAt.slice(0, 10)).map(booking => { const detail = workspace.bookingDetails.find(item => item.bookingId === booking.id); return { status: booking.status, kind: booking.kind, label: detail?.label || booking.provider || booking.kind, detail: `${displayTimestamp(booking.startAt)} — ${displayTimestamp(booking.endAt)}${detail?.placeId ? ` · ${destinationName(detail.placeId)}` : ''}${detail?.notes ? ` · ${detail.notes}` : ''} · Recorded state: ${booking.status}. No new provider verification was performed.` }; })],
       activities: workspace.activities.filter(item => item.date === day.date).sort((a, b) => a.time.localeCompare(b.time)).map(activity),
     })),
     catalogue: workspace.activities.map(item => ({ ...activity(item), city: destinationName(item.placeId) })),
@@ -36,7 +37,7 @@ export function buildGenericTripExportSnapshot(workspace: GenericWorkspace): Tri
       const detail = workspace.bookingDetails.find(item => item.bookingId === booking.id);
       const status = ['recommended', 'quoted', 'held', 'confirmed', 'missing', 'conflict'].includes(booking.status) ? booking.status as TripExportSnapshot['bookings'][number]['status'] : 'missing';
       return { kind: booking.kind, date: booking.startAt.slice(0, 10), dateIso: booking.startAt.slice(0, 10), endDate: booking.endAt.slice(0, 10), title: detail?.label || booking.provider || booking.kind, status,
-        detail: `${booking.startAt} — ${booking.endAt}${detail?.placeId ? ` · ${destinationName(detail.placeId)}` : ''}${detail?.notes ? ` · ${detail.notes}` : ''} · Recorded state: ${status}. No new provider verification was performed.` };
+        detail: `${displayTimestamp(booking.startAt)} — ${displayTimestamp(booking.endAt)}${detail?.placeId ? ` · ${destinationName(detail.placeId)}` : ''}${detail?.notes ? ` · ${detail.notes}` : ''} · Recorded state: ${status}. No new provider verification was performed.` };
     }),
   };
   const bounded = sanitizeTripExportSnapshot(snapshot);

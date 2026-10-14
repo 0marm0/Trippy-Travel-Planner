@@ -7,17 +7,33 @@ import { hotelEnrichmentFor } from "@/lib/hotel-enrichment";
 import { hotelProviderMediaFor } from "@/lib/hotel-provider-media.generated";
 import { hotelMarketCandidatesFor, type HotelMarketCandidate } from "@/lib/hotel-market-scan.generated";
 import "./hotel-refresh-panel.css";
+import "./hotel-compact.css";
+import { usableTripPhoto } from "@/lib/trip-photo";
+import { cachedHotelPhoto } from "@/lib/hotel-photo-cache.generated";
 
 const providers = ["Booking.com", "Expedia", "Priceline", "trivago", "Tripadvisor"] as const;
 type Provider = typeof providers[number];
 
-function propertyPhoto(candidate: HotelMarketCandidate) {
-  if (candidate.image) return { src: candidate.image, source: candidate.provider, url: candidate.url };
-  const official = hotelEnrichmentFor(candidate.name)?.photos?.[0];
-  if (official) return { src: official.src, source: official.source || "Official hotel", url: official.sourceUrl || candidate.url };
-  const catalog = hotelProviderMediaFor(candidate.name)?.photos?.[0];
-  if (catalog) return { src: catalog.src, source: catalog.source || "Travel provider", url: catalog.sourceUrl || candidate.url };
-  return null;
+function propertyPhotos(candidate: HotelMarketCandidate) {
+  const official = hotelEnrichmentFor(candidate.name)?.photos || [];
+  const catalog = hotelProviderMediaFor(candidate.name)?.photos || [];
+  return [
+    ...official.map((photo) => ({ src: photo.src, source: photo.source || "Official hotel" })),
+    ...catalog.map((photo) => ({ src: photo.src, source: photo.source || "Travel provider" })),
+    ...(candidate.image ? [{ src: candidate.image, source: candidate.provider }] : []),
+    ...hotelMarketCandidatesFor(candidate.city).filter((item) => item.name === candidate.name && item.image).map((item) => ({ src: item.image, source: item.provider })),
+  ].filter((photo) => usableTripPhoto(photo.src)).map((photo) => ({ ...photo, src: cachedHotelPhoto(photo.src) })).filter((photo, index, all) => all.findIndex((item) => item.src === photo.src) === index).sort((a, b) => Number(b.src.startsWith("/media/hotel-")) - Number(a.src.startsWith("/media/hotel-")));
+}
+
+function MarketPhoto({ candidate, context }: { candidate: HotelMarketCandidate; context: string }) {
+  const [failed, setFailed] = useState<string[]>([]);
+  const photo = propertyPhotos(candidate).find((item) => !failed.includes(item.src));
+  const cityContext = !photo && usableTripPhoto(context) && !failed.includes(context);
+  const src = photo?.src || (cityContext ? context : "");
+  return <a className={`market-hotel-photo ${src ? "has-photo" : "no-photo"}`} href={candidate.url} target="_blank" rel="noreferrer">
+    {src ? <img src={src} alt={photo ? `${candidate.name} property` : `${candidate.city} city context, not a property photo`} loading="lazy" onError={() => setFailed((current) => [...current, src])} /> : <span aria-hidden="true">◇</span>}
+    <small>{photo ? `Photo · ${photo.source}` : cityContext ? "City context · property photo unavailable" : "Property photo unavailable"}</small>
+  </a>;
 }
 function normalizedRating(candidate: HotelMarketCandidate) {
   return candidate.rating / candidate.ratingScale * 10;
@@ -49,8 +65,8 @@ export default function HotelRefreshPanel({ stop }: { stop: TripStop }) {
     <div className="hotel-refresh-coverage"><b>Coverage</b><span className="ready">Booking.com live</span><span className="ready">Expedia live</span><span className="ready">Priceline live</span><span className="ready">trivago live</span><span className="ready">Tripadvisor live</span><span>Vio · property media catalogue</span></div>
     <div className="provider-market-grid">{grouped.map((group) => <section className="provider-market-lane" key={group.name}>
       <header><b>{group.name}</b><span>{group.candidates.length} picks</span></header>
-      <div>{group.candidates.map((candidate) => { const photo = propertyPhoto(candidate); const fit = itineraryFit(candidate); return <article className="market-hotel" key={`${candidate.provider}:${candidate.name}`}>
-        <a className={`market-hotel-photo ${photo ? "has-photo" : "no-photo"}`} href={candidate.url} target="_blank" rel="noreferrer">{photo ? <img src={photo.src} alt={`${candidate.name} property`} /> : <span>{candidate.provider.slice(0, 1)}</span>}<small>{photo ? `Photo · ${photo.source}` : candidate.provider}</small></a>
+      <div>{group.candidates.map((candidate) => { const fit = itineraryFit(candidate); return <article className="market-hotel" key={`${candidate.provider}:${candidate.name}`}>
+        <MarketPhoto key={`${candidate.provider}:${candidate.name}`} candidate={candidate} context={stop.hero} />
         <div className="market-hotel-body"><span>{candidate.area || `${candidate.distanceKm} km from city focus`}</span><h4>{candidate.name}</h4><div className="market-hotel-metrics"><strong>${candidate.nightly.toFixed(0)}<small>/night</small></strong><em>{candidate.rating.toFixed(1)}/{candidate.ratingScale}<small>{candidate.reviews ? ` · ${candidate.reviews.toLocaleString()}` : ""}</small></em></div><div className="market-hotel-fit"><span>Fit {fit.toFixed(1)}</span><span>{candidate.distanceKm} km</span>{candidate.stars > 0 && <span>{candidate.stars}★</span>}</div><a href={candidate.url} target="_blank" rel="noreferrer">Open {candidate.provider} ↗</a></div>
       </article>; })}</div>
     </section>)}</div>

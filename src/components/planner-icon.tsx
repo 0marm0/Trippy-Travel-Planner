@@ -1,4 +1,4 @@
-import type { SVGProps } from "react";
+import { useId, type SVGProps } from "react";
 const travelArtwork: Record<string, { file: string; viewBox: string }> = {
   flight: { file: "flights", viewBox: "220 230 820 820" },
   train: { file: "train-rail", viewBox: "150 165 960 960" },
@@ -26,7 +26,9 @@ const paths: Record<string, string> = {
   shield: "M12 3 20 6v5c0 5.2-3.2 8.5-8 10-4.8-1.5-8-4.8-8-10V6l8-3Zm-3 9 2 2 4-5",
 };
 export function Icon({ name, ...props }: SVGProps<SVGSVGElement> & { name: string }) {
+  const colorId = `travel-color-${useId().replace(/:/g, "")}`;
+  const modeColor = ({ flight: "#60a5fa", train: "#facc15", car: "#c084fc" } as Record<string, string>)[name];
   const artwork = travelArtwork[name];
-  if (artwork) return <svg width="18" height="18" viewBox={artwork.viewBox} fill="none" aria-hidden="true" data-travel-icon={name} {...props}><image href={`/icons/${artwork.file}.png`} width="1280" height="1280" /></svg>;
+  if (artwork) return <svg width="18" height="18" viewBox={artwork.viewBox} fill="none" aria-hidden="true" data-travel-icon={name} {...props}>{modeColor ? <defs><filter id={colorId} x="0" y="0" width="100%" height="100%"><feFlood floodColor={modeColor} /><feComposite in2="SourceAlpha" operator="in" /></filter></defs> : null}<image href={`/icons/${artwork.file}.png`} width="1280" height="1280" filter={modeColor ? `url(#${colorId})` : undefined} /></svg>;
   return <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.65" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" {...props}><path d={paths[name] || paths.route} /></svg>;
 }

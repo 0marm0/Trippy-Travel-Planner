@@ -14,12 +14,12 @@ export function reconciliationChanges(baseInput: CollaborationState, localInput:
     changes.push({ key, label, base: b, local: l, latest: r, conflict: !equal(l, r) && !equal(b, l) && !equal(b, r), suggested: equal(b, l) ? "latest" : "local" });
   }
   for (const field of ["title", "startDate", "endDate"] as const) add(field, field, base[field], local[field], latest[field]);
-  for (const collection of ["cities", "activities"] as const) {
-    const ids = new Set([...base[collection], ...local[collection], ...latest[collection]].map(item => item.id));
+  for (const collection of ["cities", "activities", "suggestions"] as const) {
+    const ids = new Set([...(base[collection] || []), ...(local[collection] || []), ...(latest[collection] || [])].map(item => item.id));
     for (const id of ids) {
-      const b = base[collection].find(item => item.id === id), l = local[collection].find(item => item.id === id), r = latest[collection].find(item => item.id === id);
+      const b = (base[collection] || []).find(item => item.id === id), l = (local[collection] || []).find(item => item.id === id), r = (latest[collection] || []).find(item => item.id === id);
       const label = `${collection}: ${l && "title" in l ? l.title : l && "name" in l ? l.name : id}`;
-      if (!b || !l || !r) add(`${collection}/${id}`, label, b, l, r);
+      if (collection === "suggestions" || !b || !l || !r) add(`${collection}/${id}`, label, b, l, r);
       else for (const field of new Set([...Object.keys(b), ...Object.keys(l), ...Object.keys(r)])) {
         if (field === "id") continue;
         add(`${collection}/${id}/${field}`, `${label} · ${field}`, (b as Record<string, Value>)[field], (l as Record<string, Value>)[field], (r as Record<string, Value>)[field]);
@@ -31,14 +31,16 @@ export function reconciliationChanges(baseInput: CollaborationState, localInput:
 }
 
 export function resolveReconciliation(base: CollaborationState, local: CollaborationState, latest: CollaborationState, choices: Record<string, Choice>): CollaborationState {
+  // Server-attributed votes/comments always come from latest; they are never client merge choices.
   const result = structuredClone(validateCollaborationState(latest));
   for (const change of reconciliationChanges(base, local, latest)) {
     const choice = choices[change.key];
     if (choice !== "local" && choice !== "latest") throw new Error("Choose a value for every change before applying reconciliation.");
     const value = choice === "local" ? change.local : change.latest;
     const [collection, id, field] = change.key.split("/");
-    if (collection === "cities" || collection === "activities") {
-      const items = result[collection] as Array<Record<string, Value>>;
+    if (collection === "cities" || collection === "activities" || collection === "suggestions") {
+      if (collection === "suggestions" && !result.suggestions) result.suggestions = [];
+      const items = result[collection] as unknown as Array<Record<string, Value>>;
       const index = items.findIndex(item => item.id === id);
       if (!field) {
         if (index !== -1) items.splice(index, 1);

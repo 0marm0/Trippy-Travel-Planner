@@ -1,7 +1,13 @@
 export type CollaborationRole = "owner" | "editor" | "viewer";
 export type CollaborationCity = { id: string; name: string; lat?: number; lng?: number };
 export type CollaborationActivity = { id: string; cityId: string; title: string; notes: string; lat?: number; lng?: number; durationMinutes?: number; image?: string; sourceUrl?: string };
-export type CollaborationState = { title: string; startDate: string; endDate: string; cities: CollaborationCity[]; activities: CollaborationActivity[]; days: Record<string, string[]> };
+export type CollaborationSuggestion = { id: string; status: "pending" | "applied" | "rejected" } & ({ kind: "activity"; activity: CollaborationActivity; day?: string } | { kind: "day"; activityId: string; day: string });
+export type CollaborationActor = { id: string; role: "owner" | "editor" };
+export type CollaborationInteractions = {
+  votes: Array<{ suggestionId: string; actor: CollaborationActor; choice: "support" | "concern" | "neutral"; updatedAt: string }>;
+  comments: Array<{ id: string; suggestionId: string; actor: CollaborationActor; text: string; createdAt: string }>;
+};
+export type CollaborationState = { title: string; startDate: string; endDate: string; cities: CollaborationCity[]; activities: CollaborationActivity[]; days: Record<string, string[]>; suggestions?: CollaborationSuggestion[]; interactions?: CollaborationInteractions };
 
 export class CollaborationError extends Error {
   status: number;
@@ -48,7 +54,7 @@ export function safeCollaborationSourceUrl(value: unknown): string | undefined {
   } catch { return undefined; }
 }
 export function validateCollaborationState(input: unknown): CollaborationState {
-  const s = object(input, ["title", "startDate", "endDate", "cities", "activities", "days"]);
+  const s = object(input, ["title", "startDate", "endDate", "cities", "activities", "days", "suggestions", "interactions"]);
   const startDate = date(s.startDate), endDate = date(s.endDate);
   if (endDate < startDate || Date.parse(endDate) - Date.parse(startDate) > 366 * 86400000) return bad();
   if (!Array.isArray(s.cities) || s.cities.length > 50 || !Array.isArray(s.activities) || s.activities.length > 500) return bad();
@@ -72,5 +78,44 @@ export function validateCollaborationState(input: unknown): CollaborationState {
     if (day < startDate || day > endDate || !Array.isArray(values) || values.length > 50) return bad();
     days[day] = values.map(value => { const activityId = id(value); if (!activityIds.has(activityId) || scheduled.has(activityId)) return bad(); scheduled.add(activityId); return activityId; });
   }
-  return { title: text(s.title, 160), startDate, endDate, cities, activities, days };
+  let suggestions: CollaborationSuggestion[] | undefined;
+  if (s.suggestions !== undefined) {
+    if (!Array.isArray(s.suggestions) || s.suggestions.length > 100) return bad();
+    suggestions = s.suggestions.map(value => {
+      const raw = object(value, ["id", "status", "kind", "activity", "activityId", "day"]);
+      const suggestionId = id(raw.id);
+      if (raw.status !== "pending" && raw.status !== "applied" && raw.status !== "rejected") return bad();
+      const status = raw.status;
+      const day = raw.day === undefined ? undefined : date(raw.day);
+      if (status === "pending" && day && (day < startDate || day > endDate)) return bad();
+      if (raw.kind === "activity") {
+        if (raw.activityId !== undefined) return bad();
+        const candidate = object(raw.activity, ["id", "cityId", "title", "notes", "lat", "lng", "durationMinutes", "image", "sourceUrl"]);
+        const candidateCity = id(candidate.cityId);
+        const validated = validateCollaborationState({ title: "Proposed activity", startDate, endDate, cities: status === "pending" ? cities : [{ id: candidateCity, name: "Recorded city" }], activities: [candidate], days: {} }).activities[0];
+        if (status === "pending" && activityIds.has(validated.id)) return bad();
+        return { id: suggestionId, status, kind: "activity", activity: validated, ...(day ? { day } : {}) };
+      }
+      if (raw.kind !== "day" || raw.activity !== undefined || day === undefined) return bad();
+      const activityId = id(raw.activityId);
+      if (status === "pending" && !activityIds.has(activityId)) return bad();
+      return { id: suggestionId, status, kind: "day", activityId, day };
+    });
+    if (new Set(suggestions.map(item => item.id)).size !== suggestions.length) return bad();
+    const proposedIds = suggestions.filter(item => item.status === "pending" && item.kind === "activity").map(item => item.kind === "activity" ? item.activity.id : "");
+    if (new Set(proposedIds).size !== proposedIds.length) return bad();
+  }
+  let interactions: CollaborationInteractions | undefined;
+  if (s.interactions !== undefined) {
+    const raw = object(s.interactions, ["votes", "comments"]);
+    if (!Array.isArray(raw.votes) || !Array.isArray(raw.comments) || raw.votes.length > 1000 || raw.comments.length > 200) return bad();
+    const suggestionIds = new Set((suggestions || []).map(item => item.id));
+    const actor = (input: unknown): CollaborationActor => { const a = object(input, ["id", "role"]); const actorId = id(a.id); if (!/^access-[a-z0-9_-]+$/i.test(actorId) || (a.role !== "owner" && a.role !== "editor")) return bad(); return { id: actorId, role: a.role }; };
+    const timestamp = (input: unknown) => { if (typeof input !== "string" || !/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3}Z$/.test(input) || !Number.isFinite(Date.parse(input)) || new Date(input).toISOString() !== input) return bad(); return input; };
+    const votes = raw.votes.map(input => { const vote = object(input, ["suggestionId", "actor", "choice", "updatedAt"]); const suggestionId = id(vote.suggestionId); if (!suggestionIds.has(suggestionId) || (vote.choice !== "support" && vote.choice !== "concern" && vote.choice !== "neutral")) return bad(); return { suggestionId, actor: actor(vote.actor), choice: vote.choice as "support" | "concern" | "neutral", updatedAt: timestamp(vote.updatedAt) }; });
+    const comments = raw.comments.map(input => { const comment = object(input, ["id", "suggestionId", "actor", "text", "createdAt"]); const suggestionId = id(comment.suggestionId); if (!suggestionIds.has(suggestionId)) return bad(); return { id: id(comment.id), suggestionId, actor: actor(comment.actor), text: text(comment.text, 500, false, true), createdAt: timestamp(comment.createdAt) }; });
+    if (new Set(votes.map(vote => `${vote.suggestionId}:${vote.actor.id}`)).size !== votes.length || new Set(comments.map(comment => comment.id)).size !== comments.length) return bad();
+    interactions = { votes, comments };
+  }
+  return { title: text(s.title, 160), startDate, endDate, cities, activities, days, ...(suggestions ? { suggestions } : {}), ...(interactions ? { interactions } : {}) };
 }

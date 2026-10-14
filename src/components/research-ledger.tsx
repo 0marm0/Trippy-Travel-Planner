@@ -7,8 +7,8 @@ import "./research-ledger.css";
 
 function localTime(value: string) { if (!value) return ""; const date = new Date(value); return new Date(date.getTime() - date.getTimezoneOffset() * 60000).toISOString().slice(0, 16); }
 
-export default function ResearchLedger({ trip, onDataChange }: { trip: NormalizedTrip; onDataChange?: (data: ResearchLedgerData) => void }) {
-  const [ledger, setLedger] = useState(() => createResearchLedger(trip));
+export default function ResearchLedger({ trip, initialData, proposedRow, onProposalHandled, onDataChange }: { trip: NormalizedTrip; initialData?: ResearchLedgerData; proposedRow?: ResearchRow | null; onProposalHandled?: () => void; onDataChange?: (data: ResearchLedgerData) => void }) {
+  const [ledger, setLedger] = useState(() => initialData ? validateResearchLedger(initialData,trip) : createResearchLedger(trip));
   const [editing, setEditing] = useState<ResearchRow | null>(null);
   const [persist, setPersist] = useState(false);
   const [error, setError] = useState("");
@@ -19,8 +19,8 @@ export default function ResearchLedger({ trip, onDataChange }: { trip: Normalize
     try {
       const safe = validateResearchLedger(next, trip);
       if (persist) localStorage.setItem(researchStorageKey(trip), JSON.stringify(safe));
-      setLedger(safe); onDataChange?.(safe); setEditing(null); setPreview(null); setError(""); setNotice("Research ledger updated. Coverage describes your recorded work, not an exhaustive provider search.");
-    } catch (cause) { setError(cause instanceof Error ? cause.message : "Could not update the ledger."); }
+      setLedger(safe); onDataChange?.(safe); setEditing(null); setPreview(null); setError(""); setNotice("Research ledger updated. Coverage describes your recorded work, not an exhaustive provider search."); return true;
+    } catch (cause) { setError(cause instanceof Error ? cause.message : "Could not update the ledger."); return false; }
   }
   function restore() {
     try { const raw = localStorage.getItem(researchStorageKey(trip)); if (!raw) { setNotice("No saved research ledger for this trip."); return; } setPreview(validateResearchLedger(JSON.parse(raw), trip)); setNotice("Saved evidence is ready for review before restoring."); }
@@ -36,6 +36,7 @@ export default function ResearchLedger({ trip, onDataChange }: { trip: Normalize
   }
   const counts = Object.fromEntries(researchStates.map(state => [state, ledger.rows.filter(row => row.state === state).length]));
   return <section className="research-ledger" aria-label="Trip research coverage">
+    {proposedRow && <section id="matrix-receipt-review" aria-label="Research matrix receipt review"><h3>Review replacement cash coverage receipt</h3><p>This replaces the cash coverage row only after acceptance. Finish or cancel the current evidence form first.</p><p>{proposedRow.state} · {proposedRow.checkedAt || 'Unchecked'}</p><pre>{proposedRow.scope}</pre><p>{proposedRow.notes}</p><p>Next: {proposedRow.nextAction}</p><button disabled={Boolean(editing)} onClick={()=>{if(accept({...ledger,rows:ledger.rows.map(row=>row.id===proposedRow.id?proposedRow:row)}))onProposalHandled?.();}}>Accept reviewed coverage receipt</button><button onClick={()=>onProposalHandled?.()}>Keep current coverage</button></section>}
     <header><div><p className="research-ledger-kicker">EVIDENCE AND OUTSTANDING WORK</p><h2>Know what has actually been researched.</h2><p>Record dates, airports, gateways, connections, programs and modes searched. Failed or unavailable tools never mean no inventory exists.</p></div><button onClick={download}>Download research ledger</button></header>
     <div className="research-ledger-counts">{researchStates.map(state => <span key={state}><b>{counts[state]}</b> {state}</span>)}</div>
     <p className="research-ledger-note">A checked time is a research receipt, not a guarantee that a quote is still bookable. Refresh availability and terms before deciding or booking.</p>

@@ -1,6 +1,6 @@
 # Live collaboration
 
-Manual planning and the reviewed public sample work without collaboration configuration or provider accounts. Live collaboration publishes only the reviewed planning board: trip title and dates, cities, activity catalogue, and activity assignments to days. It does not share booking records, booking states, prices, raw email, private trip DTOs, or provider credentials.
+Manual planning and the reviewed public sample work without collaboration configuration or provider accounts. Live collaboration publishes only the reviewed planning board: trip title and dates, cities, activity catalogue, activity assignments to days, and optional bounded share-safe suggestions for owner review. It does not share booking records, booking states, prices, raw email, private trip DTOs, or provider credentials.
 
 ## Run on one persistent local server
 
@@ -26,6 +26,28 @@ Owners change the trip frame, create expiring editor/viewer invitations, revoke 
 
 There is no public room directory, account login, booking action, calendar action, or export endpoint. Capability access is separate from the existing local trip planner's data and permissions. The public sample endpoint explicitly calls `loadCurrentTrip({ allowPrivate: false })` and projects only catalogue fields and reviewed day assignments to known retained activities; it never uses the private-data gate. Metadata reports retained catalogue items, scheduled activities/days, and omitted catalogue items. Duplicate or unavailable activity assignments are omitted.
 
+## Board-first planning and reviewed suggestions
+
+The main workspace prioritizes the day board and activity catalogue; trip creation/import and sharing settings remain available without occupying the main planning surface. Activity forms use a detail drawer, catalogue search/city filters keep the list usable, and a focused day retains assignment controls.
+
+Owners and editors can append an activity proposal or a proposed day move to their draft, then explicitly save it to the room. Submission creates a `pending` suggestion and does not apply that proposal to the catalogue/day board. A viewer cannot submit or review. Existing editor permission to edit activities/days directly remains available; suggestions are an optional review path, not an editor approval gate.
+
+Only the owner applies or rejects a saved pending suggestion, after inspecting it and resolving/saving unfinished local changes. [`suggestions.ts`](../src/lib/collaboration/suggestions.ts) derives only the proposed activity/day change. [`store.ts`](../src/lib/collaboration/store.ts) performs review inside the same room transaction as role/access validation, observed-revision checks and the conditional write. Stale, revoked, expired or deleted-room access cannot apply a proposal; uncertain outcomes require a reload rather than a blind retry. General board writes may append pending suggestions but cannot rewrite or remove existing pending/applied/rejected receipts. Applied and rejected records remain separate from the active board.
+
+The optional `suggestions` array is capped at 100 records including resolved receipts, with privacy/reference checks on proposed content and dates. Legacy boards without this field remain valid. Suggestions participate in entity-level reconciliation, so independent local/latest additions are preserved for explicit choices. Suggestion receipts do not establish a verified author identity; discussion uses the separate access pseudonyms below. This is not a full audit log. Relevant implementation: [`schema.ts`](../src/lib/collaboration/schema.ts), [`reconciliation.ts`](../src/lib/collaboration/reconciliation.ts), [`collaboration-workspace.tsx`](../src/components/collaboration-workspace.tsx).
+
+## Proposal choices and comments
+
+A saved pending proposal can receive `support`, `concern` or `neutral` from an owner/editor access capability. A second choice from the same capability replaces only that capability's current choice for the same proposal. It cannot replace another invitation's choice. Choices do not apply a proposal or alter the board; the owner still explicitly reviews application/rejection.
+
+Attribution is a server-derived public pseudonym (`access-` plus the resolved capability-row identifier) and its owner/editor role, **not a verified person's identity**. Anyone sharing the same invitation shares that choice identity. A new invitation or replaced owner access has a different identity; old discussion remains attributed to its historical access. Capabilities, their hashes, email addresses and provider identities are never stored in the board. Clients cannot supply an actor or role in the interaction endpoint. The server checks access, expiry/revocation, pending-proposal status and the observed room revision inside the same write transaction.
+
+Comments attach only to proposal IDs, use at most 500 share-safe characters, and receive a server record ID, timestamp and access attribution. Owner/editor access may append them; viewers may read. Posted comments cannot be edited or individually deleted through general board writes. Discussion remains readable after the proposal is resolved and is removed with room deletion; existing device/downloaded copies cannot be recalled. There are at most 200 comments and 1,000 current vote records per room, and interaction writes reject state exceeding 512 KiB. This is bounded proposal discussion, not an activity chat, personal must-do list, presence service or revision audit trail.
+
+The optional `interactions` object keeps legacy boards compatible. General PATCH must preserve its history exactly and cannot forge a server attribution, change votes or drop old comments. New-room creation rejects nonempty imported interaction history instead of transferring purported authorship into another room. Reconciliation always carries the latest server interactions and never presents them as client-overwrite choices; ordinary board/proposal conflicts still require review.
+
+The discussion drawer preserves unfinished comment text in the current tab when closed or when a stale request fails. Opening another discussion requires discarding an existing different-proposal draft. Posting requires a connected role, pending proposal and resolved/saved board changes. An uncertain network outcome pauses writes and requires a current-room reload before retrying; no blind repost is performed. Unfinished comment text is excluded from device recovery and board JSON. No email, invitation, webhook or push notification is sent.
+
 ## Conflicts and privacy
 
 Every write requires the last observed revision through `If-Match`. A stale write returns HTTP 412 and the latest safe state. The UI preserves its board and unfinished activity form; saves pause until explicit review. Reconciliation compares original, local and latest states by field/entity and ordered day assignments. Conflicts require choices; compatible independent edits have editable suggestions. Another revision or local change invalidates the review. Final validation rejects deleted references, duplicate assignments and out-of-range dates, then the owner/editor explicitly saves the chosen draft. There is no unconditional overwrite or automatic retry.
@@ -49,9 +71,15 @@ All room requests use `Authorization: Bearer <capability>`, apart from room crea
 | `POST /api/collaboration/rooms` | `{ state }`, creation-code header when required | `{ roomId, ownerToken, revision, state }` |
 | `GET /api/collaboration/rooms/[id]` | capability | `{ roomId, role, revision, state }`; owners also receive invitation inventory |
 | `PATCH /api/collaboration/rooms/[id]` | capability, `If-Match`, `{ state }` | Updated revision, or 412 with latest safe snapshot |
+| `POST /api/collaboration/rooms/[id]/suggestions/review` | Owner capability, `If-Match`, `{ suggestionId, decision: "apply" \| "reject" }` | Updated revision/state; only a pending proposal can be reviewed, stale review returns 412 |
+| `POST /api/collaboration/rooms/[id]/suggestions/interact` | Owner/editor capability, `If-Match`, `{ suggestionId, action: "vote" \| "comment", value }` | Current-revision vote replacement or safe comment append on a pending proposal; actor/time are server-derived, viewers denied, stale state returns 412 |
 | `POST /api/collaboration/rooms/[id]/invites` | owner capability, `{ role: "editor" \| "viewer", expiresAt?: ISO UTC }` | `{ inviteId, token, role, expiresAt }` |
 | `DELETE /api/collaboration/rooms/[id]/invites/[inviteId]` | owner capability | `{ revoked: true }` |
 | `POST /api/collaboration/rooms/[id]/owner-token` | Owner capability, `If-Match`, `{}` | New one-time owner token and incremented revision; old owner denied |
 | `DELETE /api/collaboration/rooms/[id]` | Owner capability, `If-Match` | Deletes room/capabilities; stale access denied |
 
 Run `node --experimental-strip-types --test tests/collaboration.test.mjs` to exercise roles, stale concurrent edits, revocation, disk persistence, token hashing, privacy projections, request constraints and serverless fail-closed configuration using invented records. `tests/reconciliation.test.mjs` and `tests/room-lifecycle.test.mjs` additionally exercise choices/reference conflicts, credential-free recovery, invitation expiry, rotation and deletion. Hosted Postgres remains untested against a user-owned database.
+
+`tests/collaboration-suggestions.test.mjs` covers legacy compatibility, private/broken proposals, application/rejection, immutable receipts, owner-only durable review, stale revisions and reconciliation. Temporary SQLite checks additionally exercised old-owner denial after rotation and deleted-room review denial. Final browser/full-gate verification for the overall candidate remains with the root verification run; production Postgres concurrency and real hosted operation are not established by these tests.
+
+`tests/collaboration-interactions.test.mjs` covers per-capability vote replacement, spoof rejection, safe comments, immutable PATCH history, legacy compatibility, viewer/expired/revoked denial, stale revisions and latest-discussion reconciliation. These are synthetic local tests; real hosted sessions and Postgres interaction concurrency still require separate authorized acceptance.

@@ -149,3 +149,8 @@ export type Trip2026Payload = {
   clusterGuidance: Record<string, string>;
   bookings: BookingRecord[];
 };
+
+/** Canonical planning states are kept separate from the historical sample's TBC label. */
+export type CanonicalBookingStatus = "recommended" | "quoted" | "held" | "confirmed" | "missing" | "conflict";
+export type AtlasDisplayActivity = Omit<TripActivity, "priority"> & { priority?: TripActivity["priority"] };
+export type AtlasDisplayStop = { id: string; name: string; flag?: string; hero?: string; checkIn?: string; nights?: number | null };

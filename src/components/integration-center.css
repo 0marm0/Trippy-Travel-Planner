@@ -1,0 +1,2 @@
+.connection-form input:disabled{color:#8ba0b9;background:#18223680;cursor:not-allowed;opacity:.8}
+.connection-search .connection-prompt + .connection-prompt{margin-top:6px}

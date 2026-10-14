@@ -104,3 +104,14 @@ test('generic visual dossier includes validated quote and research sidecars', ()
   quote.label = 'API key: inventedExampleValue';
   assert.throws(() => renderGenericItineraryHtml(w, { quotes, research }));
 });
+
+test('generic exports preserve the return date without inventing an extra night', () => {
+  const value = workspace();
+  value.days = value.days.map((day,index)=>({...day,placeId:value.trip.destinations[index < 2 ? 0 : 1].id}));
+  const snapshot = buildGenericTripExportSnapshot(value);
+  assert.equal(snapshot.end, '2030-01-04');
+  assert.equal(snapshot.stops[0].checkOut, '2030-01-03');
+  assert.equal(snapshot.stops[1].checkOut, '2030-01-04');
+  assert.equal(snapshot.stops[1].nights, 1);
+  assert.equal(snapshot.days.at(-1).date, '2030-01-04');
+});

@@ -13,7 +13,7 @@ Trippy connects flight and award research, multi-city route decisions, ground tr
 - **Hotels and bases:** research comparable stay quotes through configured APIs or available host travel connectors; compare total price, room/cancellation terms, points options and location against sights and transport. Choose value across the whole stay, not only the nightly rate.
 - **Things to do and editable days:** research a broad city catalogue, map verified locations, cluster activities, assign/reorder days, and plan around hotels, arrivals, reservations, opening hours, luggage and rest.
 - **Booking tracking:** keep recommendations, quotes, holds, confirmations, missing bookings and conflicts distinct across flights, rail, rental cars, stays and activities. Review confirmations before changing state.
-- **Plan with friends:** optional live rooms let owners invite editors/viewers, add activities, arrange days, revoke access and review conflicting edits. Share-safe rooms use your own durable storage and remain separate from the rich atlas.
+- **Plan with friends:** optional live rooms let owners invite editors/viewers, add activities, arrange days, revoke access and review conflicting edits. Propose activity/day changes for owner review, vote and discuss pending proposals with access-based pseudonyms. Share-safe rooms use your own durable storage and remain separate from the rich atlas.
 
 **No API keys required to start. Optional research uses your own accounts. An agent discovers the connectors actually available in your host; the website does not inherit their credentials or tools. You review and book with the provider.**
 
@@ -23,7 +23,7 @@ Optional research modules include **SerpApi** for cash flights, hotels and place
 
 [Setup and keys](prompts/SETUP_GUIDE.md) · [Full trip intake and research](prompts/NEW_TRIP_GUIDE.md) · [Connector onboarding](docs/INTEGRATIONS.md) · [Planning guide](docs/PLANNING_GUIDE.md) · [Live collaboration](docs/LIVE_COLLABORATION.md)
 
-> **Beta · private staging repository.** The detailed atlas demonstrates the reviewed Europe 2026 sample. `/plan` accepts your own cities and dates into a separate manual workspace with route alternatives, maps from supplied coordinates, editable days, stays/transport and research evidence. Optional `/collaborate` rooms support live activity/day editing with owner, editor and viewer access on a configured durable server. Optional private accounts store reviewed planning workspaces on your configured server; automatic bookings remain unsupported. [Current capabilities and limits](docs/IMPLEMENTATION_STATUS.md).
+> **Beta · private staging repository.** The detailed atlas demonstrates the reviewed Europe 2026 sample. `/plan` accepts your own cities and dates into a separate manual workspace with route alternatives, maps from supplied coordinates, editable days, stays/transport and research evidence. Optional `/collaborate` rooms support live activity/day editing with owner, editor and viewer access on a configured durable server. Optional private accounts store reviewed planning workspaces on your configured server; automatic bookings remain unsupported. [Current capabilities and limits](docs/IMPLEMENTATION_STATUS.md) · [62-feature implementation ledger](docs/BUILD_PROGRESS.md).
 
 ## Choose your starting path
 
@@ -36,7 +36,7 @@ Optional research modules include **SerpApi** for cash flights, hotels and place
 | Let friends edit days | Follow [live collaboration](docs/LIVE_COLLABORATION.md) | A separate reviewed activity/day board, reconciliation, draft recovery and owner lifecycle controls |
 | Operate a hosted instance | Follow [deployment modes](docs/DEPLOYMENT_MODES.md) | Your infrastructure and secrets, with separate authorization before deployment |
 
-**Supported now:** the sample atlas, a generic manual workspace, recorded quote/research evidence, sanitized exports, configured live boards and optional encrypted accounts. **Next:** consistent per-item evidence, verified hosted/provider operation and deeper integration of generic plans with specialized atlas features. Comprehensive research is an agent workflow with a coverage ledger; the website does not automatically search every date, connection or program.
+**Supported now:** the sample atlas, a generic manual workspace, recorded quote/research evidence, sanitized exports, configured live boards and optional encrypted accounts. **New in this build:** compact hotel rows and three-property shortlists, dated route allocations, per-item evidence, undo/redo, a device trip library, complete workspace imports, selected-quote budget subtotals, bounded cash-flight research and a preview export studio. Arbitrary trips also have a read-only detailed city/day preview. **Next:** full editable atlas parity, broader research automation and verified hosted/provider operation. Comprehensive research is an agent workflow with a coverage ledger; the website does not automatically search every date, connection or program.
 
 ## See the app
 
@@ -62,6 +62,10 @@ Open [`/collaborate`](docs/LIVE_COLLABORATION.md) to prepare a board, review its
 
 ![Shared activity catalogue and editable day assignments](public/screenshots/collaboration-editor.webp)
 
+Pending activity/day proposals now support owner review, access-based votes and comments without exposing booking records.
+
+![Owner and editor proposal discussion](public/screenshots/collaboration-discussion.webp)
+
 <details>
 <summary>Owner invitation and revocation controls</summary>
 
@@ -76,6 +80,8 @@ Rooms share activities and day assignments separately from the full atlas's hote
 The generic workspace uses your cities and dates, manual coordinates, editable days and recorded evidence. These local QA screenshots use invented planning records, not real traveler confirmations or live quotes.
 
 ![Generic manual workspace with arbitrary trip days and routes](public/screenshots/generic-workspace.webp)
+
+![Export studio with photo-led reading preview](public/screenshots/export-studio.webp)
 
 ![Photographic itinerary dossier overview](public/screenshots/visual-export-overview.webp)
 
@@ -103,7 +109,7 @@ Keep the selected day’s activities, arrivals, hotel context and unresolved log
 
 ![Daily itinerary with travel and stay logistics](public/screenshots/daily-logistics.webp)
 
-![Hotel stays and location comparison cards](public/screenshots/hotel-stays.webp)
+![Compact hotel rows with property photos and comparison controls](public/screenshots/hotel-stays.webp)
 
 ### City maps
 

@@ -1,12 +1,13 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState, useSyncExternalStore } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState, useSyncExternalStore } from "react";
 import { Icon } from "./planner-icon";
 import GlassSelect from "./glass-select";
-import type { Money, ProviderSearchRequest } from "@/lib/providers";
+import type { Money } from "@/lib/providers";
+import { buildProviderSearchRequest, initializeProviderControls, sortProviderResults, type ProviderSearchKind, type ProviderSearchProfile, type ProviderSort } from "@/lib/provider-search-controls";
+export type { ProviderSearchKind, ProviderSearchProfile } from "@/lib/provider-search-controls";
 import "./intelligence.css";
-
-export type ProviderSearchKind = "cash-flights" | "hotels" | "places" | "award-seats" | "award-hotels";
+import "./integration-center.css";
 
 export type ProviderSearchSeed = {
   kind?: ProviderSearchKind;
@@ -14,6 +15,8 @@ export type ProviderSearchSeed = {
   destination?: string;
   date?: string;
   query?: string;
+  endDate?: string;
+  profile?: ProviderSearchProfile;
 };
 
 type ProviderState = "ready" | "manual" | "unconfigured" | "unavailable" | "degraded";
@@ -33,6 +36,7 @@ type SearchResult = {
   subtitle: string;
   price?: Money;
   points?: number;
+  durationMinutes?: number;
   kind: string;
   provider: string;
   checkedAt?: string;
@@ -157,7 +161,12 @@ function parseHealth(body: unknown): ProviderHealth[] {
 
 function parseResults(body: unknown): { results: SearchResult[]; limitations: string[] } {
   const outcomes = isRecord(body) && Array.isArray(body.providers) ? body.providers : [];
-  const limitations = outcomes.flatMap((outcome) => isRecord(outcome) && Array.isArray(outcome.limitations) ? outcome.limitations.map((item) => cleanText(item)).filter(Boolean) : []);
+  const limitations = outcomes.flatMap((outcome) => {
+    if (!isRecord(outcome)) return [];
+    const notes = Array.isArray(outcome.limitations) ? outcome.limitations.map((item) => cleanText(item)).filter(Boolean) : [];
+    if (outcome.status !== "ok") notes.push(`${cleanText(outcome.provider, "Provider")}: ${cleanText(outcome.status, "unavailable")}. Coverage remains unverified; use the manual path if needed.`);
+    return notes;
+  });
   const source = outcomes.flatMap((outcome) => isRecord(outcome) && outcome.status === "ok" && Array.isArray(outcome.results) ? outcome.results.map((result) => ({ result, outcome })) : []);
   return {
     limitations: [...new Set(limitations)],
@@ -174,6 +183,7 @@ function parseResults(body: unknown): { results: SearchResult[]; limitations: st
         title: cleanText(item.title || item.name, "Untitled result"),
         subtitle: cleanText(item.subtitle || item.detail || item.description, "Provider result"),
         price: money,
+        durationMinutes: typeof item.durationMinutes === "number" && Number.isFinite(item.durationMinutes) && item.durationMinutes > 0 ? item.durationMinutes : undefined,
         points: typeof item.points === "number" && item.points > 0 ? item.points : undefined,
         kind: resultKind,
         provider: cleanText(outcome.provider || item.provider || item.source, "Provider"),
@@ -205,14 +215,30 @@ export default function IntegrationCenter({ open, onClose, seed }: { open: boole
   const [providers, setProviders] = useState<ProviderHealth[]>(providerFallbacks);
   const [healthState, setHealthState] = useState<"loading" | "live" | "fallback">("loading");
   const [kind, setKind] = useState<ProviderSearchKind>(seed?.kind || "cash-flights");
-  const [origin, setOrigin] = useState(seed?.origin || "KRK");
-  const [destination, setDestination] = useState(seed?.destination || "BRU");
-  const [date, setDate] = useState(seed?.date || "2026-09-30");
-  const [query, setQuery] = useState(seed?.query || "");
+  const [controls, setControls] = useState(() => initializeProviderControls(seed));
+  const { origin, destination, date, query } = controls;
+  const [sort, setSort] = useState<ProviderSort>("balanced");
+  const [resultCurrency, setResultCurrency] = useState("");
   const [results, setResults] = useState<SearchResult[]>([]);
   const [limitations, setLimitations] = useState<string[]>([]);
   const [searchState, setSearchState] = useState<"idle" | "searching" | "complete" | "manual">("idle");
   const [message, setMessage] = useState("");
+  const searchController = useRef<AbortController | null>(null);
+  const clearSearch = useCallback(() => {
+    searchController.current?.abort();
+    searchController.current = null;
+    setSearchState("idle");
+    setResults([]);
+    setLimitations([]);
+    setMessage("");
+    setResultCurrency("");
+  }, []);
+  function setControl(field: keyof typeof controls, value: string) {
+    // A response is evidence for the submitted controls only, never a newly edited party/date/route.
+    clearSearch();
+    setControls(previous => ({ ...previous, [field]: value }));
+  }
+
   const [gmailStatus, setGmailStatus] = useState<GmailStatus>("checking");
   const [gmailSearch, setGmailSearch] = useState("reservation");
   const [gmailAfter, setGmailAfter] = useState("2026-09-01");
@@ -263,38 +289,40 @@ export default function IntegrationCenter({ open, onClose, seed }: { open: boole
   useEffect(() => {
     if (!open) return;
     const controller = new AbortController();
-    const healthTimer = window.setTimeout(() => { void loadHealth(controller.signal); void loadGmailStatus(controller.signal); }, 0);
+    const healthTimer = window.setTimeout(() => { clearSearch(); void loadHealth(controller.signal); void loadGmailStatus(controller.signal); }, 0);
     const onKeyDown = (event: KeyboardEvent) => { if (event.key === "Escape") onClose(); };
     window.addEventListener("keydown", onKeyDown);
-    return () => { window.clearTimeout(healthTimer); controller.abort(); window.removeEventListener("keydown", onKeyDown); };
-  }, [loadGmailStatus, loadHealth, onClose, open]);
+    return () => { window.clearTimeout(healthTimer); controller.abort(); searchController.current?.abort(); searchController.current = null; window.removeEventListener("keydown", onKeyDown); };
+  }, [clearSearch, loadGmailStatus, loadHealth, onClose, open]);
 
   const readiness = useMemo(() => providers.filter((provider) => provider.state === "ready").length, [providers]);
   const links = manualLinks(kind, origin, destination, date, query);
 
+  const sortedResults = useMemo(() => sortProviderResults(results, sort, resultCurrency), [results, sort, resultCurrency]);
+
   async function search() {
+    let requestBody;
+    try { requestBody = buildProviderSearchRequest(kind, controls); }
+    catch (error) { setMessage(error instanceof Error ? error.message : "Review the search fields."); return; }
+    searchController.current?.abort();
+    const controller = new AbortController();
+    searchController.current = controller;
+    const isCurrent = () => searchController.current === controller && !controller.signal.aborted;
+    setResultCurrency(controls.currency);
     setSearchState("searching");
     setMessage("");
     setResults([]);
     setLimitations([]);
     try {
-      const nextDate = new Date(`${date}T12:00:00Z`); nextDate.setUTCDate(nextDate.getUTCDate() + 1);
-      const requestBody: ProviderSearchRequest = kind === "cash-flights"
-        ? { kind: "cash-flight", origin, destination, departureDate: date, adults: 1, cabin: "economy", currency: "EUR" }
-        : kind === "award-seats"
-          ? { kind: "award-flight", origin, destination, departureDate: date, seats: 1, program: "any" }
-          : kind === "award-hotels"
-            ? { kind: "award-hotel", location: query || destination, startDate: date, endDate: nextDate.toISOString().slice(0, 10), nights: 1 }
-          : kind === "hotels"
-            ? { kind: "hotel", destination: query || destination, checkIn: date, checkOut: nextDate.toISOString().slice(0, 10), adults: 1, rooms: 1, currency: "EUR" }
-            : { kind: "place", query: query || "points of interest", location: destination || undefined };
       const response = await fetch("/api/providers/search", {
         method: "POST",
         headers: { "content-type": "application/json" },
         body: JSON.stringify(requestBody),
+        signal: controller.signal,
       });
       if (!response.ok) throw new Error(`status ${response.status}`);
       const body = await response.json() as unknown;
+      if (!isCurrent()) return;
       const normalized = parseResults(body);
       if (isRecord(body) && isRecord(body.liveAccess) && (body.liveAccess.state === "available" || body.liveAccess.state === "locked")) setLiveAccess({ state: body.liveAccess.state, reason: cleanText(body.liveAccess.reason, "Live provider access is restricted") });
       setResults(normalized.results);
@@ -302,6 +330,7 @@ export default function IntegrationCenter({ open, onClose, seed }: { open: boole
       setSearchState("complete");
       setMessage(normalized.results.length ? "Results received. Verify terms before changing the plan." : "The provider returned no comparable results.");
     } catch {
+      if (!isCurrent()) return;
       setSearchState("manual");
       setMessage("Live provider search is not available in this environment. The manual path is ready below.");
     }
@@ -404,20 +433,31 @@ export default function IntegrationCenter({ open, onClose, seed }: { open: boole
 
       <section className="connection-search">
         <div className="connection-section-label"><span>Research request</span><small>Quotes remain distinct from bookings</small></div>
-        <div className="capability-switch" role="tablist" aria-label="Search capability">{(Object.keys(capabilityCopy) as ProviderSearchKind[]).map((item) => <button key={item} role="tab" aria-selected={kind === item} className={kind === item ? "active" : ""} onClick={() => { setKind(item); setResults([]); setSearchState("idle"); }}><Icon name={capabilityCopy[item].icon} /><span>{capabilityCopy[item].label}</span></button>)}</div>
+        <div className="capability-switch" role="tablist" aria-label="Search capability">{(Object.keys(capabilityCopy) as ProviderSearchKind[]).map((item) => <button key={item} role="tab" aria-selected={kind === item} className={kind === item ? "active" : ""} onClick={() => { clearSearch(); setKind(item); }}><Icon name={capabilityCopy[item].icon} /><span>{capabilityCopy[item].label}</span></button>)}</div>
         <div className="connection-form">
-          {(kind === "cash-flights" || kind === "award-seats") && <><label>From<input value={origin} onChange={(event) => setOrigin(event.target.value.toUpperCase())} placeholder="Airport or city" /></label><label>To<input value={destination} onChange={(event) => setDestination(event.target.value.toUpperCase())} placeholder="Airport or city" /></label></>}
-          {(kind === "hotels" || kind === "award-hotels" || kind === "places") && <label className="wide">Destination or query<input value={query} onChange={(event) => setQuery(event.target.value)} placeholder={kind === "hotels" ? "e.g. Brussels city centre" : kind === "award-hotels" ? "e.g. Brussels or hotel name" : "e.g. modern art near hotel"} /></label>}
-          {kind !== "places" && <label>Date<input type="date" value={date} onChange={(event) => setDate(event.target.value)} /></label>}
-          <label>Sort<GlassSelect defaultValue="balanced"><option value="balanced">Best overall</option><option value="price">Lowest price</option><option value="time">Shortest time</option></GlassSelect></label>
+          {(kind === "cash-flights" || kind === "award-seats") && <><label>From<input value={origin} onChange={(event) => setControl("origin", event.target.value.toUpperCase())} placeholder="Airport or city" /></label><label>To<input value={destination} onChange={(event) => setControl("destination", event.target.value.toUpperCase())} placeholder="Airport or city" /></label></>}
+          {(kind === "hotels" || kind === "award-hotels" || kind === "places") && <label className="wide">Destination or query<input value={query} onChange={(event) => setControl("query", event.target.value)} placeholder={kind === "hotels" ? "e.g. Brussels city centre" : kind === "award-hotels" ? "e.g. Brussels or hotel name" : "e.g. modern art near hotel"} /></label>}
+          {kind !== "places" && <label>{kind === "hotels" ? "Check-in" : kind === "award-hotels" ? "First arrival date" : "Departure date"}<input type="date" value={date} onChange={(event) => setControl("date", event.target.value)} /></label>}
+          {(kind === "hotels" || kind === "award-hotels") && <label>{kind === "hotels" ? "Check-out" : "Last arrival date"}<input type="date" value={controls.endDate} onChange={(event) => setControl("endDate", event.target.value)} /></label>}
+          {(kind === "cash-flights" || kind === "hotels") && <>
+            <label>Adults<input type="number" min="1" max={kind === "hotels" ? 30 : 9} value={controls.adults} onChange={(event) => setControl("adults", event.target.value)} placeholder="Choose adults" /></label>
+            <label>Currency<input value={controls.currency} maxLength={3} onChange={(event) => setControl("currency", event.target.value.toUpperCase())} placeholder="e.g. USD" /></label>
+          </>}
+          {kind === "cash-flights" && <label>Cabin<GlassSelect aria-label="Cash flight cabin" value={controls.cabin} onChange={(event) => setControl("cabin", event.target.value)}><option value="">Choose cabin</option><option value="economy">Economy</option><option value="premium-economy">Premium economy</option><option value="business">Business</option><option value="first">First</option></GlassSelect></label>}
+          {kind === "hotels" && <label>Rooms<input type="number" min="1" max="9" value={controls.rooms} onChange={(event) => setControl("rooms", event.target.value)} placeholder="Choose rooms" /></label>}
+          {kind === "award-seats" && <><label>Seats requested<input type="number" min="1" max="9" value={controls.seats} onChange={(event) => setControl("seats", event.target.value)} placeholder="Choose seat count" /></label><label>Program source<input value={controls.program} onChange={(event) => setControl("program", event.target.value)} placeholder="Provider program code" /></label><label>Cabin filter<input value="Not supported · all returned cabins" disabled /></label></>}
+          {kind === "award-hotels" && <><label>Nights (optional, 1–5)<input type="number" min="1" max="5" value={controls.nights} onChange={(event) => setControl("nights", event.target.value)} placeholder="Provider range if blank" /></label><label>Program source (optional)<input value={controls.program} onChange={(event) => setControl("program", event.target.value)} placeholder="Provider program code" /></label><label>Guests / rooms<input value="Not supported by cached search" disabled /></label></>}
+          <label>Sort<GlassSelect aria-label="Research result sort" value={sort} onChange={(event) => setSort(event.target.value as ProviderSort)}><option value="balanced">Balanced cash / time</option><option value="price">Lowest comparable cash</option><option value="time">Shortest reported time</option></GlassSelect></label>
           <button className="connection-search-button" onClick={() => void search()} disabled={searchState === "searching"}><Icon name="search" />{searchState === "searching" ? "Searching…" : "Search configured sources"}</button>
         </div>
+        <p className="connection-prompt">Search fields start from available planning-profile values; blank values are unknown and require your choice. Editing them changes this request only. {seed?.profile?.childrenAges?.length ? "Child pricing is unsupported by these request contracts: adult-only results are not a full-party quote. " : ""}{kind === "award-seats" ? "Enter an explicit provider program code and seat count; no all-program search or seat availability is assumed. " : ""}{kind === "award-hotels" ? "The date range is an arrival search window, not check-in/check-out. Cached results do not verify guest/room occupancy. " : ""}</p>
         <p className="connection-prompt">{capabilityCopy[kind].prompt}. The server decides provider access; this form never asks for a key or token.</p>
       </section>
 
       <section className="connection-results" aria-live="polite">
         {message && <div className={`connection-message ${searchState}`}>{message}</div>}
-        {results.map((result) => { const saved = savedResearch.some((item) => item.provider === result.provider && item.id === result.id); return <article key={result.id} className={`provider-result${saved ? " saved" : ""}`}><div><span>{result.status || "result"} · {result.provider}</span><h3>{result.title}</h3><p>{result.subtitle}</p>{result.limitations.length > 0 && <small>{result.limitations.join(" · ")}</small>}</div><div>{result.price && <b>{displayMoney(result.price)}</b>}{result.points && <b>{result.points.toLocaleString()} pts</b>}{result.checkedAt && <small>Checked {result.checkedAt}</small>}{result.href && <a href={result.href} target="_blank" rel="noreferrer">Open source ↗</a>}<button className="save-research" aria-pressed={saved} onClick={() => toggleResearchResult(result)}>{saved ? "Saved to research" : "Save to research shortlist"}</button></div></article>; })}
+        {results.length > 0 && <p className="connection-prompt">Sorting uses returned cash prices in {resultCurrency || "the selected currency (none selected)"} and reported duration only. Mixed price units cannot be ranked by cash; unknown and other-currency prices stay incomparable. Balanced gives equal weight to normalized cash and time when available, with unknown values last on each measure. Points, taxes, baggage and terms are not valued; ties preserve source order. Results do not establish live inventory or eligibility.</p>}
+        {sortedResults.map((result) => { const saved = savedResearch.some((item) => item.provider === result.provider && item.id === result.id); return <article key={result.id} className={`provider-result${saved ? " saved" : ""}`}><div><span>{result.status || "result"} · {result.provider}</span><h3>{result.title}</h3><p>{result.subtitle}</p>{result.limitations.length > 0 && <small>{result.limitations.join(" · ")}</small>}</div><div>{result.price && <b>{displayMoney(result.price)} / {result.price.unit}</b>}{result.durationMinutes && <small>{result.durationMinutes} min reported</small>}{result.points && <b>{result.points.toLocaleString()} pts</b>}{result.checkedAt && <small>Checked {result.checkedAt}</small>}{result.href && <a href={result.href} target="_blank" rel="noreferrer">Open source ↗</a>}<button className="save-research" aria-pressed={saved} onClick={() => toggleResearchResult(result)}>{saved ? "Saved to research" : "Save to research shortlist"}</button></div></article>; })}
         {(searchState === "idle" || searchState === "manual" || searchState === "complete" && results.length === 0) && <div className="manual-search-card"><span><small>Always available</small><b>Continue manually</b><p>Open an external search, then record comparable totals in the Research workspace.</p></span><div>{links.map(([label, href]) => <a key={label} href={href} target="_blank" rel="noreferrer">{label} <Icon name="external" width="13" /></a>)}</div></div>}
         {limitations.length > 0 && <div className="provider-limitations"><b>Provider limitations</b><ul>{limitations.map((limitation) => <li key={limitation}>{limitation}</li>)}</ul></div>}
         <section className="saved-research" aria-label="Saved research shortlist"><header><span><small>Local research shortlist</small><b>{savedResearch.length} saved · not trip items</b></span>{savedResearch.length > 0 && <button onClick={() => storeSavedResearch([])}>Clear all</button>}</header>{savedResearch.length === 0 ? <p>Save comparable evidence here without changing confirmed itinerary or booking state.</p> : <div>{savedResearch.map((item) => <article key={`${item.provider}-${item.id}`}><span><b>{item.title}</b><small>{item.provider} · {item.kind}{item.checkedAt ? ` · ${item.checkedAt}` : ""}</small></span><em>{item.price ? displayMoney(item.price) : item.points ? `${item.points.toLocaleString()} pts` : "Evidence"}</em><button aria-label={`Remove ${item.title} from research shortlist`} onClick={() => storeSavedResearch(savedResearch.filter((saved) => saved.provider !== item.provider || saved.id !== item.id))}><Icon name="close" /></button></article>)}</div>}</section>

@@ -2,6 +2,7 @@ import { createHash, randomBytes, randomUUID } from "node:crypto";
 import { mkdirSync, chmodSync, lstatSync, realpathSync } from "node:fs";
 import { resolve, relative, dirname, join, sep } from "node:path";
 import { CollaborationError, validateCollaborationState } from "./schema.ts";
+import { assertSuggestionAppendOnly, reviewCollaborationSuggestion, recordSuggestionInteraction } from "./suggestions.ts";
 import { invitationExpiry } from "./lifecycle.ts";
 import type { CollaborationRole, CollaborationState } from "./schema.ts";
 
@@ -88,11 +89,12 @@ export async function openCollaborationStore(options: { sqlitePath?: string; pos
     if (!rows[0]) throw new CollaborationError(404, "Room unavailable.");
     return rows[0];
   };
-  const authorize = async (q: Query, roomId: string, token: string): Promise<CollaborationRole> => {
-    const rows = await q("SELECT role FROM collaboration_capabilities WHERE room_id = ? AND token_hash = ? AND revoked = 0 AND (expires_at IS NULL OR expires_at > ?)", [roomId, digest(token), now()]);
+  const resolveAccess = async (q: Query, roomId: string, token: string) => {
+    const rows = await q("SELECT id, role FROM collaboration_capabilities WHERE room_id = ? AND token_hash = ? AND revoked = 0 AND (expires_at IS NULL OR expires_at > ?)", [roomId, digest(token), now()]);
     if (!rows[0]) throw new CollaborationError(403, "Room access denied, expired, or revoked.");
-    return rows[0].role as CollaborationRole;
+    return { id: String(rows[0].id), role: rows[0].role as CollaborationRole };
   };
+  const authorize = async (q: Query, roomId: string, token: string): Promise<CollaborationRole> => (await resolveAccess(q, roomId, token)).role;
   const snapshot = (roomId: string, row: Row, role: CollaborationRole) => ({ roomId, role, revision: Number(row.revision), state: JSON.parse(String(row.state)) as CollaborationState });
   const requireRevision = (roomId: string, row: Row, role: CollaborationRole, revision: number) => {
     const latest = snapshot(roomId, row, role);
@@ -103,6 +105,7 @@ export async function openCollaborationStore(options: { sqlitePath?: string; pos
     close: database.close,
     async create(input: unknown) {
       const state = validateCollaborationState(input), roomId = randomUUID(), ownerToken = capability();
+      if (state.interactions?.votes.length || state.interactions?.comments.length) throw new CollaborationError(403, "Interaction history belongs to its original room and cannot be imported into a new room.");
       return database.transaction(async q => {
         await q("INSERT INTO collaboration_rooms(id, revision, state) VALUES (?, 1, ?)", [roomId, JSON.stringify(state)]);
         await q("INSERT INTO collaboration_capabilities(id, room_id, token_hash, role) VALUES (?, ?, ?, 'owner')", [randomUUID(), roomId, digest(ownerToken)]);
@@ -124,8 +127,32 @@ export async function openCollaborationStore(options: { sqlitePath?: string; pos
         const latest = snapshot(roomId, row, role);
         if (latest.revision !== revision) { const error = new CollaborationError(412, "The shared plan changed. Review the latest version before saving."); error.latest = latest; throw error; }
         if (role === "editor" && JSON.stringify([state.title, state.startDate, state.endDate, state.cities]) !== JSON.stringify([latest.state.title, latest.state.startDate, latest.state.endDate, latest.state.cities])) throw new CollaborationError(403, "Only the owner can change trip dates, title, or cities.");
+        assertSuggestionAppendOnly(latest.state, state);
         const changed = await q("UPDATE collaboration_rooms SET revision = revision + 1, state = ? WHERE id = ? AND revision = ? AND EXISTS (SELECT 1 FROM collaboration_capabilities WHERE room_id = ? AND token_hash = ? AND revoked = 0 AND (expires_at IS NULL OR expires_at > ?) AND role IN ('owner', 'editor')) RETURNING revision", [JSON.stringify(state), roomId, revision, roomId, digest(token), now()]);
         if (!changed.length) throw new CollaborationError(412, "The shared plan changed. Reload before saving.");
+        return { roomId, role, revision: Number(changed[0].revision), state };
+      });
+    },
+    async interactSuggestion(roomId: string, token: string, revision: number, suggestionId: unknown, action: unknown, value: unknown) {
+      return database.transaction(async q => {
+        const row = await lockRoom(q, roomId), access = await resolveAccess(q, roomId, token);
+        if (access.role === "viewer") throw new CollaborationError(403, "Viewers cannot vote or comment.");
+        requireRevision(roomId, row, access.role, revision);
+        const actor = { id: `access-${access.id}`, role: access.role };
+        const state = recordSuggestionInteraction(snapshot(roomId, row, access.role).state, actor, suggestionId, action, value, new Date(now()).toISOString(), randomUUID());
+        const changed = await q("UPDATE collaboration_rooms SET revision = revision + 1, state = ? WHERE id = ? AND revision = ? AND EXISTS (SELECT 1 FROM collaboration_capabilities WHERE room_id = ? AND id = ? AND revoked = 0 AND (expires_at IS NULL OR expires_at > ?) AND role IN ('owner', 'editor')) RETURNING revision", [JSON.stringify(state), roomId, revision, roomId, access.id, now()]);
+        if (!changed.length) throw new CollaborationError(412, "Room access or version changed. Reload before another action.");
+        return { roomId, role: access.role, revision: Number(changed[0].revision), state };
+      });
+    },
+    async reviewSuggestion(roomId: string, token: string, revision: number, suggestionId: unknown, decision: unknown) {
+      return database.transaction(async q => {
+        const row = await lockRoom(q, roomId), role = await authorize(q, roomId, token);
+        if (role !== "owner") throw new CollaborationError(403, "Only the owner can review suggestions.");
+        requireRevision(roomId, row, role, revision);
+        const state = reviewCollaborationSuggestion(snapshot(roomId, row, role).state, suggestionId, decision);
+        const changed = await q("UPDATE collaboration_rooms SET revision = revision + 1, state = ? WHERE id = ? AND revision = ? AND EXISTS (SELECT 1 FROM collaboration_capabilities WHERE room_id = ? AND token_hash = ? AND revoked = 0 AND (expires_at IS NULL OR expires_at > ?) AND role = 'owner') RETURNING revision", [JSON.stringify(state), roomId, revision, roomId, digest(token), now()]);
+        if (!changed.length) throw new CollaborationError(412, "The shared plan changed. Reload before reviewing.");
         return { roomId, role, revision: Number(changed[0].revision), state };
       });
     },

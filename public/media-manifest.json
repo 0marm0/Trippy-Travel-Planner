@@ -4804,8 +4804,8 @@
       "license": "MIT app UI; depicted photographs and map/provider content retain their separate terms",
       "rightsStatus": "approved",
       "privacyStatus": "approved",
-      "sha256": "7c14f83d7bc6a94b4f765f86829c59b85c9f80deeacb402242230720860a8f4a",
-      "privacyReview": "Reviewed public sample or invented planning only; screenshot pixel review and metadata stripping",
+      "sha256": "488a759e111a3b5ddb60d2391060a0296c9f42501ec23e68d9d6caad3d50cb83",
+      "privacyReview": "Pixel-reviewed public sample or invented planning; no access values or private identifiers; metadata stripped",
       "reviewedAt": "2026-10-14"
     },
     {
@@ -4817,6 +4817,28 @@
       "privacyStatus": "approved",
       "sha256": "82dd1efeb9201b9eaa1ab5e8710bb9bee73c4d1f681b6ffacd4b2d924d6e4b85",
       "privacyReview": "Reviewed public sample or invented planning only; screenshot pixel review and metadata stripping",
+      "reviewedAt": "2026-10-14"
+    },
+    {
+      "path": "public/screenshots/collaboration-discussion.webp",
+      "credit": "Trippy app screenshot; depicted source credits retained where shown",
+      "sourceUrl": "repository:docs/SCREENSHOTS.md",
+      "license": "MIT app UI; depicted photographs and map/provider content retain their separate terms",
+      "rightsStatus": "approved",
+      "privacyStatus": "approved",
+      "sha256": "c6e1a59ca82da24afda4159c39974316d5783d30ff11841da97b1a09a849a60f",
+      "privacyReview": "Pixel-reviewed public sample or invented planning; no access values or private identifiers; metadata stripped",
+      "reviewedAt": "2026-10-14"
+    },
+    {
+      "path": "public/screenshots/export-studio.webp",
+      "credit": "Trippy app screenshot; depicted source credits retained where shown",
+      "sourceUrl": "repository:docs/SCREENSHOTS.md",
+      "license": "MIT app UI; depicted photographs and map/provider content retain their separate terms",
+      "rightsStatus": "approved",
+      "privacyStatus": "approved",
+      "sha256": "a2e87e6748ffe047e6dc0634db664676a492dee1a917197807ca4fb403c62121",
+      "privacyReview": "Pixel-reviewed public sample or invented planning; no access values or private identifiers; metadata stripped",
       "reviewedAt": "2026-10-14"
     }
   ],

@@ -9,8 +9,8 @@ import './trip-quote-comparison.css';
 const numericFields = ['cashAmount','taxesFees','destinationPoints','sourcePoints','transferRatio','transferIncrement','minimumTransfer','pointValuation'] as const;
 const money = (value: number | null, currency: string) => value === null ? 'Unknown' : `${Number(value.toFixed(4)).toLocaleString()} ${currency}`;
 const inputTime = (value: string) => value ? new Date(Date.parse(value) - new Date(value).getTimezoneOffset()*60000).toISOString().slice(0,16) : '';
-export default function TripQuoteComparison({ trip, onDataChange }: { trip: NormalizedTrip; onDataChange?: (data: QuoteComparisonData) => void }) {
-  const [data,setData] = useState(() => createQuoteComparison(trip));
+export default function TripQuoteComparison({ trip, initialData, onDataChange }: { trip: NormalizedTrip; initialData?: QuoteComparisonData; onDataChange?: (data: QuoteComparisonData) => void }) {
+  const [data,setData] = useState(() => initialData ? validateQuoteComparison(initialData,trip) : createQuoteComparison(trip));
   const [editing,setEditing] = useState<TripQuote | null>(null);
   const [persist,setPersist] = useState(false);
   const [message,setMessage] = useState('No inventory has been searched. Start with a manually entered quote or estimate.');

@@ -1,6 +1,6 @@
 # Module boundaries and arbitrary-trip readiness
 
-The current app combines a substantial sample atlas with a generic `/plan` manual workspace. Shared schema/relationship validation also powers the `trip:init` and `trip:validate` CLI. Research, optimization, logistics, interchange and export modules are reusable. The detailed atlas is not yet a plug-in renderer for every file matching `schema/trip.schema.json`; the separate generic workspace now renders manual days, bookings and coordinate maps, with research and quote comparison sidecars. Deeper reuse of specialized atlas features remains incremental work.
+The current app combines a substantial sample atlas with a generic `/plan` manual workspace. Shared schema/relationship validation also powers the `trip:init` and `trip:validate` CLI. Research, optimization, logistics, interchange and export modules are reusable. The detailed atlas is not yet a plug-in renderer for every file matching `schema/trip.schema.json`; the separate generic workspace now renders manual days, bookings and coordinate maps, with optional item receipts, dated route allocations and retained research/quote comparison fields. Deeper reuse of specialized atlas features remains incremental work.
 
 ## Reusable seams today
 
@@ -11,6 +11,7 @@ The current app combines a substantial sample atlas with a generic `/plan` manua
 | New route scoring behavior | `src/lib/optimization/route-optimizer.ts` | Explicit weights, asymmetric legs, missing evidence, bounded search, invented stop IDs; optimizer tests |
 | Logistics or booking-gap rule | `src/lib/trip-logistics.ts` | Rule explains its evidence and never infers confirmation; logistics tests |
 | Agent-authored plan changes | `src/lib/trippy-bundle.ts`, `schema/trippy-update.schema.json` | Parse, size/privacy checks, scope and ID references, preview/accept/reject; bundle tests |
+| Generic detailed manual view | `src/lib/planning-view.ts`, `src/components/planning-tools.tsx`, `src/components/generic-trip-workspace.tsx` | Versioned sample-free view, whole-night allocation preview, anchor conflicts, receipt review flags, undo/redo and readiness; preserve unknowns and existing record dates |
 | New export format | `src/lib/trip-exports.ts`, HTML/PDF renderers | Start from a sanitized snapshot; never serialize the private source object; export tests |
 | Map or activity presentation | `src/components/geographic-map.tsx`, typed view records | Missing coordinates, loading/failure, list fallback, no hardcoded destination requirement |
 | Private import parser | `src/lib/imports/gmail/` | Minimum read-only consent, deduplication, private custody, no automatic mutation; Gmail tests |
@@ -22,7 +23,7 @@ Live adapters are source code modules with a typed registry, not dynamically loa
 | Source | Current limitation | Required change for generic trips |
 | --- | --- | --- |
 | `schema/trip.schema.json`, shared validation and `/plan` | Canonical draft creation/preview is implemented; detailed sample rendering uses a different payload | Translate validated canonical input through a documented, versioned detailed view adapter |
-| Canonical route candidates and locked anchors | Required and locked-anchor cities are retained, but candidates contain city order without dated nightly allocations | Add an explicit allocation model before claiming fixed-event timing or transit feasibility |
+| Canonical route candidates and locked anchors | Canonical candidates retain city order; optional workspace allocations now derive dated nights and check fixed anchors/minimum/maximum stays | Retain explicit review; do not confuse allocation checks with researched service times or transit feasibility |
 | `src/lib/trip-model.ts` | `Trip2026Payload` has a literal sample identity; older booking labels remain | General trip identity, explicit source mode and canonical booking-state migration |
 | `src/lib/current-trip.ts` | Reads compact legacy fields, fixed route dates, sample media/enrichment and reviewed corrections | Isolate this as a compatibility data pack; never apply sample corrections to arbitrary trips |
 | `src/app/api/trips/2026/route.ts` | Active endpoint targets one sample | Add trip selection through a safe source registry, with no user-controlled filesystem paths |
@@ -60,8 +61,12 @@ The repository now has a separate generic manual workspace, recorded quote/resea
 
 ## Additional implemented contracts
 
-- `generic-trip-workspace.ts` and its UI separate canonical trip data from days, pins and activity/booking detail sidecars; `generic-itinerary-html.ts` adapts validated input to shared reading exports.
+- `generic-trip-workspace.ts` and its UI separate canonical trip data from days, pins, activity/booking details and optional `itemEvidence`, `routeAllocations`, `researchEvidence`, `quoteEvidence` and selected `budgetQuoteIds`; explicit device/account saves and itinerary exports retain these fields. Entity changes mark retained item receipts `reviewRequired`; `generic-itinerary-html.ts` adapts validated input to shared reading exports.
+- `trip-budget.ts` consumes validated recorded quotes and explicit selection IDs, preserving currencies/source programs and exposing missing amounts, stale checks, party mismatch and overlap. It does not automatically combine alternatives or infer complete coverage.
 - Research/quote modules validate independent source/time/scope and cash/points assumptions; they remain recorded evidence, not provider fetchers.
+- Connections controls build validated profile-aware requests and cancel superseded queries; actual result sorting preserves unknown prices/currencies/units and source freshness. `provider-search-controls.ts` does not expand provider capabilities.
+- Export studio derives current preview/download options from props, validates before scoping, blocks silent collection loss and makes linked-image loading explicit. Its sandbox is separate from the downloadable reading file.
+- Collaboration suggestions are bounded optional state: append-only proposals and owner review transactions are separate from normal board edits. Legacy boards remain valid. Reconciliation includes proposals as entities.
 - Collaboration reconciliation/recovery/lifecycle keep current-revision choices, referential validation and token-free retained records separate from capability custody.
 - `accounts/` uses Better Auth server sessions, tenant-qualified encrypted workspaces, revision checks and an account quota; identity/session records do not enter planning exports. Hosted Postgres and real recovery transport need authorized private verification.
 

@@ -1,8 +1,8 @@
 # Trippy product and design roadmap
 
-Planning proposal · 2026-10-14 · source baseline `b229d25`.
+Delivery roadmap · updated 2026-10-14 · original proposal baseline `b229d25`.
 
-This is a proposed delivery sequence, not a list of shipped features. It expands the [engineering improvement roadmap](IMPROVEMENT_ROADMAP.md) and [UI direction](UI_UX_ROADMAP.md). [Implementation status](IMPLEMENTATION_STATUS.md) describes what actually works. Existing manual/sample planning must remain usable throughout.
+This retains the proposed delivery sequence and broad acceptance targets. The current status column is assessed against local source in [the complete 62-item build ledger](BUILD_PROGRESS.md); partial delivery does not complete a broader row. It expands the [engineering improvement roadmap](IMPROVEMENT_ROADMAP.md) and [UI direction](UI_UX_ROADMAP.md). [Implementation status](IMPLEMENTATION_STATUS.md) describes what actually works. Existing manual/sample planning must remain usable throughout.
 
 ## Product direction
 
@@ -22,7 +22,7 @@ The most consequential gap is parity: the detailed sample atlas, generic workspa
 | Rich HTML and compact travel/transit/hotel HTML/PDF | Better export configuration, preview, size control and cross-format fidelity |
 | Local hotel/activity image caches and failure labels | Subject-accurate coverage tracking and resilient galleries |
 
-Current gaps include per-item evidence, dated route allocations, generic atlas parity, actual provider/hosted verification and independent accessibility review. A passed local build does not establish those capabilities.
+Current source includes per-item receipts, dated manual route allocations, a device trip library/import path, a canonical read-only detailed preview, bounded cash research, selected-quote budgeting and reviewed room discussions. Full editable atlas parity, broader sourced routing, actual provider/hosted verification and independent accessibility review remain gaps. A passed local build does not establish those capabilities.
 
 ## Visual direction: quieter, denser, more useful
 
@@ -55,99 +55,99 @@ Milestones 1 and 2 can proceed in independent UI and data lanes. Collaboration d
 
 ## Feature backlog
 
-All rows below are proposals. “Extend” means a foundation already exists; it does not mean the listed improvement is shipped. Priorities are **Now**, **Next**, **Later**. Later items should be promoted by observed user needs rather than implemented all at once.
+The rows retain their original proposal scope. Current status is **Implemented**, **Partial**, **Planned** or **External dependency**; see [BUILD_PROGRESS](BUILD_PROGRESS.md) for the evidence and remaining acceptance for every ID. “Implemented” describes the supported local contract, not deployment or live-provider readiness. Priorities are **Now**, **Next**, **Later**. Later items should be promoted by observed user needs rather than implemented all at once.
 
 ### Design and navigation
 
-| ID | Proposal | Priority / effort | Done when |
-| --- | --- | --- | --- |
-| D01 | Shared tokens and reusable shell across atlas, generic, collaboration, About and account | Now / M | Same spacing, typography, controls, focus and status semantics across surfaces |
-| D02 | Compact/comfortable density with row-based lists | Now / M | Density persists per device; comparison stays readable and full details remain reachable |
-| D03 | One context drawer for activities, hotels and transport | Now / M | Open/close returns focus and preserves list filters, selection and position |
-| D04 | Simplify navigation into route, days, stays, research and trip readiness | Next / M | Existing features remain reachable; user tests validate labels and task paths |
-| D05 | Synchronized list/map/day selection | Next / M | Selecting a record highlights the same ID without changing the plan |
-| D06 | Filter presets, active-filter chips and clear-all | Next / S | Counts and empty states explain every active constraint |
-| D07 | Extend command search to dates, cities, activities and navigation | Next / M | Keyboard search opens the correct context and never exposes private/raw records |
-| D08 | Intentional photo crops, gallery loading and missing-image treatment | Now / S | Exact-subject association, attribution, fallback and layout stability verified |
-| D09 | Mobile detail sheets and task-focused bottom navigation | Next / M | Complete planning and comparison flows work at phone width without hover |
-| D10 | Accessible chart/map/list alternatives, reduced motion and visible focus | Now / M | Keyboard and screen-reader review covers core tasks; colors are not the sole signal |
-| D11 | Contextual empty, offline, stale and provider-failure states | Now / M | Each state identifies the gap and preserves work with a relevant next action |
-| D12 | Consistent About/README feature tour using current app captures | Next / S | Each claim links to a supported path; historical/demo/provider limits remain clear |
+| ID | Proposal | Current status | Priority / effort | Done when |
+| --- | --- | --- | --- | --- |
+| D01 | Shared tokens and reusable shell across atlas, generic, collaboration, About and account | Partial | Now / M | Same spacing, typography, controls, focus and status semantics across surfaces |
+| D02 | Compact/comfortable density with row-based lists | Partial | Now / M | Density persists per device; comparison stays readable and full details remain reachable |
+| D03 | One context drawer for activities, hotels and transport | Partial | Now / M | Open/close returns focus and preserves list filters, selection and position |
+| D04 | Simplify navigation into route, days, stays, research and trip readiness | Partial | Next / M | Existing features remain reachable; user tests validate labels and task paths |
+| D05 | Synchronized list/map/day selection | Partial | Next / M | Selecting a record highlights the same ID without changing the plan |
+| D06 | Filter presets, active-filter chips and clear-all | Planned | Next / S | Counts and empty states explain every active constraint |
+| D07 | Extend command search to dates, cities, activities and navigation | Partial | Next / M | Keyboard search opens the correct context and never exposes private/raw records |
+| D08 | Intentional photo crops, gallery loading and missing-image treatment | Partial | Now / S | Exact-subject association, attribution, fallback and layout stability verified |
+| D09 | Mobile detail sheets and task-focused bottom navigation | Partial | Next / M | Complete planning and comparison flows work at phone width without hover |
+| D10 | Accessible chart/map/list alternatives, reduced motion and visible focus | Partial | Now / M | Keyboard and screen-reader review covers core tasks; colors are not the sole signal |
+| D11 | Contextual empty, offline, stale and provider-failure states | Partial | Now / M | Each state identifies the gap and preserves work with a relevant next action |
+| D12 | Consistent About/README feature tour using current app captures | Partial | Next / S | Each claim links to a supported path; historical/demo/provider limits remain clear |
 
 ### Trip model and reusable planning
 
-| ID | Proposal | Priority / effort | Done when |
-| --- | --- | --- | --- |
-| P01 | Canonical-to-detailed-view adapter; sample becomes a compatibility data pack | Now / L | Arbitrary trip views inherit no sample dates, bookings, cities or photo assumptions |
-| P02 | Unified trip selection, saved-draft library and versioned state migration | Next / L | Switching trips never leaks selections/evidence and old saves can be reviewed/migrated |
-| P03 | Per-item source, checked time, confidence and unknown fields | Now / M | Evidence survives editing, interchange and reading exports with stable references |
-| P04 | Dated nightly allocation for every route candidate | Now / M | Nights sum correctly and fixed-event/transit conflicts are explained |
-| P05 | Versioned workspace envelope for trip, itinerary and evidence | Next / L | Explicit save/load restores supported sidecars or clearly reports omissions |
-| P06 | Duplicate a trip or create a reviewed scenario | Next / M | New IDs and ownership; no accidental copying of confirmation or access data |
-| P07 | Safe undo/redo for local edits | Next / M | Explicit local changes can be reversed; shared revision conflicts remain separate |
-| P08 | Better guided intake with saved constraints and reactive questions | Next / M | Dates, travelers, points, pace and must-dos drive prompts; no repeated answered questions |
-| P09 | Unified decision inbox for incomplete evidence and booking gaps | Next / M | Every issue opens its source item and distinguishes recommendation from confirmation |
-| P10 | Plan snapshots with readable change summaries | Later / L | Restore previews its effect; exports/private records/access credentials remain separate |
+| ID | Proposal | Current status | Priority / effort | Done when |
+| --- | --- | --- | --- | --- |
+| P01 | Canonical-to-detailed-view adapter; sample becomes a compatibility data pack | Partial | Now / L | Arbitrary trip views inherit no sample dates, bookings, cities or photo assumptions |
+| P02 | Unified trip selection, saved-draft library and versioned state migration | Partial | Next / L | Switching trips never leaks selections/evidence and old saves can be reviewed/migrated |
+| P03 | Per-item source, checked time, confidence and unknown fields | Partial | Now / M | Evidence survives editing, interchange and reading exports with stable references |
+| P04 | Dated nightly allocation for every route candidate | Partial | Now / M | Nights sum correctly and fixed-event/transit conflicts are explained |
+| P05 | Versioned workspace envelope for trip, itinerary and evidence | Implemented | Next / L | Explicit save/load restores supported sidecars or clearly reports omissions |
+| P06 | Duplicate a trip or create a reviewed scenario | Planned | Next / M | New IDs and ownership; no accidental copying of confirmation or access data |
+| P07 | Safe undo/redo for local edits | Implemented | Next / M | Explicit local changes can be reversed; shared revision conflicts remain separate |
+| P08 | Better guided intake with saved constraints and reactive questions | Partial | Next / M | Dates, travelers, points, pace and must-dos drive prompts; no repeated answered questions |
+| P09 | Unified decision inbox for incomplete evidence and booking gaps | Partial | Next / M | Every issue opens its source item and distinguishes recommendation from confirmation |
+| P10 | Plan snapshots with readable change summaries | Planned | Later / L | Restore previews its effect; exports/private records/access credentials remain separate |
 
 ### Routes, flights, points and stays
 
-| ID | Proposal | Priority / effort | Done when |
-| --- | --- | --- | --- |
-| R01 | Wire search forms to actual travelers, cabin, rooms, currency and trip dates; fix Sort | Now / M | Outgoing requests and ordering reflect visible controls and unsupported fields are disclosed |
-| R02 | Bounded flexible-date matrix with searched/failed/unsearched cells | Next / L | Visible scope, cancellation, quota estimate and manual fallback; no automatic exhaustive claim |
-| R03 | Airport/gateway/open-jaw comparison with protection and positioning context | Next / L | Whole-ticket quotes remain distinct from summed one-ways and self-transfers |
-| R04 | Whole-route alternatives varying city order, nights and ground modes | Next / L | At least three materially different feasible candidates or explicit constraints preventing them |
-| R05 | One leg comparison for flight, rail, car and supported coach/ferry evidence | Next / M | All-in cost, door-to-door time and unknowns are comparable; geometry is labelled honestly |
-| R06 | Points-program balances, ratios, bonuses and valuation scenarios | Next / L | Source points, taxes, delays and seat evidence are visible; no automatic transfer |
-| R07 | Pin and compare a small shortlist of complete cash/award options | Next / M | Equivalent party, dates, cabin and terms; incomplete totals never win by treating gaps as zero |
-| R08 | Hotel base comparison against the actual days | Next / L | Travel burden uses sourced routes or labelled estimates, including airport/station transfers |
-| R09 | Hotel total-stay and room/cancellation comparison, including split stays | Next / M | Per-night and total units, taxes, occupancy, bed types and terms remain explicit |
-| R10 | Opt-in saved-search refresh and price/award change alerts | Later / L | Eligible provider, budget, interval, expiry, freshness and explicit notification authorization |
+| ID | Proposal | Current status | Priority / effort | Done when |
+| --- | --- | --- | --- | --- |
+| R01 | Wire search forms to actual travelers, cabin, rooms, currency and trip dates; fix Sort | Implemented | Now / M | Outgoing requests and ordering reflect visible controls and unsupported fields are disclosed |
+| R02 | Bounded flexible-date matrix with searched/failed/unsearched cells | Partial | Next / L | Visible scope, cancellation, quota estimate and manual fallback; no automatic exhaustive claim |
+| R03 | Airport/gateway/open-jaw comparison with protection and positioning context | Planned | Next / L | Whole-ticket quotes remain distinct from summed one-ways and self-transfers |
+| R04 | Whole-route alternatives varying city order, nights and ground modes | Partial | Next / L | At least three materially different feasible candidates or explicit constraints preventing them |
+| R05 | One leg comparison for flight, rail, car and supported coach/ferry evidence | Partial | Next / M | All-in cost, door-to-door time and unknowns are comparable; geometry is labelled honestly |
+| R06 | Points-program balances, ratios, bonuses and valuation scenarios | Partial | Next / L | Source points, taxes, delays and seat evidence are visible; no automatic transfer |
+| R07 | Pin and compare a small shortlist of complete cash/award options | Partial | Next / M | Equivalent party, dates, cabin and terms; incomplete totals never win by treating gaps as zero |
+| R08 | Hotel base comparison against the actual days | Partial | Next / L | Travel burden uses sourced routes or labelled estimates, including airport/station transfers |
+| R09 | Hotel total-stay and room/cancellation comparison, including split stays | Partial | Next / M | Per-night and total units, taxes, occupancy, bed types and terms remain explicit |
+| R10 | Opt-in saved-search refresh and price/award change alerts | Planned | Later / L | Eligible provider, budget, interval, expiry, freshness and explicit notification authorization |
 
 ### Friends and group decisions
 
-| ID | Proposal | Priority / effort | Done when |
-| --- | --- | --- | --- |
-| C01 | Compact shared-board shell with contextual editing instead of permanent long forms | Now / M | Add/edit and day assignment work without displacing the whole catalogue |
-| C02 | “Suggest a change” mode with owner review | Next / L | Proposal is distinct from an applied edit; rejected suggestions remain intelligible |
-| C03 | Votes and personal must-do lists | Next / M | Group preference never silently changes confirmed bookings or the owner's locked anchors |
-| C04 | Comments attached to safe activity/day/proposal IDs | Next / M | Bounded text, role checks and deletion/retention rules; no private booking uploads |
-| C05 | Clear save/reconnect indicators and participant presence | Next / L | Presence is explicitly scoped and ephemeral; pending/failed/saved states are distinguishable |
-| C06 | Shared change history and attributable revision summaries | Next / L | Authorized members see safe changes; no raw credentials/identifiers in history |
-| C07 | Human-readable invitation role, expiry and revocation UI | Next / S | Owner/editor/viewer behavior and expired/revoked outcomes are obvious and tested |
-| C08 | Explicit proposal reconciliation between shared board and owner workspace | Next / L | Mapping/version preview, deletions and conflicts reviewed; no automatic full-plan synchronization |
-| C09 | Reviewed route/stay proposals using a separate allowlisted share schema | Later / L | Private bookings and references remain excluded; owner decides what becomes selected |
-| C10 | Better identity/recovery options for rooms | Later / L | Chosen account/capability model and migration verified before promising owner recovery |
+| ID | Proposal | Current status | Priority / effort | Done when |
+| --- | --- | --- | --- | --- |
+| C01 | Compact shared-board shell with contextual editing instead of permanent long forms | Implemented | Now / M | Add/edit and day assignment work without displacing the whole catalogue |
+| C02 | “Suggest a change” mode with owner review | Implemented | Next / L | Proposal is distinct from an applied edit; rejected suggestions remain intelligible |
+| C03 | Votes and personal must-do lists | Partial | Next / M | Group preference never silently changes confirmed bookings or the owner's locked anchors |
+| C04 | Comments attached to safe activity/day/proposal IDs | Implemented | Next / M | Bounded text, role checks and deletion/retention rules; no private booking uploads |
+| C05 | Clear save/reconnect indicators and participant presence | Partial | Next / L | Presence is explicitly scoped and ephemeral; pending/failed/saved states are distinguishable |
+| C06 | Shared change history and attributable revision summaries | Planned | Next / L | Authorized members see safe changes; no raw credentials/identifiers in history |
+| C07 | Human-readable invitation role, expiry and revocation UI | Implemented | Next / S | Owner/editor/viewer behavior and expired/revoked outcomes are obvious and tested |
+| C08 | Explicit proposal reconciliation between shared board and owner workspace | Partial | Next / L | Mapping/version preview, deletions and conflicts reviewed; no automatic full-plan synchronization |
+| C09 | Reviewed route/stay proposals using a separate allowlisted share schema | Planned | Later / L | Private bookings and references remain excluded; owner decides what becomes selected |
+| C10 | Better identity/recovery options for rooms | Planned | Later / L | Chosen account/capability model and migration verified before promising owner recovery |
 
 ### Days, maps and the trip itself
 
-| ID | Proposal | Priority / effort | Done when |
-| --- | --- | --- | --- |
-| T01 | Day timeline with travel blocks, buffers, local time zones and downtime | Next / L | Overlaps, midnight travel and unknown travel times remain explicit |
-| T02 | Reorder a day or move an activity with keyboard-equivalent controls | Next / M | Dates/locks/reservations are validated and changes can be reviewed/reversed |
-| T03 | Neighborhood clustering and route suggestions | Next / L | Uses known coordinates and an explicit walking/transit basis; no fabricated path |
-| T04 | Opening-hour, closure and reservation checks per planned date | Next / L | Source/time retained; uncertain schedules prompt review rather than blocking by assumption |
-| T05 | Rainy-day, low-energy and accessible alternatives | Next / M | Alternatives preserve requirements and do not imply medical/accessibility suitability without evidence |
-| T06 | Personal/group budget view with known, estimated and unknown amounts | Next / M | Currency/rate/date and party basis disclosed; no unsupported complete-total claim |
-| T07 | Trip readiness checklist linked to actual records | Next / M | Stay, transport, activity and transfer gaps link to their review surfaces |
-| T08 | Travel mode focused on today, next movement and useful directions | Next / M | Local timezone/date selection explicit; emergency/offline limitations clear |
-| T09 | Offline read-only trip pack with queued edits as a separate later capability | Later / L | Shows snapshot age and unavailable maps/images; reconnect never overwrites silently |
-| T10 | Personal tasks, packing and group responsibilities | Later / M | Optional modules; safe assignments and notification consent; no clutter in the core itinerary |
+| ID | Proposal | Current status | Priority / effort | Done when |
+| --- | --- | --- | --- | --- |
+| T01 | Day timeline with travel blocks, buffers, local time zones and downtime | Partial | Next / L | Overlaps, midnight travel and unknown travel times remain explicit |
+| T02 | Reorder a day or move an activity with keyboard-equivalent controls | Partial | Next / M | Dates/locks/reservations are validated and changes can be reviewed/reversed |
+| T03 | Neighborhood clustering and route suggestions | Partial | Next / L | Uses known coordinates and an explicit walking/transit basis; no fabricated path |
+| T04 | Opening-hour, closure and reservation checks per planned date | Partial | Next / L | Source/time retained; uncertain schedules prompt review rather than blocking by assumption |
+| T05 | Rainy-day, low-energy and accessible alternatives | Planned | Next / M | Alternatives preserve requirements and do not imply medical/accessibility suitability without evidence |
+| T06 | Personal/group budget view with known, estimated and unknown amounts | Implemented | Next / M | Currency/rate/date and party basis disclosed; no unsupported complete-total claim |
+| T07 | Trip readiness checklist linked to actual records | Partial | Next / M | Stay, transport, activity and transfer gaps link to their review surfaces |
+| T08 | Travel mode focused on today, next movement and useful directions | Partial | Next / M | Local timezone/date selection explicit; emergency/offline limitations clear |
+| T09 | Offline read-only trip pack with queued edits as a separate later capability | Partial | Later / L | Shows snapshot age and unavailable maps/images; reconnect never overwrites silently |
+| T10 | Personal tasks, packing and group responsibilities | Planned | Later / M | Optional modules; safe assignments and notification consent; no clutter in the core itinerary |
 
 ### Exports, agents and operating quality
 
-| ID | Proposal | Priority / effort | Done when |
-| --- | --- | --- | --- |
-| O01 | Export studio: visual dossier, compact briefs and editable records with preview | Next / M | Format/scope/date/theme/photo options accurately describe supported output |
-| O02 | Export photo-size budget and embedded/local/remote asset summary | Next / M | Warns before excessive output; never silently drops requested records |
-| O03 | Cross-format conservation checks and print-layout regression gallery | Now / M | Selected route, days, stays, transport, states and icons agree across supported formats |
-| O04 | Item-level provider/connector capability and setup dashboard | Next / M | Configured, eligible, healthy, unsupported and untested remain distinct; no secrets shown |
-| O05 | Agent research plan with approval, progress, coverage and bounded retries | Next / L | Actual tools and query scope named; cost/access limits enforced; proposals preview before writes |
-| O06 | Durable private import candidate review/approve/reject and retention ledger | Next / L | Separate read/import decisions, deduplication and redaction; raw records stay private |
-| O07 | Photo coverage/attribution repair queue with exact-subject review | Next / M | Six failed hotel sources and missing activities tracked; new sources reviewed before caching |
-| O08 | Hosted storage, recovery, backups, throttling and key-rotation validation | Next / L | Authorized synthetic multi-instance/restart/restore/access tests pass before remote reliance |
-| O09 | Reproducible onboarding for own keys, own hosting and sample/manual mode | Now / M | Fresh install reaches a working trip without keys; optional setup never assumes a connector |
-| O10 | Performance, keyboard, screen-reader, offline and independent release review | Now / M | Named representative flows and failure conditions tested; public/hosting decisions remain separate |
+| ID | Proposal | Current status | Priority / effort | Done when |
+| --- | --- | --- | --- | --- |
+| O01 | Export studio: visual dossier, compact briefs and editable records with preview | Partial | Next / M | Format/scope/date/theme/photo options accurately describe supported output |
+| O02 | Export photo-size budget and embedded/local/remote asset summary | Partial | Next / M | Warns before excessive output; never silently drops requested records |
+| O03 | Cross-format conservation checks and print-layout regression gallery | Partial | Now / M | Selected route, days, stays, transport, states and icons agree across supported formats |
+| O04 | Item-level provider/connector capability and setup dashboard | Partial | Next / M | Configured, eligible, healthy, unsupported and untested remain distinct; no secrets shown |
+| O05 | Agent research plan with approval, progress, coverage and bounded retries | Partial | Next / L | Actual tools and query scope named; cost/access limits enforced; proposals preview before writes |
+| O06 | Durable private import candidate review/approve/reject and retention ledger | Planned | Next / L | Separate read/import decisions, deduplication and redaction; raw records stay private |
+| O07 | Photo coverage/attribution repair queue with exact-subject review | Partial | Next / M | Six failed hotel sources and missing activities tracked; new sources reviewed before caching |
+| O08 | Hosted storage, recovery, backups, throttling and key-rotation validation | External dependency | Next / L | Authorized synthetic multi-instance/restart/restore/access tests pass before remote reliance |
+| O09 | Reproducible onboarding for own keys, own hosting and sample/manual mode | Implemented | Now / M | Fresh install reaches a working trip without keys; optional setup never assumes a connector |
+| O10 | Performance, keyboard, screen-reader, offline and independent release review | Partial | Now / M | Named representative flows and failure conditions tested; public/hosting decisions remain separate |
 
 ## First three implementation packets
 
@@ -196,4 +196,4 @@ Before describing a feature as built, update status/README/agent instructions co
 
 Use the existing Trippy charcoal design, deliberate photography, flight/rail/car colors, MIT code and separately licensed photos. Keep provider-neutral/manual mode and user-owned keys/hosting. These do not need to be re-asked.
 
-Defer a real-time transport vendor, account-bound room migration, paid providers, notification delivery and hosted deployment until their acceptance requirements and actual operating environment are known. The next concrete build decision is Packet A, with Packet B's view-model design running alongside it; it is not a commitment to every later feature.
+Defer a real-time transport vendor, account-bound room migration, paid providers, notification delivery and hosted deployment until their acceptance requirements and actual operating environment are known. Bounded portions of Packets A–C are now implemented. Use the [build ledger](BUILD_PROGRESS.md) to choose the remaining acceptance work; read-only detailed views do not complete editable parity, and no commitment to every later feature or external deployment follows.

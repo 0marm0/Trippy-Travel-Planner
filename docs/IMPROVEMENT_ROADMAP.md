@@ -1,5 +1,7 @@
 # Improvement roadmap
 
+For the expanded product backlog, premium compact design direction and first build packets, see [the product roadmap](PRODUCT_ROADMAP.md). The engineering prerequisites below remain applicable.
+
 The local candidate now includes a generic manual trip workspace, research and quote evidence, richer itinerary exports, reviewed shared-board handoff, reconciliation/recovery, room lifecycle and optional encrypted accounts. This roadmap describes remaining work, not a promise of live coverage or authorization to provision, publish or deploy. See [current status](IMPLEMENTATION_STATUS.md), [exports](EXPORTS.md) and [verification](RELEASE_REPORT.md).
 
 ## 1. Carry evidence through every decision

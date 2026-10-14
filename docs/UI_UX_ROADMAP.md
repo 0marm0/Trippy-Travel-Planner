@@ -1,5 +1,7 @@
 # TRIPPY workspace and guided-planning roadmap
 
+Next implementation priorities and the 62-item proposed backlog are in [the product roadmap](PRODUCT_ROADMAP.md), including compact accepted-trip headers, hotel decision rows, contextual editing and shared-shell acceptance criteria.
+
 ## Current product shape
 
 The 2026 workspace is a local-first, provider-neutral planner with Route & dates, Transport, Cities & sights, Daily itinerary, Hotels & days, Activities, and Flights & research. Its route overview provides calendar, timeline, and list views; the itinerary supports current structured exports. The 2025 workspace remains a separately gated private-local legacy view.

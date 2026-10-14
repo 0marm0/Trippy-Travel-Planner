@@ -319,4 +319,6 @@ The release gate includes lint, types, tests, schema/sample validation, a produc
 
 ## Documentation
 
+[Product and premium UI roadmap](docs/PRODUCT_ROADMAP.md) · proposed next steps, dependencies and acceptance checks.
+
 [Planning guide](docs/PLANNING_GUIDE.md) · [Setup](docs/SETUP.md) · [Onboarding](docs/ONBOARDING.md) · [Integrations](docs/INTEGRATIONS.md) · [Current implementation](docs/IMPLEMENTATION_STATUS.md) · [Export formats](docs/EXPORTS.md) · [Private accounts](docs/PRIVATE_ACCOUNTS.md) · [Architecture](docs/ARCHITECTURE.md) · [Collaboration](docs/COLLABORATION.md) · [Agent workflow](docs/AGENT_WORKFLOWS.md) · [Research playbook](docs/RESEARCH_PLAYBOOK.md) · [Gallery](docs/PHOTO_GALLERY.md) · [Contributing](CONTRIBUTING.md) · [Security reporting](SECURITY.md)

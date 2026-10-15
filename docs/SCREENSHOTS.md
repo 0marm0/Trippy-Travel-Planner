@@ -1,8 +1,8 @@
 # Trippy app screenshots
 
-Original atlas application screenshots captured on 2026-10-13 from the production build of commit e01ffdf, in verified public sample mode. There are no private trip records, booking identifiers, provider keys or invitation capabilities in these captures. New-trip and collaboration setup screenshots show blank local drafts. The three collaboration captures were refreshed on 2026-10-14 UTC from the redesigned production candidate, using a blank board and reviewed public sample only. The additional editor captures show reviewed sample day cards and a sample-only owner room; the production room uses an ephemeral local test creation code and exposes no access values.
+The gallery contains **32 screenshots** from actual app surfaces. The 2026-10-14/15 UTC production-candidate refresh replaces the overall route, flight comparison, transport comparison, day editor, hotel rows, Berlin/Amsterdam maps and shared board, and adds preparation and shared-history captures. These show the reviewed public sample or an invented Tokyo/Kyoto trip and Example City room. They contain no real contacts, booking identifiers, credentials or invitation capabilities.
 
-The gallery contains **30 screenshots**. The final three captures below come from the 2026-10-14 local candidate and show synthetic generic planning, a visual reading export and reviewed shared-board reconciliation. They contain no real traveler account details, confirmation records, credentials or access capabilities.
+Other captures retain their earlier 2026-10-13/14 reviewed versions. The export-studio image retains the previously verified photo-loaded capture; a fresh inspection stalled in the browser preview, so an incomplete image was not substituted. Captures demonstrate the stated views, not every roadmap feature or hosted/provider acceptance.
 
 [Back to the README](../README.md) · [Travel photo gallery](PHOTO_GALLERY.md)
 
@@ -132,7 +132,7 @@ Illustrative manual inputs in the working comparison panel, not provider quotes.
 
 ![Glass itinerary dossier with a reviewed route panorama](../public/screenshots/visual-export-overview.webp)
 
-The 2026-10-14 design refresh replaces the core route, planning, collaboration and export captures. Transport hues are blue for flights, yellow for rail and purple for driving; status remains a separate label or dash pattern. The gallery now contains 28 captures. Invented generic plans contain no traveler identifiers.
+Transport hues are blue for flights, yellow for rail and purple for driving; status remains a separate label or dash pattern. Invented generic plans contain no traveler identifiers.
 
 The 2026-10-14 visual pass refreshed the route mode colors, itinerary editor, trip setup, generic workspace, collaboration layout, hotels and dossier chapters. Reconciliation and invitation screenshots retain their earlier functional snapshots; their current surfaces use the shared charcoal/glass styles.
 
@@ -148,3 +148,16 @@ Side-by-side settings and sandboxed reading preview, captured from the current c
 Invented local room, owner access pseudonym and synthetic planning comment. No invitation value, real contact or private trip record appears. The refreshed hotel rows and these two captures were pixel-reviewed on 2026-10-14; other historical captures retain the versions described above.
 
 ![Share-safe proposal votes and comments](../public/screenshots/collaboration-discussion.webp)
+
+
+## Tasks, packing and reviewed alternatives
+
+An invented trip with a completed packing task and a same-city fallback pair. Role aliases are not verified identities; source and suitability unknowns remain explicit.
+
+![Glass preparation panel with packing and plan B](../public/screenshots/trip-preparation.webp)
+
+## Shared revision history
+
+An invented local SQLite room with invitation and board summaries. The displayed access alias is a pseudonym, not an invitation capability. The latest-100 window contains categories/counts rather than private content.
+
+![Shared-room revision summaries with action, time and category counts](../public/screenshots/collaboration-history.webp)

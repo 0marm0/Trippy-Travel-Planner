@@ -20,6 +20,7 @@ export function previewWorkspaceScenario(source: GenericWorkspace, name: string,
   const receipt: ScenarioReceipt = { version: 1, kind: 'local-scenario-copy', sourceTripId: source.trip.id, scenarioTripId: scenarioId, copiedAt, bookingPolicy, retainedBookingStates: omit ? [] : source.trip.bookings.map(item => ({ id: item.id, state: item.status })), omittedBookingCount: omit ? source.trip.bookings.length : 0, omittedBookingDetailCount: omit ? source.bookingDetails.length : 0, omittedBookingEvidenceCount: omit ? source.itemEvidence?.filter(item => item.target === 'booking').length || 0 : 0, evidenceIdentityRebinding: 'same-facts-new-trip-identity', notice: 'Local scenario copy. Existing source dates, prices and evidence timestamps are retained, not refreshed. Copied booking states describe the same recorded bookings; this copy creates no new reservation or confirmation. No account ownership or shared-room access is copied.' };
   if (omit) {
     next.trip.bookings = []; next.bookingDetails = [];
+    if (next.bookingPlans) next.bookingPlans = {version:1,items:[]};
     if (next.itemEvidence) next.itemEvidence = next.itemEvidence.filter(item => item.target !== 'booking');
   }
   if (validateWorkspace(next).length) throw new Error('Scenario identity cannot be rebound safely. No records were copied or saved.');

@@ -1,3 +1,5 @@
+import { validateBookingPlans, type BookingPlanningData } from './booking-planning.ts';
+import { validateTripPreparation, type TripPreparation } from './trip-preparation.ts';
 import { validateRouteScenarios, type RouteScenarioData } from './route-scenarios.ts';
 import { validateNormalizedTrip, type NormalizedTrip } from './normalized-trip.ts';
 import { safeCollaborationImage, safeCollaborationSourceUrl } from './collaboration/schema.ts';
@@ -23,6 +25,8 @@ export type GenericWorkspace = {
   quoteEvidence?: QuoteComparisonData;
   budgetQuoteIds?: string[];
   routeScenarios?: RouteScenarioData;
+  bookingPlans?: BookingPlanningData;
+  preparation?: TripPreparation;
 };
 export type BrowserStore = Pick<Storage, 'getItem' | 'setItem' | 'removeItem'>;
 
@@ -87,7 +91,7 @@ export function validateWorkspace(input: unknown): string[] {
   let value = input as Record<string, unknown>;
   const fail = ['Workspace is invalid or contains unsafe fields; no changes saved.'];
   const required = ['version', 'trip', 'selectedRouteId', 'places', 'days', 'activities', 'bookingDetails'];
-  const optional = ['itemEvidence', 'routeAllocations', 'researchEvidence', 'quoteEvidence', 'budgetQuoteIds', 'routeScenarios'];
+  const optional = ['itemEvidence', 'routeAllocations', 'researchEvidence', 'quoteEvidence', 'budgetQuoteIds', 'routeScenarios', 'bookingPlans', 'preparation'];
   if (!value || typeof value !== 'object' || Array.isArray(value) || !required.every(key => Object.hasOwn(value, key)) || Object.keys(value).some(key => ![...required, ...optional].includes(key))) return fail;
   const record = value as Record<string, unknown>;
   if (record.version !== 1 || validateNormalizedTrip(record.trip).length) return fail;
@@ -128,6 +132,8 @@ export function validateWorkspace(input: unknown): string[] {
   }
   if (value.budgetQuoteIds !== undefined && (!Array.isArray(value.budgetQuoteIds) || value.budgetQuoteIds.length > 300 || value.budgetQuoteIds.some(id => typeof id !== 'string' || !/^[a-z0-9-]{1,64}$/.test(id)) || new Set(value.budgetQuoteIds).size !== value.budgetQuoteIds.length)) return fail;
   try {
+    if (value.bookingPlans !== undefined) validateBookingPlans(value.bookingPlans,trip);
+    if (value.preparation !== undefined) validateTripPreparation(value.preparation, value as unknown as GenericWorkspace);
     if (value.routeScenarios !== undefined) validateRouteScenarios(value.routeScenarios,trip);
     if (value.researchEvidence !== undefined) validateResearchLedger(value.researchEvidence,trip);
     if (value.quoteEvidence !== undefined) validateQuoteComparison(value.quoteEvidence,trip);
@@ -153,7 +159,7 @@ export function removeWorkspace(store: BrowserStore, trip: NormalizedTrip): void
 }
 export function exportWorkspace(value: GenericWorkspace): { trip: string; itinerary: string } {
   if (validateWorkspace(value).length) throw new Error('Unsafe or invalid workspace; export blocked');
-  return { trip: JSON.stringify(value.trip, null, 2) + '\n', itinerary: JSON.stringify({ version: value.version, tripId: value.trip.id, selectedRouteId: value.selectedRouteId, places: value.places, days: value.days, activities: value.activities, bookingDetails: value.bookingDetails, ...(value.itemEvidence ? { itemEvidence: value.itemEvidence } : {}), ...(value.routeAllocations ? { routeAllocations: value.routeAllocations } : {}), ...(value.researchEvidence ? { researchEvidence: value.researchEvidence } : {}), ...(value.quoteEvidence ? { quoteEvidence: value.quoteEvidence } : {}), ...(value.budgetQuoteIds ? {budgetQuoteIds:value.budgetQuoteIds} : {}), ...(value.routeScenarios ? {routeScenarios:value.routeScenarios} : {}) }, null, 2) + '\n' };
+  return { trip: JSON.stringify(value.trip, null, 2) + '\n', itinerary: JSON.stringify({ version: value.version, tripId: value.trip.id, selectedRouteId: value.selectedRouteId, places: value.places, days: value.days, activities: value.activities, bookingDetails: value.bookingDetails, ...(value.itemEvidence ? { itemEvidence: value.itemEvidence } : {}), ...(value.routeAllocations ? { routeAllocations: value.routeAllocations } : {}), ...(value.researchEvidence ? { researchEvidence: value.researchEvidence } : {}), ...(value.quoteEvidence ? { quoteEvidence: value.quoteEvidence } : {}), ...(value.budgetQuoteIds ? {budgetQuoteIds:value.budgetQuoteIds} : {}), ...(value.routeScenarios ? {routeScenarios:value.routeScenarios} : {}), ...(value.bookingPlans ? {bookingPlans:value.bookingPlans} : {}), ...(value.preparation ? {preparation:value.preparation} : {}) }, null, 2) + '\n' };
 }
 export function workspaceConflicts(value: GenericWorkspace): string[] {
   const conflicts: string[] = [];
@@ -174,7 +180,7 @@ export function workspaceConflicts(value: GenericWorkspace): string[] {
 
 /** Retain the receipt, but never present evidence as current after its supported record changes. */
 export function reconcileItemEvidence(previous: GenericWorkspace, next: GenericWorkspace): GenericWorkspace {
-  const record = (workspace: GenericWorkspace, evidence: ItemEvidence) => evidence.target === 'activity' ? workspace.activities.find(item => item.id === evidence.targetId) : evidence.target === 'booking' ? {record:workspace.trip.bookings.find(item => item.id === evidence.targetId),detail:workspace.bookingDetails.find(item => item.bookingId === evidence.targetId)} : {place:workspace.trip.destinations.find(item => item.id === evidence.targetId),pin:workspace.places.find(item => item.placeId === evidence.targetId)};
+  const record = (workspace: GenericWorkspace, evidence: ItemEvidence) => evidence.target === 'activity' ? workspace.activities.find(item => item.id === evidence.targetId) : evidence.target === 'booking' ? {record:workspace.trip.bookings.find(item => item.id === evidence.targetId),detail:workspace.bookingDetails.find(item => item.bookingId === evidence.targetId),planning:workspace.bookingPlans?.items.find(item=>item.bookingId===evidence.targetId)} : {place:workspace.trip.destinations.find(item => item.id === evidence.targetId),pin:workspace.places.find(item => item.placeId === evidence.targetId)};
   if (!next.itemEvidence) return next;
   return {...next,itemEvidence:next.itemEvidence.map(evidence => previous.itemEvidence?.some(item => item.target === evidence.target && item.targetId === evidence.targetId) && JSON.stringify(record(previous,evidence)) !== JSON.stringify(record(next,evidence)) ? {...evidence,reviewRequired:true} : evidence)};
 }

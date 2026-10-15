@@ -4862,6 +4862,39 @@
       "sha256": "54aa69d3370036b64de534134309cb900528abfa11a271f2bf4261a1787d157d",
       "privacyReview": "Pixel-reviewed reviewed public sample or invented planning; no access values, credentials or private identifiers; metadata stripped",
       "reviewedAt": "2026-10-14"
+    },
+    {
+      "path": "public/screenshots/saved-filters.webp",
+      "credit": "Trippy app screenshot; depicted source credits retained where shown",
+      "sourceUrl": "repository:docs/SCREENSHOTS.md",
+      "license": "MIT app UI; depicted photographs and map/provider content retain their separate terms",
+      "rightsStatus": "approved",
+      "privacyStatus": "approved",
+      "sha256": "013ca972d5d62454c526d9bd94ac819eb15429c31a7f298f6ca7cbfaf95a4727",
+      "privacyReview": "Pixel-reviewed reviewed public sample or invented planning; no access values, credentials or private identifiers; metadata stripped",
+      "reviewedAt": "2026-10-14"
+    },
+    {
+      "path": "public/screenshots/collaboration-ideas.webp",
+      "credit": "Trippy app screenshot; depicted source credits retained where shown",
+      "sourceUrl": "repository:docs/SCREENSHOTS.md",
+      "license": "MIT app UI; depicted photographs and map/provider content retain their separate terms",
+      "rightsStatus": "approved",
+      "privacyStatus": "approved",
+      "sha256": "cfff0d4044e90229ecdb576eccf286d91f0b9c969e6320970e5660483711fcf2",
+      "privacyReview": "Pixel-reviewed reviewed public sample or invented planning; no access values, credentials or private identifiers; metadata stripped",
+      "reviewedAt": "2026-10-14"
+    },
+    {
+      "path": "public/screenshots/journey-evidence.webp",
+      "credit": "Trippy app screenshot; depicted source credits retained where shown",
+      "sourceUrl": "repository:docs/SCREENSHOTS.md",
+      "license": "MIT app UI; depicted photographs and map/provider content retain their separate terms",
+      "rightsStatus": "approved",
+      "privacyStatus": "approved",
+      "sha256": "4b49d83d581d59ceb5ba194e9370a1e0e28136b11ec196c1898085576e31ccbb",
+      "privacyReview": "Pixel-reviewed reviewed public sample or invented planning; no access values, credentials or private identifiers; metadata stripped",
+      "reviewedAt": "2026-10-14"
     }
   ],
   "remoteAssets": []

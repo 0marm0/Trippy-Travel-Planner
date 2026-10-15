@@ -17,7 +17,7 @@ export function summarizeBoardChanges(before: CollaborationState, after: Collabo
   };
   const records=(items:Array<{id:string}>)=>Object.fromEntries(items.map(item=>[item.id,item]));
   compare('trip',{title:before.title,startDate:before.startDate,endDate:before.endDate},{title:after.title,startDate:after.startDate,endDate:after.endDate});
-  compare('cities',records(before.cities),records(after.cities));compare('activities',records(before.activities),records(after.activities));compare('days',before.days,after.days);compare('proposals',records(before.suggestions??[]),records(after.suggestions??[]));
+  compare('cities',records(before.cities),records(after.cities));compare('activities',records(before.activities),records(after.activities));compare('days',before.days,after.days);compare('proposals',{...Object.fromEntries((before.suggestions??[]).map(item=>[`proposal:${item.id}`,item])),...Object.fromEntries((before.planningIdeas??[]).map(item=>[`idea:${item.id}`,item]))},{...Object.fromEntries((after.suggestions??[]).map(item=>[`proposal:${item.id}`,item])),...Object.fromEntries((after.planningIdeas??[]).map(item=>[`idea:${item.id}`,item]))});
   const interactions=(state:CollaborationState)=>Object.fromEntries([...(state.interactions?.votes??[]).map(item=>[`vote:${item.suggestionId}:${item.actor.id}`,item]),...(state.interactions?.comments??[]).map(item=>[`comment:${item.id}`,item])]);
   compare('interactions',interactions(before),interactions(after));
   return changes;

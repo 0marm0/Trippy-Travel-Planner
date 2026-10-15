@@ -28,26 +28,30 @@ import ts from 'typescript';
 const workspaceSource = await readFile(new URL('../src/components/collaboration-workspace.tsx', import.meta.url), 'utf8');
 const parsedWorkspace = ts.createSourceFile('collaboration-workspace.tsx', workspaceSource, ts.ScriptTarget.Latest, true, ts.ScriptKind.TSX);
 let effectSource;
+const replacementFunctions = [];
 function findAccessEffect(node) {
+  if (ts.isFunctionDeclaration(node) && ['resetIdeaDraft', 'discardAndLoadLatest'].includes(node.name?.getText(parsedWorkspace))) replacementFunctions.push(node.getText(parsedWorkspace));
   if (ts.isCallExpression(node) && node.expression.getText(parsedWorkspace) === 'useEffect' && node.arguments[0]?.getText(parsedWorkspace).includes('function consumeFragment(')) effectSource = node.arguments[0].getText(parsedWorkspace);
   ts.forEachChild(node, findAccessEffect);
 }
 findAccessEffect(parsedWorkspace);
 assert.ok(effectSource, 'the collaboration access effect must be exercised');
+assert.equal(replacementFunctions.length, 2, 'exercise actual approved-replacement handlers');
+const compiledReplacement = ts.transpileModule(`${replacementFunctions.join('\n')} discardAndLoadLatest();`, { compilerOptions: { target: ts.ScriptTarget.ES2022 } }).outputText;
 const compiledEffect = ts.transpileModule(`const effect = ${effectSource}; effect();`, { compilerOptions: { target: ts.ScriptTarget.ES2022 } }).outputText;
 function accessHarness() {
   const listeners = new Map(), pending = [], storage = new Map();
-  const state = { connected: false, snapshot: null, plan: null, latest: null, connectionError: '' };
+  const state = { connected: false, snapshot: null, plan: null, latest: null, connectionError: '', ideaDraft: false, ideaDraftVersion: 0 };
   const refreshRoomRef = { current: null };
-  const token = { current: '' }, busyRef = { current: false }, dirtyRef = { current: false }, activityDraftRef = { current: false }, commentDraftRef = { current: '' }, closedRef = { current: false }, revisionRef = { current: 0 };
+  const token = { current: '' }, busyRef = { current: false }, dirtyRef = { current: false }, activityDraftRef = { current: false }, ideaDraftRef = { current: false }, commentDraftRef = { current: '' }, closedRef = { current: false }, revisionRef = { current: 0 };
   let poll;
   const window = { location: { hash: `#token=${'a'.repeat(43)}`, pathname: '/collaborate/synthetic-room', search: '' }, history: { state: null, replaceState() { window.location.hash = ''; } }, sessionStorage: { setItem: (key, value) => storage.set(key, value), getItem: key => storage.get(key) || null }, addEventListener: (name, handler) => listeners.set(name, handler), removeEventListener: name => listeners.delete(name), setInterval: handler => { poll = handler; return 1; }, clearInterval() {} };
   const set = field => value => { state[field] = typeof value === 'function' ? value(state[field]) : value; };
-  const context = { roomId: 'synthetic-room', window, token, busyRef, dirtyRef, activityDraftRef, commentDraftRef, closedRef, revisionRef, refreshRoomRef, parseRoomAccessFragment, sessionKey: id => `synthetic:${id}`, AbortController, AbortSignal,
+  const context = { roomId: 'synthetic-room', window, token, busyRef, dirtyRef, activityDraftRef, ideaDraftRef, commentDraftRef, closedRef, revisionRef, refreshRoomRef, parseRoomAccessFragment, sessionKey: id => `synthetic:${id}`, AbortController, AbortSignal,
     fetch: (url, options) => new Promise((resolve, reject) => pending.push({ url, options, resolve, reject })), responseBody: async response => response,
-    setConnected: set('connected'), setAccessToken: set('accessToken'), setInvites: set('invites'), setInviteReview: set('inviteReview'), setReconciliation: set('reconciliation'), setNotice: set('notice'), setConnectionError: set('connectionError'), setLatest: set('latest'), setSnapshot: set('snapshot'), setPlan: set('plan') };
+    setConnected: set('connected'), setAccessToken: set('accessToken'), setInvites: set('invites'), setInviteReview: set('inviteReview'), setReconciliation: set('reconciliation'), setNotice: set('notice'), setConnectionError: set('connectionError'), setLatest: set('latest'), setSnapshot: set('snapshot'), setPlan: set('plan'), setDirty: set('dirty'), setReview: set('review'), setApproved: set('approved'), setError: set('error'), setIdeaDraft: set('ideaDraft'), setIdeaDraftVersion: set('ideaDraftVersion'), resetActivity: () => { activityDraftRef.current = false; } };
   const cleanup = vm.runInNewContext(compiledEffect, context);
-  return { state, pending, token, busyRef, dirtyRef, refreshRoomRef, activityDraftRef, commentDraftRef, cleanup, poll: () => poll(), change: capability => { window.location.hash = `#token=${capability}`; listeners.get('hashchange')(); } };
+  return { state, pending, token, busyRef, dirtyRef, refreshRoomRef, activityDraftRef, ideaDraftRef, commentDraftRef, cleanup, replaceLatest: approved => { context.latest = state.latest; window.confirm = () => approved; vm.runInNewContext(compiledReplacement, context); }, poll: () => poll(), change: capability => { window.location.hash = `#token=${capability}`; listeners.get('hashchange')(); } };
 }
 const settle = () => new Promise(resolve => setImmediate(resolve));
 const snapshot = (role, revision = 1, title = 'Synthetic board') => ({ roomId: 'synthetic-room', role, revision, state: { title }, invites: role === 'owner' ? [{ inviteId: 'synthetic-invite', role: 'editor' }] : undefined });
@@ -105,4 +109,34 @@ test('stream-triggered refresh uses the same dirty-form, busy and access-generat
   harness.pending[3].resolve(snapshot('viewer',2)); await settle(); assert.equal(harness.state.plan.title,'Unsaved board'); assert.equal(harness.state.snapshot.role,'viewer');
   harness.busyRef.current = true; const count = harness.pending.length; harness.refreshRoomRef.current(); assert.equal(harness.pending.length,count);
   harness.cleanup(); assert.equal(harness.refreshRoomRef.current,null);
+});
+
+
+test('unfinished route/stay form survives ordinary refresh and access changes until approved replacement resets it', async () => {
+  const harness = accessHarness(); harness.pending[0].resolve(snapshot('owner')); await settle();
+  harness.state.plan = { title: 'Current board with unfinished route idea' };
+  harness.state.ideaDraft = true; harness.ideaDraftRef.current = true;
+  // Only the separate idea form is dirty; the board itself has no unsaved writes.
+  assert.equal(harness.dirtyRef.current, false);
+  harness.refreshRoomRef.current(); harness.pending[1].resolve(snapshot('owner', 2, 'Incoming board')); await settle();
+  assert.equal(harness.state.plan.title, 'Current board with unfinished route idea');
+  assert.equal(harness.state.latest.revision, 2);
+  assert.equal(harness.ideaDraftRef.current, true);
+  assert.equal(harness.state.ideaDraftVersion, 0);
+  harness.change('b'.repeat(43)); harness.pending[2].resolve(snapshot('editor', 2, 'Incoming board')); await settle();
+  assert.equal(harness.state.snapshot.role, 'editor');
+  assert.equal(harness.state.plan.title, 'Current board with unfinished route idea');
+  assert.equal(harness.ideaDraftRef.current, true);
+  // Cancelling the explicit replacement preserves both the form and its mount.
+  harness.replaceLatest(false);
+  assert.equal(harness.state.plan.title, 'Current board with unfinished route idea');
+  assert.equal(harness.ideaDraftRef.current, true);
+  assert.equal(harness.state.ideaDraftVersion, 0);
+  harness.replaceLatest(true);
+  assert.equal(harness.state.plan.title, 'Incoming board');
+  assert.equal(harness.state.latest, null);
+  assert.equal(harness.ideaDraftRef.current, false);
+  assert.equal(harness.state.ideaDraft, false);
+  assert.equal(harness.state.ideaDraftVersion, 1, 'the keyed child form is remounted only after replacement approval');
+  harness.cleanup();
 });

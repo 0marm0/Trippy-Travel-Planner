@@ -9,6 +9,7 @@ function checkedRoomTransition(input: CollaborationState): CollaborationState {
 
 /** General board writes can append proposals; review is a separate owner transaction. */
 export function assertSuggestionAppendOnly(previous: CollaborationState, next: CollaborationState) {
+  if (JSON.stringify(previous.planningIdeas || []) !== JSON.stringify(next.planningIdeas || [])) throw new CollaborationError(403, "Route and stay ideas can only change through owner review.");
   if (JSON.stringify(previous.interactions || { votes: [], comments: [] }) !== JSON.stringify(next.interactions || { votes: [], comments: [] })) throw new CollaborationError(403, "Votes and comments can only change through authenticated room actions.");
   for (const suggestion of previous.suggestions || []) {
     if (JSON.stringify(next.suggestions?.find(item => item.id === suggestion.id)) !== JSON.stringify(suggestion)) throw new CollaborationError(403, "Existing suggestions can only change through owner review.");
@@ -24,7 +25,9 @@ export function reviewCollaborationSuggestion(input: CollaborationState, suggest
   if (!proposal || proposal.status !== "pending") throw new CollaborationError(409, "This suggestion is no longer pending. Reload the board.");
   const next = structuredClone(state);
   next.suggestions = next.suggestions!.map(item => item.id === suggestionId ? { ...item, status: decision === "apply" ? "applied" : "rejected" } : item);
-  if (decision === "apply") {
+  if (decision === "apply" && (proposal.kind === "route" || proposal.kind === "stay")) {
+    next.planningIdeas = [...(next.planningIdeas || []), proposal.idea];
+  } else if (decision === "apply" && (proposal.kind === "activity" || proposal.kind === "day")) {
     const activityId = proposal.kind === "activity" ? proposal.activity.id : proposal.activityId;
     if (proposal.kind === "activity") next.activities.push(proposal.activity);
     if (proposal.day) {

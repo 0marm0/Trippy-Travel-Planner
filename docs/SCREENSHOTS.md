@@ -1,6 +1,6 @@
 # Trippy app screenshots
 
-The gallery contains **32 screenshots** from actual app surfaces. The 2026-10-14/15 UTC production-candidate refresh replaces the overall route, flight comparison, transport comparison, day editor, hotel rows, Berlin/Amsterdam maps and shared board, and adds preparation and shared-history captures. These show the reviewed public sample or an invented Tokyo/Kyoto trip and Example City room. They contain no real contacts, booking identifiers, credentials or invitation capabilities.
+The gallery contains **35 screenshots** from actual app surfaces. The 2026-10-14/15 UTC production-candidate refresh replaces the overall route, flight comparison, transport comparison, day editor, hotel rows, Berlin/Amsterdam maps and shared board, and adds preparation and shared-history captures. These show the reviewed public sample or an invented Tokyo/Kyoto trip and Example City room. They contain no real contacts, booking identifiers, credentials or invitation capabilities.
 
 Other captures retain their earlier 2026-10-13/14 reviewed versions. The export-studio image retains the previously verified photo-loaded capture; a fresh inspection stalled in the browser preview, so an incomplete image was not substituted. Captures demonstrate the stated views, not every roadmap feature or hosted/provider acceptance.
 
@@ -161,3 +161,18 @@ An invented trip with a completed packing task and a same-city fallback pair. Ro
 An invented local SQLite room with invitation and board summaries. The displayed access alias is a pseudonym, not an invitation capability. The latest-100 window contains categories/counts rather than private content.
 
 ![Shared-room revision summaries with action, time and category counts](../public/screenshots/collaboration-history.webp)
+
+
+## Saved catalogue filters
+
+![Sample activity catalogue with active chips and a device-only museum preset](../public/screenshots/saved-filters.webp)
+
+## Reviewed shared stay ideas
+
+![Invented shared-room stay idea after owner review](../public/screenshots/collaboration-ideas.webp)
+
+## Recorded journey evidence
+
+![Invented route costs and elapsed leg timing with unknown door-to-door totals](../public/screenshots/journey-evidence.webp)
+
+These three captures were added from the current production candidate. Shared ideas do not establish bookings. Journey comparisons show entered demonstration evidence, not live inventory or real available fares.

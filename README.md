@@ -22,15 +22,17 @@ The checkout includes the full reviewed Europe sample dashboard and its bundled 
 | Plan | What you can do |
 | --- | --- |
 | **Cash + points flights** | Record and compare fares, award points, taxes, transfer ratios, baggage and your point valuation. Prepare bounded exact-date cash research, or give your authorized agent a broader coverage brief. |
-| **Better routes** | Preview different city orders and night allocations. Record gateways, open jaws, through/separate tickets, flight/rail/car/ferry/bus legs and quote references; compare compatible whole-route assumptions. |
-| **Hotels + location** | Explore the sample's property galleries, maps and three-stay comparisons. For your trip, record stay locations/photos and compare sourced room, cancellation and all-in quote terms. |
+| **Better routes** | Preview different city orders and night allocations. Record gateways, open jaws, through/separate tickets, flight/rail/car/ferry/bus legs and quote references; compare compatible whole-route assumptions, recorded elapsed time and explicit coverage gaps. |
+| **Hotels + location** | Explore the sample's property galleries, maps and three-stay comparisons. For your trip, record stay locations/photos, compare sourced room and cancellation terms, and inspect straight-line hotel-to-activity geography with missing pins disclosed. |
 | **Cities + days** | Edit activities, priorities, durations and day assignments. Keep attributed photos, recorded pins, source receipts, arrival context and unresolved conflicts alongside the plan. |
-| **Friends + decisions** | Share a separate activity/day board, invite editors or viewers, propose changes, vote and discuss, and inspect recent revision summaries. Review downloaded group changes before applying them to your workspace. |
+| **Friends + decisions** | Share a separate activity/day board, invite editors or viewers, propose activity changes and route/stay ideas, vote and discuss, and inspect recent revision summaries. Owners review proposals before applying them. Review downloaded group changes before applying them to your workspace. |
 | **Preparation + recovery** | Keep trip tasks, packing roles and explicit fallback ideas; review activity swaps. Create separate scenarios, use undo/redo, save named recovery snapshots and restore reviewed differences. |
 | **Booking progress** | Keep `recommended`, `quoted`, `held`, `confirmed`, `missing` and `conflict` distinct across travel and stays. A quote, selected option or imported email does not establish confirmation. |
 | **Take it with you** | Preview rich or compact reading copies, select dates, and export HTML/PDF. Keep editable workspace JSON and evidence for later changes. |
 
 Research remains evidence-based: missing prices, protection, schedules and geography stay unknown. Trippy compares the options you record or research; it does not automatically search every connection/program or prove a global cheapest result. [Supported paths and limits →](docs/IMPLEMENTATION_STATUS.md)
+
+Find recorded activities, bookings, routes, quotes and preparation tasks with **Find in trip**. Sample hotel and activity views include active filter chips and device-only saved presets. Map selection opens context; choosing a stay remains an explicit action. Missing venue photos show a neutral placeholder.
 
 ## See Trippy in action
 
@@ -54,6 +56,14 @@ Actual app captures using the reviewed sample or clearly identified invented pla
 <td><a href="public/screenshots/collaboration-history.webp"><img src="public/screenshots/collaboration-history.webp" alt="Authenticated shared-room revision summaries" /></a><strong>See what changed</strong><br/><sub>Recent revision summaries with roles, times and change counts.</sub></td>
 </tr>
 </table>
+
+### Faster decisions, less clutter
+
+| Keep your view | Bring friends into the decision |
+| --- | --- |
+| ![Activity filters with clearable chips and a saved museum preset](public/screenshots/saved-filters.webp) | ![Owner-reviewed stay idea alongside shared activities](public/screenshots/collaboration-ideas.webp) |
+
+Sample catalogue presets stay on your device. Shared route/stay ideas stay separate from reservations and require owner review. Generic workspaces also compare recorded journey evidence and hotel-base geography, with missing costs, pins and timing disclosed.
 
 ### From the whole route to a neighborhood
 

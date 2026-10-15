@@ -29,7 +29,7 @@ export function previewBoardSync(workspace: GenericWorkspace, baseText: string, 
   }
   const warnings = ['Board order does not set clock times. Existing activity times are retained; provide a time and duration for new ideas. Unscheduled ideas require an explicit day. Day destination allocations remain unchanged.'];
   if (incoming.activities.some(activity => activity.image || activity.sourceUrl || activity.lat !== undefined)) warnings.push('Activity photos, source links and activity coordinates stay on the board; those optional fields are not mapped by this reviewed import.');
-  warnings.push('Pending proposals, discussion and access information are excluded. Only applied board city, activity and day edits are compared.');
+  warnings.push('Pending proposals, accepted route/stay ideas, discussion and access information remain separate on the board and are excluded from this owner-workspace import. Only applied board city, activity and day edits are compared.');
   return { workspaceSnapshot: JSON.stringify(workspace), base, incoming, changes: reconciliationChanges(base.board, current, incoming), warnings };
 }
 export function applyBoardSync(workspace: GenericWorkspace, review: BoardSyncReview, choices: Record<string, Choice>, schedule: BoardSyncSchedule = {}): GenericWorkspace {

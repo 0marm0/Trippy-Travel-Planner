@@ -34,7 +34,18 @@ function truncate(value: string, font: PDFFont, size: number, width: number): st
 }
 
 function wrap(value: string, font: PDFFont, size: number, width: number, maxLines = 2): string[] {
-  const words = cleanPdfText(value).split(/\s+/).filter(Boolean);
+  // Public source URLs can be a single long word. Split by measured glyph width
+  // so gallery captions and the lossless appendix both stay inside their column.
+  const words = cleanPdfText(value).split(/\s+/).filter(Boolean).flatMap(word=>{
+    if (font.widthOfTextAtSize(word,size)<=width) return [word];
+    const chunks:string[]=[];let chunk='';
+    for (const character of word) {
+      if (chunk && font.widthOfTextAtSize(chunk+character,size)>width) {chunks.push(chunk);chunk='';}
+      chunk+=character;
+    }
+    if (chunk) chunks.push(chunk);
+    return chunks;
+  });
   const lines: string[] = [];
   let line = "";
   for (const word of words) {
@@ -156,7 +167,7 @@ function collectItems(snapshot: TripExportSnapshot): DossierItem[] {
   }
   for (const booking of snapshot.bookings) {
     const tone = classify(booking.status, booking.title, booking.detail);
-    items.push({ date: booking.dateIso || booking.date.slice(0, 10), kind: tripPdfIconFor(booking.kind, `${booking.title} ${booking.detail}`), status: toneLabel(tone, booking.status), title: booking.title, detail: booking.detail, tone, source: "booking" });
+    items.push({ date: booking.dateIso || booking.date.slice(0, 10), kind: tripPdfIconFor(booking.kind, `${booking.title} ${booking.detail}`), status: toneLabel(tone, booking.status), title: booking.title, detail: `${booking.detail}${booking.image?` | Photo credit: ${booking.imageCredit||"Unknown"}; source: ${booking.imageSourceUrl||"Unknown"}; checked ${booking.imageCheckedAt||"Unknown"}`:""}`, tone, source: "booking" });
   }
   for (const transport of snapshot.transport) {
     items.push({ date: transport.date, kind: tripPdfIconFor(transport.mode, transport.name), status: "PLANNED", title: `${transport.from} to ${transport.to}`, detail: `${transport.name} | ${transport.ride} | selected planning option`, tone: "planned", source: "transport" });
@@ -448,7 +459,8 @@ function drawDaily(dossier: Dossier, visual: boolean, images: Embedded) {
 async function loadVisualImages(doc: PDFDocument, snapshot: TripExportSnapshot, options: TripPdfOptions): Promise<Embedded> {
   const result: Embedded = new Map();
   if (!options.visual || !options.imageLoader) return result;
-  const urls = [...new Set(snapshot.days.flatMap((day) => day.activities.map((activity) => activity.image).filter(Boolean)))].slice(0, 60);
+  // One shared unique-asset budget; stay photos do not get an unbounded second pass.
+  const urls = [...new Set([...snapshot.days.flatMap((day) => day.activities.map((activity) => activity.image)),...snapshot.bookings.map(item=>item.image||'')].filter(Boolean))].slice(0, 60);
   let cursor = 0;
   await Promise.all(Array.from({ length: Math.min(4, urls.length) }, async () => {
     while (cursor < urls.length) {
@@ -457,6 +469,28 @@ async function loadVisualImages(doc: PDFDocument, snapshot: TripExportSnapshot, 
     }
   }));
   return result;
+}
+
+/** Photo captions are a visual index; full metadata stays in the operational ledger/appendix. */
+function drawStayPhotos(dossier: Dossier, images: Embedded) {
+  const stays=dossier.snapshot.bookings.filter(item=>item.image && images.has(item.image));
+  if (!stays.length) return;
+  let page: PDFPage | null=null, y=0;
+  for (const stay of stays) {
+    if (!page || y<210) {
+      page=dossier.newPage('Recorded stay photos','visual index | full details in logistics ledger');
+      y=dossier.sectionRail(page,744,'Recorded stay photographs','attributed planning images | not verification');
+    }
+    const image=images.get(stay.image!)!, width=155, height=112;
+    page.drawRectangle({x:PAGE.margin,y:y-142,width:PAGE.width-PAGE.margin*2,height:134,color:dossier.palette.card});
+    const scale=Math.min(width/image.width,height/image.height);
+    page.drawImage(image,{x:PAGE.margin+10+(width-image.width*scale)/2,y:y-127+(height-image.height*scale)/2,width:image.width*scale,height:image.height*scale});
+    const textX=PAGE.margin+180,textW=PAGE.width-PAGE.margin-textX-10;
+    page.drawText(truncate(stay.title,dossier.bold,10,textW),{x:textX,y:y-25,size:10,font:dossier.bold,color:dossier.palette.text});
+    const caption=`${stay.status} | ${stay.dateIso} to ${stay.endDate} | ${stay.imageCredit||'Credit unknown'} | checked ${stay.imageCheckedAt||'Unknown'} | ${stay.imageSourceUrl||'Source unknown'}`;
+    wrap(caption,dossier.regular,7,textW,9).forEach((line,index)=>page!.drawText(line,{x:textX,y:y-42-index*9,size:7,font:dossier.regular,color:dossier.palette.muted}));
+    y-=158;
+  }
 }
 
 export async function createTripPdfReplica(snapshotInput: TripExportSnapshot, options: TripPdfOptions): Promise<Uint8Array> {
@@ -483,6 +517,7 @@ export async function createTripPdfReplica(snapshotInput: TripExportSnapshot, op
   drawDecisionDeck(dossier, overview, y, items);
   drawLedger(dossier, items);
   drawDaily(dossier, options.visual === true, images);
+  if (options.visual) drawStayPhotos(dossier,images);
   dossier.footer();
   return doc.save({ useObjectStreams: true });
 }

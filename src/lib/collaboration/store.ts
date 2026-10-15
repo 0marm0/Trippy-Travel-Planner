@@ -3,6 +3,7 @@ import { mkdirSync, chmodSync, lstatSync, realpathSync } from "node:fs";
 import { resolve, relative, dirname, join, sep } from "node:path";
 import { CollaborationError, validateCollaborationState } from "./schema.ts";
 import { assertSuggestionAppendOnly, reviewCollaborationSuggestion, recordSuggestionInteraction } from "./suggestions.ts";
+import { historyLimit, summarizeBoardChanges, validateHistoryEntry, validateHistorySummary, type HistoryEntry, type HistoryChange } from "./history.ts";
 import { invitationExpiry } from "./lifecycle.ts";
 import type { CollaborationRole, CollaborationState } from "./schema.ts";
 
@@ -11,6 +12,7 @@ type Query = (sql: string, values?: (string | number)[]) => Promise<Row[]>;
 type Database = { transaction: <T>(fn: (query: Query) => Promise<T>) => Promise<T>; close: () => Promise<void> };
 const tables = `CREATE TABLE IF NOT EXISTS collaboration_rooms (id TEXT PRIMARY KEY, revision INTEGER NOT NULL, state TEXT NOT NULL);
 CREATE TABLE IF NOT EXISTS collaboration_capabilities (id TEXT PRIMARY KEY, room_id TEXT NOT NULL REFERENCES collaboration_rooms(id), token_hash TEXT NOT NULL UNIQUE, role TEXT NOT NULL, revoked INTEGER NOT NULL DEFAULT 0, expires_at BIGINT);
+CREATE TABLE IF NOT EXISTS collaboration_history (room_id TEXT NOT NULL REFERENCES collaboration_rooms(id), sequence INTEGER NOT NULL, revision INTEGER NOT NULL, summary TEXT NOT NULL, PRIMARY KEY (room_id, sequence));
 CREATE TABLE IF NOT EXISTS collaboration_presence (room_id TEXT NOT NULL REFERENCES collaboration_rooms(id), capability_id TEXT NOT NULL REFERENCES collaboration_capabilities(id), lease_until BIGINT NOT NULL, PRIMARY KEY (room_id, capability_id));`;
 const digest = (token: string) => createHash("sha256").update(token).digest("hex");
 const capability = () => randomBytes(32).toString("base64url");
@@ -102,8 +104,28 @@ export async function openCollaborationStore(options: { sqlitePath?: string; pos
     if (!Number.isSafeInteger(revision) || revision < 1) throw new CollaborationError(400, "Invalid revision.");
     if (latest.revision !== revision) { const error = new CollaborationError(412, "The shared plan changed. Review the latest version first."); error.latest = latest; throw error; }
   };
+  const appendHistory = async (q: Query, roomId: string, token: string, revision: number, action: HistoryEntry['action'], changes: HistoryChange[], capturedActor?: {id:string;role:CollaborationRole}) => {
+    const access = capturedActor ?? await resolveAccess(q,roomId,token);
+    const rows = await q("SELECT MAX(sequence) AS sequence FROM collaboration_history WHERE room_id = ?",[roomId]);
+    const sequence = Number(rows[0]?.sequence ?? 0)+1;
+    const entry = validateHistoryEntry({sequence,revision,at:new Date(now()).toISOString(),actor:{id:`access-${access.id}`,role:access.role},action,changes});
+    await q("INSERT INTO collaboration_history(room_id,sequence,revision,summary) VALUES (?,?,?,?)",[roomId,sequence,revision,JSON.stringify(entry)]);
+    await q("DELETE FROM collaboration_history WHERE room_id = ? AND sequence <= ?",[roomId,sequence-historyLimit]);
+    // Recheck after every write; expiry denial rolls back the board and its summary together.
+    if (!capturedActor) await resolveAccess(q,roomId,token);
+  };
   return {
     close: database.close,
+    async history(roomId: string, token: string) {
+      return database.transaction(async q => {
+        const row = await lockRoom(q,roomId);
+        await resolveAccess(q,roomId,token);
+        const rows = await q("SELECT summary FROM collaboration_history WHERE room_id = ? ORDER BY sequence DESC LIMIT 100",[roomId]);
+        const entries = rows.reverse().map(item=>validateHistoryEntry(JSON.parse(String(item.summary))));
+        await resolveAccess(q,roomId,token);
+        return validateHistorySummary({revision:Number(row.revision),entries,retainedLimit:historyLimit,startsAtRevision:entries[0]?.revision??null});
+      });
+    },
     async create(input: unknown) {
       const state = validateCollaborationState(input), roomId = randomUUID(), ownerToken = capability();
       if (state.interactions?.votes.length || state.interactions?.comments.length) throw new CollaborationError(403, "Interaction history belongs to its original room and cannot be imported into a new room.");
@@ -147,6 +169,7 @@ export async function openCollaborationStore(options: { sqlitePath?: string; pos
         assertSuggestionAppendOnly(latest.state, state);
         const changed = await q("UPDATE collaboration_rooms SET revision = revision + 1, state = ? WHERE id = ? AND revision = ? AND EXISTS (SELECT 1 FROM collaboration_capabilities WHERE room_id = ? AND token_hash = ? AND revoked = 0 AND (expires_at IS NULL OR expires_at > ?) AND role IN ('owner', 'editor')) RETURNING revision", [JSON.stringify(state), roomId, revision, roomId, digest(token), now()]);
         if (!changed.length) throw new CollaborationError(412, "The shared plan changed. Reload before saving.");
+        await appendHistory(q,roomId,token,Number(changed[0].revision),"board-update",summarizeBoardChanges(latest.state,state));
         return { roomId, role, revision: Number(changed[0].revision), state };
       });
     },
@@ -159,6 +182,7 @@ export async function openCollaborationStore(options: { sqlitePath?: string; pos
         const state = recordSuggestionInteraction(snapshot(roomId, row, access.role).state, actor, suggestionId, action, value, new Date(now()).toISOString(), randomUUID());
         const changed = await q("UPDATE collaboration_rooms SET revision = revision + 1, state = ? WHERE id = ? AND revision = ? AND EXISTS (SELECT 1 FROM collaboration_capabilities WHERE room_id = ? AND id = ? AND revoked = 0 AND (expires_at IS NULL OR expires_at > ?) AND role IN ('owner', 'editor')) RETURNING revision", [JSON.stringify(state), roomId, revision, roomId, access.id, now()]);
         if (!changed.length) throw new CollaborationError(412, "Room access or version changed. Reload before another action.");
+        await appendHistory(q,roomId,token,Number(changed[0].revision),"proposal-interaction",summarizeBoardChanges(snapshot(roomId,row,access.role).state,state));
         return { roomId, role: access.role, revision: Number(changed[0].revision), state };
       });
     },
@@ -170,19 +194,21 @@ export async function openCollaborationStore(options: { sqlitePath?: string; pos
         const state = reviewCollaborationSuggestion(snapshot(roomId, row, role).state, suggestionId, decision);
         const changed = await q("UPDATE collaboration_rooms SET revision = revision + 1, state = ? WHERE id = ? AND revision = ? AND EXISTS (SELECT 1 FROM collaboration_capabilities WHERE room_id = ? AND token_hash = ? AND revoked = 0 AND (expires_at IS NULL OR expires_at > ?) AND role = 'owner') RETURNING revision", [JSON.stringify(state), roomId, revision, roomId, digest(token), now()]);
         if (!changed.length) throw new CollaborationError(412, "The shared plan changed. Reload before reviewing.");
+        await appendHistory(q,roomId,token,Number(changed[0].revision),"proposal-review",summarizeBoardChanges(snapshot(roomId,row,role).state,state));
         return { roomId, role, revision: Number(changed[0].revision), state };
       });
     },
     async invite(roomId: string, ownerToken: string, role: unknown, expiryInput?: unknown) {
       if (role !== "editor" && role !== "viewer") throw new CollaborationError(400, "Choose editor or viewer access.");
       return database.transaction(async q => {
-        await lockRoom(q, roomId);
+        const row = await lockRoom(q, roomId);
         if (await authorize(q, roomId, ownerToken) !== "owner") throw new CollaborationError(403, "Only the owner can create invitations.");
         const expiresAt = invitationExpiry(expiryInput, now());
         const count = await q("SELECT COUNT(*) AS count FROM collaboration_capabilities WHERE room_id = ? AND revoked = 0 AND (expires_at IS NULL OR expires_at > ?)", [roomId, now()]);
         if (Number(count[0].count) >= 101) throw new CollaborationError(409, "Revoke an invitation before creating another.");
         const inviteId = randomUUID(), token = capability();
         await q("INSERT INTO collaboration_capabilities(id, room_id, token_hash, role, expires_at) VALUES (?, ?, ?, ?, ?)", [inviteId, roomId, digest(token), role, expiresAt]);
+        await appendHistory(q,roomId,ownerToken,Number(row.revision),"invitation-created",[{category:"access",added:1,changed:0,removed:0}]);
         return { inviteId, token, role, expiresAt: new Date(expiresAt).toISOString() };
       });
     },
@@ -191,11 +217,14 @@ export async function openCollaborationStore(options: { sqlitePath?: string; pos
         const row = await lockRoom(q, roomId), role = await authorize(q, roomId, ownerToken);
         if (role !== "owner") throw new CollaborationError(403, "Only the owner can replace owner access.");
         requireRevision(roomId, row, role, revision);
+        const actor = await resolveAccess(q,roomId,ownerToken);
         const token = capability();
         await q("DELETE FROM collaboration_presence WHERE room_id = ? AND capability_id IN (SELECT id FROM collaboration_capabilities WHERE room_id = ? AND role = 'owner')", [roomId, roomId]);
         await q("UPDATE collaboration_capabilities SET revoked = 1 WHERE room_id = ? AND role = 'owner'", [roomId]);
         await q("INSERT INTO collaboration_capabilities(id, room_id, token_hash, role) VALUES (?, ?, ?, 'owner')", [randomUUID(), roomId, digest(token)]);
         await q("UPDATE collaboration_rooms SET revision = revision + 1 WHERE id = ? AND revision = ?", [roomId, revision]);
+        await appendHistory(q,roomId,token,revision+1,"owner-rotated",[{category:"access",added:1,changed:0,removed:1}],actor);
+        await resolveAccess(q,roomId,token);
         return { ownerToken: token, roomId, revision: revision + 1 };
       });
     },
@@ -205,6 +234,7 @@ export async function openCollaborationStore(options: { sqlitePath?: string; pos
         if (role !== "owner") throw new CollaborationError(403, "Only the owner can delete this room.");
         requireRevision(roomId, row, role, revision);
         // Explicit cascade works on existing schemas whose foreign key has no cascade.
+        await q("DELETE FROM collaboration_history WHERE room_id = ?", [roomId]);
         await q("DELETE FROM collaboration_presence WHERE room_id = ?", [roomId]);
         await q("DELETE FROM collaboration_capabilities WHERE room_id = ?", [roomId]);
         await q("DELETE FROM collaboration_rooms WHERE id = ? AND revision = ?", [roomId, revision]);
@@ -213,10 +243,11 @@ export async function openCollaborationStore(options: { sqlitePath?: string; pos
     },
     async revoke(roomId: string, ownerToken: string, inviteId: string) {
       return database.transaction(async q => {
-        await lockRoom(q, roomId);
+        const row = await lockRoom(q, roomId);
         if (await authorize(q, roomId, ownerToken) !== "owner") throw new CollaborationError(403, "Only the owner can revoke invitations.");
-        await q("UPDATE collaboration_capabilities SET revoked = 1 WHERE id = ? AND room_id = ? AND role <> 'owner'", [inviteId, roomId]);
+        const revoked = await q("UPDATE collaboration_capabilities SET revoked = 1 WHERE id = ? AND room_id = ? AND role <> 'owner' AND revoked = 0 RETURNING id", [inviteId, roomId]);
         await q("DELETE FROM collaboration_presence WHERE room_id = ? AND capability_id IN (SELECT id FROM collaboration_capabilities WHERE id = ? AND room_id = ? AND revoked = 1)", [roomId, inviteId, roomId]);
+        if(revoked.length) await appendHistory(q,roomId,ownerToken,Number(row.revision),"invitation-revoked",[{category:"access",added:0,changed:0,removed:1}]);
         return { revoked: true };
       });
     },

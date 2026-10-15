@@ -2,6 +2,8 @@ import type { Trip2026Payload, TripActivity } from "./trip-model";
 import { createTripPdfReplica } from "./trip-export-pdf.ts";
 import { renderTripHtmlReplica, renderTripHtmlCompact } from "./trip-export-html.ts";
 import { buildTripLogistics, calendarDates, logisticsItemsForDate } from "./trip-logistics.ts";
+import { safeCollaborationSourceUrl } from "./collaboration/schema.ts";
+import { hasPrivatePlanningText } from "./planning-privacy.ts";
 
 export type TripExportState = {
   assignments: Record<string, string[]>;
@@ -54,7 +56,7 @@ export type TripExportSnapshot = {
   catalogue: ExportCatalogueActivity[];
   transport: Array<{ date: string; from: string; to: string; mode: string; name: string; ride: string; door: string; hours: number; low: number; high: number; note: string }>;
   hotels: Array<{ city: string; name: string; neighborhood: string; tier: string; stars: number; low: number; high: number; why: string; tradeoff: string; image: string }>;
-  bookings: Array<{ kind: string; date: string; dateIso: string; endDate: string; title: string; detail: string; status: "recommended" | "quoted" | "held" | "confirmed" | "tbc" | "missing" | "conflict" }>;
+  bookings: Array<{ kind: string; date: string; dateIso: string; endDate: string; title: string; detail: string; image?: string; imageCredit?: string; imageSourceUrl?: string; imageCheckedAt?: string; status: "recommended" | "quoted" | "held" | "confirmed" | "tbc" | "missing" | "conflict" }>;
 };
 
 export type TripPdfOptions = {
@@ -87,8 +89,8 @@ function cleanText(value: unknown, max = MAX_TEXT): string {
 }
 
 /** Remove private identifiers while preserving dates, routes and flight numbers. */
-export function redactPrivateExportText(value: unknown): string {
-  let text = cleanText(value);
+export function redactPrivateExportText(value: unknown, maximum = MAX_TEXT): string {
+  let text = cleanText(value, Math.min(8_000,maximum));
   text = text.replace(/\bBearer\s+[A-Z0-9_.~+\/-]{12,}|\b(?:sk-|ghp_|github_pat_|AIza|ya29\.)[A-Z0-9_-]{12,}/gi, REDACTED);
   text = text.replace(/\b[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}\b/gi, REDACTED);
   text = text.replace(/https?:\/\/\S+/gi, REDACTED);
@@ -103,6 +105,7 @@ export function isBundledTripImage(value: string): boolean {
 }
 
 function safeImage(value: unknown): string {
+  if (typeof value === 'string' && exportImageHasPrivateData(value)) return '';
   if (typeof value === "string" && isBundledTripImage(value)) return value;
   try {
     const parsed = new URL(cleanText(value, 2_048));
@@ -115,6 +118,16 @@ function safeImage(value: unknown): string {
   } catch {
     return "";
   }
+}
+
+function bookingMedia(item: Record<string, unknown>): Pick<TripExportSnapshot['bookings'][number], 'image' | 'imageCredit' | 'imageSourceUrl' | 'imageCheckedAt'> {
+  const image = /^(?:stay|hotel|lodging|accommodation|apartment|airbnb)$/i.test(String(item.kind)) ? safeImage(item.image) : '';
+  if (!image) return {};
+  const time = item.imageCheckedAt;
+  const validTime = typeof time === 'string' && /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d+)?(?:Z|[+-]\d{2}:\d{2})$/.test(time) && Number.isFinite(Date.parse(time)) && new Date(time.slice(0,10)+'T00:00:00Z').toISOString().slice(0,10) === time.slice(0,10);
+  const credit = String(item.imageCredit??'').normalize('NFKC');
+  const unsafeCredit = hasPrivatePlanningText(credit) || /@|\+?\d[\d ()-]{6,}\d|https?:|www\.|mail[t]o:/i.test(credit);
+  return {image,imageCredit:unsafeCredit?'':redactPrivateExportText(credit).slice(0,160),imageSourceUrl:safeCollaborationSourceUrl(item.imageSourceUrl)||'',imageCheckedAt:validTime?time:''};
 }
 
 function number(value: unknown, min = 0, max = 1_000_000): number {
@@ -237,13 +250,13 @@ export function sanitizeTripExportSnapshot(value: unknown): TripExportSnapshot {
     stops: array("stops", 40).map(record).map((item) => ({ name: redactPrivateExportText(item.name).slice(0, 160), country: redactPrivateExportText(item.country).slice(0, 100), checkIn: redactPrivateExportText(item.checkIn).slice(0, 10), checkOut: redactPrivateExportText(item.checkOut).slice(0, 10), nights: number(item.nights, 0, 60), stay: redactPrivateExportText(item.stay), image: safeImage(item.image), ...(item.dateBasis === "planning-days" ? {dateBasis:"planning-days" as const,planningDates:(Array.isArray(item.planningDates) ? item.planningDates : []).slice(0,366).map(value=>redactPrivateExportText(value).slice(0,10))} : {}) })),
     days: array("days", 366).map(record).map((item) => ({
       date: redactPrivateExportText(item.date).slice(0, 10), dayNumber: number(item.dayNumber, 1, 366), city: redactPrivateExportText(item.city).slice(0, 160), country: redactPrivateExportText(item.country).slice(0, 100), theme: redactPrivateExportText(item.theme).slice(0, 240), note: redactPrivateExportText(item.note),
-      anchors: (Array.isArray(item.anchors) ? item.anchors : []).slice(0, 20).map(record).map((anchor) => ({ status: redactPrivateExportText(anchor.status).slice(0, 40), label: redactPrivateExportText(anchor.label), detail: redactPrivateExportText(anchor.detail), kind: redactPrivateExportText(anchor.kind).slice(0, 40) })),
+      anchors: (Array.isArray(item.anchors) ? item.anchors : []).slice(0, 20).map(record).map((anchor) => ({ status: redactPrivateExportText(anchor.status).slice(0, 40), label: redactPrivateExportText(anchor.label), detail: redactPrivateExportText(anchor.detail,8_000), kind: redactPrivateExportText(anchor.kind).slice(0, 40) })),
       activities: (Array.isArray(item.activities) ? item.activities : []).slice(0, 50).map(record).map((activity) => ({ title: redactPrivateExportText(activity.title).slice(0, 240), description: redactPrivateExportText(activity.description), details: redactPrivateExportText(activity.details), category: redactPrivateExportText(activity.category).slice(0, 120), priority: priority(activity.priority), image: safeImage(activity.image) })),
     })),
     catalogue: array("catalogue", 500).map(record).map((activity) => ({ city: redactPrivateExportText(activity.city).slice(0, 160), title: redactPrivateExportText(activity.title).slice(0, 240), description: redactPrivateExportText(activity.description), details: redactPrivateExportText(activity.details), category: redactPrivateExportText(activity.category).slice(0, 120), priority: priority(activity.priority), image: safeImage(activity.image) })),
     transport: array("transport", 40).map(record).map((item) => ({ date: redactPrivateExportText(item.date).slice(0, 10), from: redactPrivateExportText(item.from).slice(0, 100), to: redactPrivateExportText(item.to).slice(0, 100), mode: redactPrivateExportText(item.mode).slice(0, 30), name: redactPrivateExportText(item.name).slice(0, 240), ride: redactPrivateExportText(item.ride).slice(0, 100), door: redactPrivateExportText(item.door).slice(0, 100), hours: number(item.hours, 0, 200), low: number(item.low), high: number(item.high), note: redactPrivateExportText(item.note) })),
     hotels: array("hotels", 40).map(record).map((item) => ({ city: redactPrivateExportText(item.city).slice(0, 160), name: redactPrivateExportText(item.name).slice(0, 240), neighborhood: redactPrivateExportText(item.neighborhood).slice(0, 160), tier: redactPrivateExportText(item.tier).slice(0, 100), stars: number(item.stars, 0, 5), low: number(item.low), high: number(item.high), why: redactPrivateExportText(item.why), tradeoff: redactPrivateExportText(item.tradeoff), image: safeImage(item.image) })),
-    bookings: array("bookings", 100).map(record).map((item) => ({ kind: redactPrivateExportText(item.kind), date: redactPrivateExportText(item.date).slice(0, 40), dateIso: redactPrivateExportText(item.dateIso).slice(0, 10), endDate: redactPrivateExportText(item.endDate).slice(0, 10), title: redactPrivateExportText(item.title), detail: redactPrivateExportText(item.detail), status: item.status === "confirmed" || item.status === "missing" || item.status === "conflict" || item.status === "recommended" || item.status === "quoted" || item.status === "held" ? item.status : "tbc" })),
+    bookings: array("bookings", 100).map(record).map((item) => ({ kind: redactPrivateExportText(item.kind), date: redactPrivateExportText(item.date).slice(0, 40), dateIso: redactPrivateExportText(item.dateIso).slice(0, 10), endDate: redactPrivateExportText(item.endDate).slice(0, 10), title: redactPrivateExportText(item.title), detail: redactPrivateExportText(item.detail,8_000), ...bookingMedia(item), status: item.status === "confirmed" || item.status === "missing" || item.status === "conflict" || item.status === "recommended" || item.status === "quoted" || item.status === "held" ? item.status : "tbc" })),
   };
 }
 
@@ -278,6 +291,14 @@ export function filterTripExportSnapshot(input: TripExportSnapshot, scope: TripE
   const keepsCategory = (category: LogisticsCategory) => category !== "other" && (scope === "travel" || scope === category);
   const keepBooking = (booking: TripExportSnapshot["bookings"][number]) => keepsCategory(categoryForKind(booking.kind));
   const anchorCategory = (anchor: TripExportSnapshot["days"][number]["anchors"][number], date: string): LogisticsCategory => {
+    // Explicit kinds survive every occupied stay day, including checkout. An
+    // unsupported explicit kind must not become lodging through its title.
+    if (anchor.kind?.trim()) {
+      const kind=anchor.kind.trim().toLowerCase();
+      if (['flight','train','rail','car','transfer','taxi','ferry','bus','coach','transport','transit'].includes(kind)) return 'transit';
+      if (['stay','hotel','lodging','accommodation','apartment','airbnb'].includes(kind)) return 'hotels';
+      return 'other';
+    }
     const booking = snapshot.bookings.find(item => item.title === anchor.label && (item.dateIso || item.date.slice(0, 10)) === date);
     if (booking) return categoryForKind(booking.kind);
     const movement = snapshot.transport.find(item => item.date === date && (item.name === anchor.label || `${item.from} to ${item.to}` === anchor.label));
@@ -330,7 +351,7 @@ export async function downloadTripExport(data: Trip2026Payload, state: TripExpor
   if (kind === "html" || kind.startsWith("html-")) {
     const scope: TripExportScope = kind === "html-transit" ? "transit" : kind === "html-hotels" ? "hotels" : kind === "html-travel" ? "travel" : "all";
     let html = renderTripHtml(snapshot, { privacy: effectivePrivacy, visual: kind === "html", scope });
-    const images = kind === "html" ? [...new Set([...snapshot.stops.map((item) => item.image || ""), ...snapshot.catalogue.map((item) => item.image), ...snapshot.days.flatMap((day) => day.activities.map((item) => item.image)), ...snapshot.hotels.map((hotel) => hotel.image)].filter(isBundledTripImage))] : [];
+    const images = kind === "html" ? [...new Set([...snapshot.stops.map((item) => item.image || ""), ...snapshot.catalogue.map((item) => item.image), ...snapshot.days.flatMap((day) => day.activities.map((item) => item.image)), ...snapshot.hotels.map((hotel) => hotel.image),...snapshot.bookings.map(item=>item.image||'')].filter(isBundledTripImage))] : [];
     // Embed reviewed bundled photos so a downloaded dossier works independently
     // of localhost or the maintainer's website. Never embed arbitrary URLs.
     for (let offset = 0; offset < images.length; offset += 8) {

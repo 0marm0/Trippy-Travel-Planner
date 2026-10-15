@@ -49,3 +49,10 @@ Before sharing, verify the exact artifact with synthetic/sample data or reviewed
 ## Visual design and transport identity
 
 Rich reading copies use photo-led city panoramas, charcoal glass surfaces and daily timelines. Explicit mode metadata takes precedence over venue names: flights are blue, rail is yellow and driving is purple in HTML and PDF. Booking state stays a separate badge. Generic days include recorded stay ranges and dated movements, without promoting a quote or hold to confirmed. The generic workspace groups downloads under **Export & download** and opens the shared Export studio for reading-copy review. Item receipts marked `reviewRequired` carry that warning into generic reading copies; saving a source does not refresh it.
+
+
+## Stay details and preparation records
+
+Generic reading exports retain reviewed `bookingPlans`: stay destination links, attributed photos, sourced coordinates, transport mode/endpoints, entered elapsed/transfer minutes and explicit unknowns. Metadata never changes the underlying reservation status, exact start/end or price. Rich all-scope HTML also contains trip-wide tasks/packing and fallback references, source/time and remaining checks; selected reading dates do not silently narrow these trip-wide preparations. Narrow hotel/transit briefs omit unrelated preparation items.
+
+Stay images use the same allowlisted image/source contract as activities. Visual PDF shares its existing 60-unique-image budget across activity and stay candidates and appends a stay gallery; the text ledger retains full metadata when a short gallery caption is abbreviated. Missing or beyond-budget images have an explicit fallback. Compact PDF remains photo-free and all earlier travel/transit/hotel scopes remain available. Reading copies are not an editable task/workspace import.

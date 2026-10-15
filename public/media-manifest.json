@@ -2030,13 +2030,13 @@
     },
     {
       "path": "public/screenshots/route.webp",
-      "sha256": "59d252cacf8e693e1c09dff53aad8ca7c2316fca5ef0cee6dadeffd852fa887b",
+      "sha256": "d603d136f0e887c5a6febc8b0e74036caa73fc4596dba2c954718c719c9236ff",
       "credit": "Trippy app screenshot; map attributions retained where shown",
       "sourceUrl": "repository:docs/SCREENSHOTS.md",
       "license": "MIT app UI; depicted photographs and map/provider content retain their separate terms",
       "rightsStatus": "approved",
       "privacyStatus": "approved",
-      "privacyReview": "Reviewed public sample or invented planning only; screenshot pixel review and metadata stripping",
+      "privacyReview": "Pixel-reviewed reviewed public sample or invented planning; no access values, credentials or private identifiers; metadata stripped",
       "reviewedAt": "2026-10-14"
     },
     {
@@ -2085,25 +2085,25 @@
     },
     {
       "path": "public/screenshots/city-amsterdam.webp",
-      "sha256": "6194ec147044ff3a1b1a4b2e35078faa98183e348a1cc04366f70abbd3dc58ab",
+      "sha256": "17fdbd49c32ef42a240126ede4c8b0ea8f3e09afa7b061f184e23f139b017298",
       "credit": "Trippy app screenshot; map attributions retained where shown",
       "sourceUrl": "repository:docs/SCREENSHOTS.md",
       "license": "MIT app UI; depicted photographs and map/provider content retain their separate terms",
       "rightsStatus": "approved",
       "privacyStatus": "approved",
-      "privacyReview": "Reviewed public sample only; screenshot pixel review and metadata stripping",
-      "reviewedAt": "2026-10-13"
+      "privacyReview": "Pixel-reviewed reviewed public sample or invented planning; no access values, credentials or private identifiers; metadata stripped",
+      "reviewedAt": "2026-10-14"
     },
     {
       "path": "public/screenshots/city-berlin.webp",
-      "sha256": "efe32cb071cbe90ef6b07cf409f6ce8c2ab92b9252293ea736a60e68f942aeb4",
+      "sha256": "a9df8b661a383c39afc26084acbdb5fd369dece150ce512e502f09598c9bcd1b",
       "credit": "Trippy app screenshot; map attributions retained where shown",
       "sourceUrl": "repository:docs/SCREENSHOTS.md",
       "license": "MIT app UI; depicted photographs and map/provider content retain their separate terms",
       "rightsStatus": "approved",
       "privacyStatus": "approved",
-      "privacyReview": "Reviewed public sample only; screenshot pixel review and metadata stripping",
-      "reviewedAt": "2026-10-13"
+      "privacyReview": "Pixel-reviewed reviewed public sample or invented planning; no access values, credentials or private identifiers; metadata stripped",
+      "reviewedAt": "2026-10-14"
     },
     {
       "path": "public/screenshots/city-munich.webp",
@@ -2217,24 +2217,24 @@
     },
     {
       "path": "public/screenshots/itinerary-editor.webp",
-      "sha256": "728f8f41078def7f5630fc39af8d54e0856dc0b7c2c2983f971446789ae7b432",
+      "sha256": "a76993d111cc6f69a3177bc0a40980a7d96fc4fa0269d28740474feaad461895",
       "credit": "Trippy reviewed sample app screenshot",
       "sourceUrl": "repository:docs/SCREENSHOTS.md",
       "license": "MIT app UI; depicted photographs and map/provider content retain their separate terms",
       "rightsStatus": "approved",
       "privacyStatus": "approved",
-      "privacyReview": "Reviewed public sample or invented planning only; screenshot pixel review and metadata stripping",
+      "privacyReview": "Pixel-reviewed reviewed public sample or invented planning; no access values, credentials or private identifiers; metadata stripped",
       "reviewedAt": "2026-10-14"
     },
     {
       "path": "public/screenshots/collaboration-editor.webp",
-      "sha256": "762364202c9add6e9cc977c9fc9f317b80c96cae1ee1e5026de295ef4bf38943",
+      "sha256": "914700c54894cd79e3fb47a3e2639f4c62f4fd164aacc97d05f82eb069103764",
       "credit": "Trippy reviewed sample app screenshot",
       "sourceUrl": "repository:docs/SCREENSHOTS.md",
       "license": "MIT app UI; depicted photographs and map/provider content retain their separate terms",
       "rightsStatus": "approved",
       "privacyStatus": "approved",
-      "privacyReview": "Reviewed public sample or invented planning only; screenshot pixel review and metadata stripping",
+      "privacyReview": "Pixel-reviewed reviewed public sample or invented planning; no access values, credentials or private identifiers; metadata stripped",
       "reviewedAt": "2026-10-14"
     },
     {
@@ -4771,8 +4771,8 @@
       "license": "MIT app UI; depicted photographs and map/provider content retain their separate terms",
       "rightsStatus": "approved",
       "privacyStatus": "approved",
-      "sha256": "966a907851146514dc358cd6fd86d9c29c55be37b124e96a4d6448318fc3024c",
-      "privacyReview": "Reviewed public sample or invented planning only; screenshot pixel review and metadata stripping",
+      "sha256": "2db39d6dc78d91693dd4582a905927b80ef26646cebea6f2bdb4844077e047a7",
+      "privacyReview": "Pixel-reviewed reviewed public sample or invented planning; no access values, credentials or private identifiers; metadata stripped",
       "reviewedAt": "2026-10-14"
     },
     {
@@ -4782,8 +4782,8 @@
       "license": "MIT app UI; depicted photographs and map/provider content retain their separate terms",
       "rightsStatus": "approved",
       "privacyStatus": "approved",
-      "sha256": "de01c22ce333fc7748ba0b9fda16c31fc37cfb6871dd6115d5a4e7340a8d2b2a",
-      "privacyReview": "Reviewed public sample or invented planning only; screenshot pixel review and metadata stripping",
+      "sha256": "4272a6417d08bf709ddd9cd07f85c58a1438302f19449470d63a4370242be11e",
+      "privacyReview": "Pixel-reviewed reviewed public sample or invented planning; no access values, credentials or private identifiers; metadata stripped",
       "reviewedAt": "2026-10-14"
     },
     {
@@ -4804,8 +4804,8 @@
       "license": "MIT app UI; depicted photographs and map/provider content retain their separate terms",
       "rightsStatus": "approved",
       "privacyStatus": "approved",
-      "sha256": "488a759e111a3b5ddb60d2391060a0296c9f42501ec23e68d9d6caad3d50cb83",
-      "privacyReview": "Pixel-reviewed public sample or invented planning; no access values or private identifiers; metadata stripped",
+      "sha256": "b3251da359b6914dfb9bda81e74db993e25d4113d05f6b5124d9c2537403fc7a",
+      "privacyReview": "Pixel-reviewed reviewed public sample or invented planning; no access values, credentials or private identifiers; metadata stripped",
       "reviewedAt": "2026-10-14"
     },
     {
@@ -4839,6 +4839,28 @@
       "privacyStatus": "approved",
       "sha256": "67e5e12ac0ff62bcd19a1795f59c22946920727a52e4534769c1046fabf48862",
       "privacyReview": "Pixel-reviewed sanitized sample export studio with glass surfaces and approved local photography; no access values or private identifiers; metadata stripped",
+      "reviewedAt": "2026-10-14"
+    },
+    {
+      "path": "public/screenshots/trip-preparation.webp",
+      "credit": "Trippy app screenshot; depicted source credits retained where shown",
+      "sourceUrl": "repository:docs/SCREENSHOTS.md",
+      "license": "MIT app UI; depicted photographs and map/provider content retain their separate terms",
+      "rightsStatus": "approved",
+      "privacyStatus": "approved",
+      "sha256": "ab7881dbf9f190082934cb89f7c82689d55124fe552b94521e1755a97b6d3c58",
+      "privacyReview": "Pixel-reviewed reviewed public sample or invented planning; no access values, credentials or private identifiers; metadata stripped",
+      "reviewedAt": "2026-10-14"
+    },
+    {
+      "path": "public/screenshots/collaboration-history.webp",
+      "credit": "Trippy app screenshot; depicted source credits retained where shown",
+      "sourceUrl": "repository:docs/SCREENSHOTS.md",
+      "license": "MIT app UI; depicted photographs and map/provider content retain their separate terms",
+      "rightsStatus": "approved",
+      "privacyStatus": "approved",
+      "sha256": "54aa69d3370036b64de534134309cb900528abfa11a271f2bf4261a1787d157d",
+      "privacyReview": "Pixel-reviewed reviewed public sample or invented planning; no access values, credentials or private identifiers; metadata stripped",
       "reviewedAt": "2026-10-14"
     }
   ],

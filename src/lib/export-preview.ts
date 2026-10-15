@@ -43,7 +43,7 @@ export function buildExportPreviewSummary(input: TripExportSnapshot, options: Ex
   if (errors.length) throw new Error(errors.join(" "));
   const snapshot = filterTripExportSnapshot(sanitizeTripExportSnapshot(input), options.scope);
   // Inventory counts refer to unique candidate assets, not guaranteed rendered or successfully loaded images.
-  const images = new Set(options.visual ? [...snapshot.stops.map(item => item.image), ...snapshot.hotels.map(item => item.image), ...snapshot.catalogue.map(item => item.image), ...snapshot.days.flatMap(day => day.activities.map(item => item.image))].filter((image): image is string => !!image) : []);
+  const images = new Set(options.visual ? [...snapshot.stops.map(item => item.image), ...snapshot.hotels.map(item => item.image), ...snapshot.bookings.map(item=>item.image), ...snapshot.catalogue.map(item => item.image), ...snapshot.days.flatMap(day => day.activities.map(item => item.image))].filter((image): image is string => !!image) : []);
   const photos = { local: 0, external: 0, embedded: 0 };
   for (const image of images) {
     if (image.startsWith("data:image/")) photos.embedded += 1;

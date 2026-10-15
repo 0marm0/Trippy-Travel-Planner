@@ -71,3 +71,10 @@ The repository now has a separate generic manual workspace, recorded quote/resea
 - `accounts/` uses Better Auth server sessions, tenant-qualified encrypted workspaces, revision checks and an account quota; identity/session records do not enter planning exports. Hosted Postgres and real recovery transport need authorized private verification.
 
 [Status](IMPLEMENTATION_STATUS.md) · [Exports](EXPORTS.md) · [Private accounts](PRIVATE_ACCOUNTS.md).
+
+
+## Versioned planning extensions
+
+`GenericWorkspace` keeps the normalized trip as the authoritative identity and adds optional validated sidecars instead of expanding booking state semantics. `booking-planning.ts` owns referenced stay/transport metadata and preview/apply behavior; `trip-preparation.ts` owns bounded tasks and explicit fallback swaps. Both use type-only workspace imports, shared privacy/media contracts and pure validation. Their UI workbenches accept the owner workspace and return a validated next copy through the existing history callback. Device/account persistence and complete editable JSON preserve the sidecars; scenario copies exclude booking metadata whenever booking records are excluded.
+
+Shared revision history is separately implemented in `collaboration/history.ts` and the room store. It is not a workspace sidecar: server transactions append bounded category summaries, authenticated history reads apply room lifecycle checks, and the client only renders a validated response. This keeps shared access bookkeeping out of exported travel data.

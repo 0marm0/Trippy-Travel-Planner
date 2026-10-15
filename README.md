@@ -2,6 +2,10 @@
   <img src="public/brand/trippy-icon.png" alt="Trippy" width="76" />
 </p>
 <h1 align="center">Trippy Travel Planner</h1>
+<p align="center">
+  <a href="https://github.com/0marm0/Trippy-Travel-Planner/actions/workflows/ci.yml"><img src="https://github.com/0marm0/Trippy-Travel-Planner/actions/workflows/ci.yml/badge.svg?branch=main" alt="Release checks" /></a>
+  · <a href="LICENSE">MIT code</a> · <a href="docs/MEDIA.md">Separate photo licenses</a> · Open-source beta
+</p>
 <p align="center"><strong>Find better value. Shape the whole journey. Make room for discovery.</strong></p>
 <p align="center">
   <a href="#start-locally">Get started</a> ·
@@ -13,9 +17,15 @@
 
 ![Trippy's complete route map with blue flights, yellow trains, purple driving and city stops](public/screenshots/route.webp)
 
-**Your flights, trains, stays, sights and daily decisions, connected in one workspace.** Compare cash and award assumptions, explore multi-city routes, build editable days, track booking gaps and plan with friends. Start without keys; add your own research providers when you need them.
+**Plan the whole journey—from cash and points comparisons to the places you’ll see each day.** Trippy brings flight, train and driving alternatives, hotel locations, city maps, editable itineraries and booking progress into a visual workspace. Build with an agent, review the evidence, plan with friends, then take a photo-rich itinerary with you.
+
+**Try it immediately:** clone the repo and run the included Europe dashboard with its bundled photos. No API keys, sign-in or Vercel account required. Use your own cities and dates in the separate trip workspace; add your own research providers and shared-room hosting when you need them.
 
 The checkout includes the full reviewed Europe sample dashboard and its bundled assets. `/about` is the introduction; `/` is the atlas. For your own cities and dates, `/plan` opens a separate validated workspace with editable detailed views, maps from recorded coordinates and explicit saves. The sample never becomes your default itinerary.
+
+| Explore | Make it yours | Share the journey |
+| --- | --- | --- |
+| [37 app screenshots](docs/SCREENSHOTS.md) · [What works today](docs/IMPLEMENTATION_STATUS.md) | [Local setup](#start-locally) · [Agent setup prompt](prompts/START_HERE.md) · [Your API keys](docs/INTEGRATIONS.md) | [Collaborative planning](#plan-together) · [HTML/PDF exports](#take-the-plan-with-you) · [Your own hosting](docs/DEPLOYMENT_MODES.md) |
 
 ## A workspace for the whole journey
 
@@ -48,7 +58,7 @@ Actual app captures using the reviewed sample or clearly identified invented pla
 <td><a href="public/screenshots/hotel-stays.webp"><img src="public/screenshots/hotel-stays.webp" alt="Compact hotel rows with property photographs" /></a><strong>A better place to stay</strong><br/><sub>Property photos, location fit and comparable stay terms.</sub></td>
 </tr>
 <tr>
-<td><a href="public/screenshots/collaboration-editor.webp"><img src="public/screenshots/collaboration-editor.webp" alt="Shared activity board with owner and editor presence" /></a><strong>Bring everyone into the plan</strong><br/><sub>Shared ideas, editable days and reviewed decisions.</sub></td>
+<td><a href="public/screenshots/collaboration-editor.webp"><img src="public/screenshots/collaboration-editor.webp" alt="Photo-led shared activity board with editable ideas and day assignments" /></a><strong>Bring everyone into the plan</strong><br/><sub>Shared ideas, editable days and reviewed decisions.</sub></td>
 <td><a href="public/screenshots/export-studio.webp"><img src="public/screenshots/export-studio.webp" alt="Glass export studio with a photo-led itinerary preview" /></a><strong>A beautiful copy for the journey</strong><br/><sub>Rich dossiers, compact briefs and selected reading dates.</sub></td>
 </tr>
 <tr>
@@ -58,7 +68,10 @@ Actual app captures using the reviewed sample or clearly identified invented pla
 </table>
 
 <table>
-<tr><td width="50%"><img src="public/screenshots/travel-day.webp" alt="Travel day with activity photography, recorded bookings and preparation"><strong>Your day, ready to read</strong><p>A photo-led agenda with recorded booking states and due tasks.</p></td><td width="50%"><img src="public/screenshots/day-geography.webp" alt="Nearby place groups from sourced activity pins"><strong>Shape a day around nearby places</strong><p>Read-only groups and straight-line order comparisons from sourced pins.</p></td></tr>
+<tr>
+<td width="50%"><a href="public/screenshots/travel-day.webp"><img src="public/screenshots/travel-day.webp" alt="Travel day with activity photography, recorded bookings and preparation" /></a><strong>Your day, ready to read</strong><br/><sub>A photo-led agenda with recorded booking states and due tasks.</sub></td>
+<td width="50%"><a href="public/screenshots/day-geography.webp"><img src="public/screenshots/day-geography.webp" alt="Nearby place groups from sourced activity pins" /></a><strong>Shape a day around nearby places</strong><br/><sub>Read-only groups and straight-line order comparisons from sourced pins.</sub></td>
+</tr>
 </table>
 
 ### Faster decisions, less clutter
@@ -110,7 +123,7 @@ npm ci
 npm run dev:local
 ```
 
-Open [the sample atlas](http://localhost:3000/), [your own trip](http://localhost:3000/plan), or [the introduction](http://localhost:3000/about). During private staging, cloning requires repository access. The [older hosted demo](https://trippy-travel-optimizer.vercel.app/) may lag this source.
+Open [the sample atlas](http://localhost:3000/), [your own trip](http://localhost:3000/plan), or [the introduction](http://localhost:3000/about). The [older hosted demo](https://trippy-travel-optimizer.vercel.app/) may lag this source.
 
 **No provider key, sign-in or Vercel account is needed for manual/sample planning.** Draft previews stay in memory; accepted workspaces save only when you choose a device or optional account save. Downloads are copies. A clean checkout includes the reviewed sample; it needs no maintainer account or private files. [Setup guide →](docs/SETUP.md)
 
@@ -171,7 +184,7 @@ Remote friends need the same authorized HTTPS server; your computer's localhost 
 | **Complete workspace JSON + evidence** | Editable records, safe metadata and supported planning sidecars for resuming work |
 | **Atlas CSV** | Flat planning rows for a spreadsheet |
 
-Export studio previews current scope, layout, theme and optional reading dates. Overlapping stays retain original terms. Bundled preview imagery is opt-in and bounded; linked photos and detached HTML may need the app, bundled assets or internet. Files cannot be revoked once shared. [Export formats and offline limits →](docs/EXPORTS.md)
+Export studio previews current scope, layout, theme and optional reading dates. Overlapping stays retain original terms. Bundled preview imagery is opt-in and bounded. HTML downloads embed approved bundled photos; external photos still need their original host and internet. If bundled photos cannot be packaged completely, the download stops with an error. Files cannot be revoked once shared. [Export formats and offline limits →](docs/EXPORTS.md)
 
 ## Your infrastructure, your accounts
 
@@ -190,7 +203,7 @@ npm run release:check
 
 The release gate covers lint, types, tests, schema/sample validation, production build, artifact privacy boundaries, staged/reachable history, media and production dependency advisories. [Current CI](https://github.com/0marm0/Trippy-Travel-Planner/actions/workflows/ci.yml) · [Release evidence](docs/RELEASE_REPORT.md) · [62-feature progress ledger](docs/BUILD_PROGRESS.md)
 
-**Beta · private staging.** Working features and remaining acceptance are recorded separately. Keep private originals, raw messages, confirmation identifiers, loyalty details and secrets out of samples, exports, screenshots and Git. Public visibility and deployment require their separate authorization.
+**Open-source beta.** Working features and remaining acceptance are recorded separately. A public repository does not provide a hosted service, live inventory or automatic booking. Keep private originals, raw messages, confirmation identifiers, loyalty details and secrets out of samples, exports, screenshots and Git.
 
 **MIT code; separately licensed photos, maps and provider content.** Existing photo licenses are owner-attested; per-photo license/attribution records remain deferred. Image-source failures are disclosed rather than replaced with unrelated property photographs. [Media provenance](docs/MEDIA.md) · [Security](SECURITY.md)
 

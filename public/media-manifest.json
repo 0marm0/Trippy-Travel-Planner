@@ -4837,8 +4837,8 @@
       "license": "MIT app UI; depicted photographs and map/provider content retain their separate terms",
       "rightsStatus": "approved",
       "privacyStatus": "approved",
-      "sha256": "a2e87e6748ffe047e6dc0634db664676a492dee1a917197807ca4fb403c62121",
-      "privacyReview": "Pixel-reviewed public sample or invented planning; no access values or private identifiers; metadata stripped",
+      "sha256": "67e5e12ac0ff62bcd19a1795f59c22946920727a52e4534769c1046fabf48862",
+      "privacyReview": "Pixel-reviewed sanitized sample export studio with glass surfaces and approved local photography; no access values or private identifiers; metadata stripped",
       "reviewedAt": "2026-10-14"
     }
   ],

@@ -2,6 +2,8 @@ import type { Metadata } from "next";
 import "maplibre-gl/dist/maplibre-gl.css";
 import "./brand.css";
 import "./workspace.css";
+import "./liquid-glass.css";
+import { AppearanceProvider } from "@/components/appearance-controls";
 
 export const metadata: Metadata = {
   title: "Trippy Travel Planner",
@@ -11,7 +13,7 @@ export const metadata: Metadata = {
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
   return (
     <html lang="en">
-      <body>{children}</body>
+      <body><AppearanceProvider>{children}</AppearanceProvider></body>
     </html>
   );
 }

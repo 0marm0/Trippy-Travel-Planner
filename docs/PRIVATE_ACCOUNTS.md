@@ -30,7 +30,13 @@ Enabling accounts also permits email/password enrollment. Better Auth authentica
 
 Updates and deletes require a current `If-Match` revision. Stale writes return HTTP 412 and leave the draft intact. Explicitly preview and accept the current stored version before replacing a draft; no automatic overwrite retry occurs. Downloads revalidate the decrypted workspace and contain sanitized planning data only. Real trip exports still belong in private storage.
 
-Account deletion requires the current password and removes owned plans, authentication records and sessions. Previously exported files, browser drafts and private backups are outside server deletion; the traveler controls those copies. A failed account deletion can leave an account present after plans were removed; the operation never restores deleted plans.
+Account deletion requires the current password and removes owned plans, authentication records and sessions. Previously exported files, browser drafts, named device snapshots, local scenarios and private backups are outside server deletion; the traveler controls those copies. A failed account deletion can leave an account present after plans were removed; the operation never restores deleted plans.
+
+## Local scenarios and snapshots stay separate
+
+`/plan` → **History** creates reviewed local scenario copies and named device snapshots. Scenario duplication generates a new trip ID/name without creating a new account owner, reservation or confirmation. Booking records/details and booking receipts are excluded by default; an explicit alternative retains the same original recorded bookings and exact states. A downloadable copy receipt records provenance, omissions and unchanged source timestamps. Research, quote and route-scenario identities are rebound only for an otherwise identical trip; this does not refresh their evidence.
+
+Named snapshots store complete validated workspaces separately from account plans, using versioned local-storage keys per trip ID with an eight-snapshot/4 MB bound. Restore previews activity/day/booking/evidence changes, rechecks current workspace and saved-snapshot identity, and requires either a successful safety snapshot of the current open copy or an explicit discard choice. Quota/storage failures preserve the current open workspace. These records are visible to other users of that browser profile; no account session or room capability enters them. Opening a scenario or restoring a snapshot resets automatic local saving and stays in memory until an explicit save. Account save/load, device-library indexing and snapshot storage remain distinct actions. Deleting an account does not remove these browser copies. Evidence: [`workspace-scenarios.ts`](../src/lib/workspace-scenarios.ts), [`workspace-history.ts`](../src/lib/workspace-history.ts), [`workspace-history-tools.tsx`](../src/components/workspace-history-tools.tsx).
 
 ## Optional password recovery
 

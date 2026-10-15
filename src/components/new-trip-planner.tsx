@@ -6,13 +6,14 @@ import { Icon } from "./planner-icon";
 import { createNormalizedTrip, validateNormalizedTrip, type NormalizedTrip } from "@/lib/normalized-trip";
 import "./new-trip-planner.css";
 import WorkspaceLibrary from "./workspace-library";
+import AppearanceControls from "./appearance-controls";
 import GenericTripWorkspace from "./generic-trip-workspace";
 import { loadWorkspace, removeWorkspace, workspaceKey, parseWorkspaceImport, type GenericWorkspace } from "@/lib/generic-trip-workspace";
 
 const split = (text: string) => text.split(",").map((item) => item.trim()).filter(Boolean);
 
 function PlannerNavigation() {
-  return <nav className="planning-navigation" aria-label="Trippy navigation"><Link className="planning-brand" href="/"><span className="planning-brand-mark"><Icon name="globe" /></span><span>TRIPPY<small>Make room for discovery.</small></span></Link><div className="planning-navigation-links"><Link href="/">Sample atlas</Link><Link href="/about">About</Link><Link href="/collaborate"><Icon name="activities" /> Plan together</Link></div></nav>;
+  return <nav className="planning-navigation" aria-label="Trippy navigation"><Link className="planning-brand" href="/"><span className="planning-brand-mark"><Icon name="globe" /></span><span>TRIPPY<small>Make room for discovery.</small></span></Link><div className="planning-navigation-links"><AppearanceControls /><Link href="/">Sample atlas</Link><Link href="/about">About</Link><Link href="/collaborate"><Icon name="activities" /> Plan together</Link></div></nav>;
 }
 
 export default function NewTripPlanner() {

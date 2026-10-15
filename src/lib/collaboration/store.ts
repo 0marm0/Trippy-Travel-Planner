@@ -10,7 +10,8 @@ type Row = Record<string, unknown>;
 type Query = (sql: string, values?: (string | number)[]) => Promise<Row[]>;
 type Database = { transaction: <T>(fn: (query: Query) => Promise<T>) => Promise<T>; close: () => Promise<void> };
 const tables = `CREATE TABLE IF NOT EXISTS collaboration_rooms (id TEXT PRIMARY KEY, revision INTEGER NOT NULL, state TEXT NOT NULL);
-CREATE TABLE IF NOT EXISTS collaboration_capabilities (id TEXT PRIMARY KEY, room_id TEXT NOT NULL REFERENCES collaboration_rooms(id), token_hash TEXT NOT NULL UNIQUE, role TEXT NOT NULL, revoked INTEGER NOT NULL DEFAULT 0, expires_at BIGINT);`;
+CREATE TABLE IF NOT EXISTS collaboration_capabilities (id TEXT PRIMARY KEY, room_id TEXT NOT NULL REFERENCES collaboration_rooms(id), token_hash TEXT NOT NULL UNIQUE, role TEXT NOT NULL, revoked INTEGER NOT NULL DEFAULT 0, expires_at BIGINT);
+CREATE TABLE IF NOT EXISTS collaboration_presence (room_id TEXT NOT NULL REFERENCES collaboration_rooms(id), capability_id TEXT NOT NULL REFERENCES collaboration_capabilities(id), lease_until BIGINT NOT NULL, PRIMARY KEY (room_id, capability_id));`;
 const digest = (token: string) => createHash("sha256").update(token).digest("hex");
 const capability = () => randomBytes(32).toString("base64url");
 
@@ -119,6 +120,22 @@ export async function openCollaborationStore(options: { sqlitePath?: string; pos
         return { ...snapshot(roomId, row, role), ...(invites ? { invites } : {}) };
       });
     },
+    /** Presence is an optional 30-second capability lease, never an identity or board revision. */
+    async presence(roomId: string, token: string, present?: boolean) {
+      if (present !== undefined && typeof present !== "boolean") throw new CollaborationError(400, "Choose whether to announce presence.");
+      return database.transaction(async q => {
+        const row = await lockRoom(q, roomId), access = await resolveAccess(q, roomId, token);
+        const checkedAt = now();
+        await q("DELETE FROM collaboration_presence WHERE room_id = ? AND (lease_until <= ? OR capability_id NOT IN (SELECT id FROM collaboration_capabilities WHERE room_id = ? AND revoked = 0 AND (expires_at IS NULL OR expires_at > ?)))", [roomId, checkedAt, roomId, checkedAt]);
+        if (present === false) await q("DELETE FROM collaboration_presence WHERE room_id = ? AND capability_id = ?", [roomId, access.id]);
+        if (present === true) await q("INSERT INTO collaboration_presence(room_id, capability_id, lease_until) VALUES (?, ?, ?) ON CONFLICT (room_id, capability_id) DO UPDATE SET lease_until = excluded.lease_until", [roomId, access.id, checkedAt + 30000]);
+        const rows = await q("SELECT p.capability_id, c.role FROM collaboration_presence p JOIN collaboration_capabilities c ON c.id = p.capability_id AND c.room_id = p.room_id WHERE p.room_id = ? AND p.lease_until > ? AND c.revoked = 0 AND (c.expires_at IS NULL OR c.expires_at > ?) ORDER BY p.capability_id", [roomId, now(), now()]);
+        // Time may cross capability expiry during cleanup, renewal or the summary query.
+        // Reauthorize before returning so denial rolls back every lease mutation.
+        await resolveAccess(q, roomId, token);
+        return { revision: Number(row.revision), presence: rows.map(value => ({ id: `access-${value.capability_id}`, role: value.role as CollaborationRole })), leaseSeconds: 30 as const };
+      });
+    },
     async update(roomId: string, token: string, revision: number, input: unknown) {
       const state = validateCollaborationState(input);
       return database.transaction(async q => {
@@ -175,6 +192,7 @@ export async function openCollaborationStore(options: { sqlitePath?: string; pos
         if (role !== "owner") throw new CollaborationError(403, "Only the owner can replace owner access.");
         requireRevision(roomId, row, role, revision);
         const token = capability();
+        await q("DELETE FROM collaboration_presence WHERE room_id = ? AND capability_id IN (SELECT id FROM collaboration_capabilities WHERE room_id = ? AND role = 'owner')", [roomId, roomId]);
         await q("UPDATE collaboration_capabilities SET revoked = 1 WHERE room_id = ? AND role = 'owner'", [roomId]);
         await q("INSERT INTO collaboration_capabilities(id, room_id, token_hash, role) VALUES (?, ?, ?, 'owner')", [randomUUID(), roomId, digest(token)]);
         await q("UPDATE collaboration_rooms SET revision = revision + 1 WHERE id = ? AND revision = ?", [roomId, revision]);
@@ -187,6 +205,7 @@ export async function openCollaborationStore(options: { sqlitePath?: string; pos
         if (role !== "owner") throw new CollaborationError(403, "Only the owner can delete this room.");
         requireRevision(roomId, row, role, revision);
         // Explicit cascade works on existing schemas whose foreign key has no cascade.
+        await q("DELETE FROM collaboration_presence WHERE room_id = ?", [roomId]);
         await q("DELETE FROM collaboration_capabilities WHERE room_id = ?", [roomId]);
         await q("DELETE FROM collaboration_rooms WHERE id = ? AND revision = ?", [roomId, revision]);
         return { deleted: true };
@@ -197,6 +216,7 @@ export async function openCollaborationStore(options: { sqlitePath?: string; pos
         await lockRoom(q, roomId);
         if (await authorize(q, roomId, ownerToken) !== "owner") throw new CollaborationError(403, "Only the owner can revoke invitations.");
         await q("UPDATE collaboration_capabilities SET revoked = 1 WHERE id = ? AND room_id = ? AND role <> 'owner'", [inviteId, roomId]);
+        await q("DELETE FROM collaboration_presence WHERE room_id = ? AND capability_id IN (SELECT id FROM collaboration_capabilities WHERE id = ? AND room_id = ? AND revoked = 1)", [roomId, inviteId, roomId]);
         return { revoked: true };
       });
     },

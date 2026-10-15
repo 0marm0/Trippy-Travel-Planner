@@ -286,3 +286,11 @@ test('PDF mode colors remain distinct from booking status and always draw colore
     }
   }
 });
+
+test('PDF footer preserves timing uncertainty rather than asserting all times are local',async()=>{
+ const snapshot=sanitizeTripExportSnapshot({title:'Invented timing review',start:'2030-01-01',end:'2030-01-02',bookings:[{kind:'flight',dateIso:'2030-01-01',title:'Unverified movement',status:'recommended',detail:'Original entered offset retained'}]});
+ const doc=await PDFDocument.load(await createTripPdf(snapshot,{theme:'dark',scope:'transit'}));let operators='';
+ for(const page of doc.getPages()){const contents=page.node.Contents();const refs=contents instanceof PDFArray?contents.asArray():[contents];for(const ref of refs){const stream=doc.context.lookup(ref);if(stream instanceof PDFRawStream)operators+=Buffer.from(decodePDFRawStream(stream).decode()).toString('latin1');}}
+ assert.ok(operators.toUpperCase().includes(Buffer.from('Times as recorded; verify local time zones.').toString('hex').toUpperCase()));
+ assert.equal(operators.toUpperCase().includes(Buffer.from('All times local.').toString('hex').toUpperCase()),false);
+});

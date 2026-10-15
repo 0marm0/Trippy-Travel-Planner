@@ -24,7 +24,7 @@ The checkout includes the full reviewed Europe sample dashboard and its bundled 
 | **Cash + points flights** | Record and compare fares, award points, taxes, transfer ratios, baggage and your point valuation. Prepare bounded exact-date cash research, or give your authorized agent a broader coverage brief. |
 | **Better routes** | Preview different city orders and night allocations. Record gateways, open jaws, through/separate tickets, flight/rail/car/ferry/bus legs and quote references; compare compatible whole-route assumptions, recorded elapsed time and explicit coverage gaps. |
 | **Hotels + location** | Explore the sample's property galleries, maps and three-stay comparisons. For your trip, record stay locations/photos, compare sourced room and cancellation terms, and inspect straight-line hotel-to-activity geography with missing pins disclosed. |
-| **Cities + days** | Edit activities, priorities, durations and day assignments. Keep attributed photos, recorded pins, source receipts, arrival context and unresolved conflicts alongside the plan. |
+| **Cities + days** | Edit activities, priorities, durations and day assignments. Keep attributed photos, recorded pins, source receipts and conflicts alongside the plan. Inspect nearby activity groups and read-only visit-order suggestions; use Travel day for the dated agenda, original booking timestamps and due tasks. |
 | **Friends + decisions** | Share a separate activity/day board, invite editors or viewers, propose activity changes and route/stay ideas, vote and discuss, and inspect recent revision summaries. Owners review proposals before applying them. Review downloaded group changes before applying them to your workspace. |
 | **Preparation + recovery** | Keep trip tasks, packing roles and explicit fallback ideas; review activity swaps. Create separate scenarios, use undo/redo, save named recovery snapshots and restore reviewed differences. |
 | **Booking progress** | Keep `recommended`, `quoted`, `held`, `confirmed`, `missing` and `conflict` distinct across travel and stays. A quote, selected option or imported email does not establish confirmation. |
@@ -57,11 +57,17 @@ Actual app captures using the reviewed sample or clearly identified invented pla
 </tr>
 </table>
 
+<table>
+<tr><td width="50%"><img src="public/screenshots/travel-day.webp" alt="Travel day with activity photography, recorded bookings and preparation"><strong>Your day, ready to read</strong><p>A photo-led agenda with recorded booking states and due tasks.</p></td><td width="50%"><img src="public/screenshots/day-geography.webp" alt="Nearby place groups from sourced activity pins"><strong>Shape a day around nearby places</strong><p>Read-only groups and straight-line order comparisons from sourced pins.</p></td></tr>
+</table>
+
 ### Faster decisions, less clutter
 
 | Keep your view | Bring friends into the decision |
 | --- | --- |
 | ![Activity filters with clearable chips and a saved museum preset](public/screenshots/saved-filters.webp) | ![Owner-reviewed stay idea alongside shared activities](public/screenshots/collaboration-ideas.webp) |
+
+The planning, collaboration, preparation, history and export surfaces share the atlas’s dark navy glass and blue controls. Attributed activity photos provide context in preparation and sharing; history summaries remain separate from current-plan imagery.
 
 Sample catalogue presets stay on your device. Shared route/stay ideas stay separate from reservations and require owner review. Generic workspaces also compare recorded journey evidence and hotel-base geography, with missing costs, pins and timing disclosed.
 

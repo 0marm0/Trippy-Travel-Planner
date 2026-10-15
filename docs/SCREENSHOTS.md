@@ -1,8 +1,8 @@
 # Trippy app screenshots
 
-The gallery contains **35 screenshots** from actual app surfaces. The 2026-10-14/15 UTC production-candidate refresh replaces the overall route, flight comparison, transport comparison, day editor, hotel rows, Berlin/Amsterdam maps and shared board, and adds preparation and shared-history captures. These show the reviewed public sample or an invented Tokyo/Kyoto trip and Example City room. They contain no real contacts, booking identifiers, credentials or invitation capabilities.
+The gallery contains **37 screenshots** from actual app surfaces. The latest production-candidate refresh replaces collaboration, export studio, preparation and shared history with the atlas navy glass design and recorded activity photography. It adds the generic Travel day and nearby-place grouping views. These six captures use invented Berlin/Munich planning records with reviewed public sample photos; current board photography is separate from revision history.
 
-Other captures retain their earlier 2026-10-13/14 reviewed versions. The export-studio image retains the previously verified photo-loaded capture; a fresh inspection stalled in the browser preview, so an incomplete image was not substituted. Captures demonstrate the stated views, not every roadmap feature or hosted/provider acceptance.
+Other captures retain their reviewed earlier versions. Screenshots demonstrate the stated views, not every roadmap feature or hosted/provider acceptance. No real contacts, booking identifiers, credentials or invitation capabilities appear.
 
 [Back to the README](../README.md) · [Travel photo gallery](PHOTO_GALLERY.md)
 
@@ -176,3 +176,11 @@ An invented local SQLite room with invitation and board summaries. The displayed
 ![Invented route costs and elapsed leg timing with unknown door-to-door totals](../public/screenshots/journey-evidence.webp)
 
 These three captures were added from the current production candidate. Shared ideas do not establish bookings. Journey comparisons show entered demonstration evidence, not live inventory or real available fares.
+
+## Travel day: agenda, recorded bookings and preparation
+
+![Travel day](../public/screenshots/travel-day.webp)
+
+## Nearby places: sourced pins and read-only grouping
+
+![Nearby places](../public/screenshots/day-geography.webp)

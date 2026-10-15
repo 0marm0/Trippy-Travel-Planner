@@ -222,7 +222,7 @@ class Dossier {
   footer() {
     this.pages.forEach((page, index) => {
       page.drawLine({ start: { x: PAGE.margin, y: 22 }, end: { x: PAGE.width - PAGE.margin, y: 22 }, thickness: .45, color: this.palette.line });
-      page.drawText("All times local. Red indicates a booking or verification action.", { x: PAGE.margin, y: 10, size: 6.5, font: this.bold, color: this.palette.text });
+      page.drawText("Times as recorded; verify local time zones. Red marks booking or verification actions.", { x: PAGE.margin, y: 10, size: 6.5, font: this.bold, color: this.palette.text });
       const label = `${index + 1} / ${this.pages.length}`;
       page.drawText(label, { x: PAGE.width - PAGE.margin - this.regular.widthOfTextAtSize(label, 6.5), y: 10, size: 6.5, font: this.regular, color: this.palette.muted });
       const pageLabel = `PAGE ${index + 1} OF ${this.pages.length}`;

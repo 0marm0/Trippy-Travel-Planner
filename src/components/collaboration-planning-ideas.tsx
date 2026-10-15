@@ -1,0 +1,26 @@
+"use client";
+
+import { useState } from "react";
+import DetailDrawer from "./detail-drawer";
+import type { CollaborationPlanningIdea, CollaborationState, CollaborationSuggestion } from "@/lib/collaboration/schema";
+
+export function suggestionTitle(item: CollaborationSuggestion, state: CollaborationState) {
+  return item.kind === "activity" ? item.activity.title : item.kind === "day" ? state.activities.find(activity => activity.id === item.activityId)?.title || "Recorded activity" : item.idea.title;
+}
+export function suggestionScope(item: CollaborationSuggestion) {
+  return item.kind === "route" || item.kind === "stay" ? `${item.kind} idea · dates, cost and availability unknown` : `${item.kind === "activity" ? "New activity" : "Move activity"} · ${item.day || "Catalogue only"}`;
+}
+export default function CollaborationPlanningIdeas({ state, canEdit, append, onDirty }: { state: CollaborationState; canEdit: boolean; append: (suggestion: CollaborationSuggestion) => boolean; onDirty: (dirty: boolean) => void }) {
+  const [open, setOpen] = useState(false);
+  const [draft, setDraft] = useState({ kind: "stay" as "route" | "stay", title: "", notes: "", cityId: "", toCityId: "", mode: "unknown" as Extract<CollaborationPlanningIdea, { kind: "route" }>["mode"] });
+  const [unfinished, setUnfinished] = useState(false);
+  function change(patch: Partial<typeof draft>) { setDraft({ ...draft, ...patch }); setUnfinished(true); onDirty(true); }
+  function clear() { setDraft({ kind: "stay", title: "", notes: "", cityId: "", toCityId: "", mode: "unknown" }); setUnfinished(false); onDirty(false); }
+  function submit() {
+    const common = { id: crypto.randomUUID(), title: draft.title, notes: draft.notes };
+    const cityId = draft.cityId || state.cities[0]?.id || "";
+    const proposal: CollaborationSuggestion = draft.kind === "stay" ? { id: crypto.randomUUID(), status: "pending", kind: "stay", idea: { ...common, kind: "stay", cityId } } : { id: crypto.randomUUID(), status: "pending", kind: "route", idea: { ...common, kind: "route", fromCityId: cityId, toCityId: draft.toCityId, mode: draft.mode } };
+    if (append(proposal)) { clear(); setOpen(false); }
+  }
+  return <section className="collab-panel collab-planning-ideas"><div className="collab-section-title"><h2>Route & stay ideas</h2>{canEdit && <button onClick={() => setOpen(true)}>{unfinished ? "Resume route / stay draft" : "Suggest route / stay"}</button>}</div><p className="collab-muted">Shared planning ideas only. Dates, prices, schedules and availability are unknown. Applying an idea adds it here; it never creates or changes a booking or private planning workspace.</p>{!state.planningIdeas?.length && <p>No reviewed route or stay ideas yet.</p>}{state.planningIdeas?.map(idea => <article className="collab-activity" key={idea.id}><h3>{idea.title}</h3><small>{idea.kind === "stay" ? `Stay idea · ${state.cities.find(city => city.id === idea.cityId)?.name}` : `Route idea · ${state.cities.find(city => city.id === idea.fromCityId)?.name} → ${state.cities.find(city => city.id === idea.toCityId)?.name} · ${idea.mode}`}</small><p style={{ whiteSpace: "pre-wrap" }}>{idea.notes}</p><small>Owner reviewed idea · no reservation or inventory established</small></article>)}{open && <DetailDrawer title="Propose a route or stay idea" close={() => setOpen(false)}><form className="collab-activity-form" onSubmit={event => { event.preventDefault(); submit(); }}><fieldset disabled={!canEdit}><p>Keep private traveler and booking details outside this board. Closing preserves this tab’s unfinished form; device recovery saves board records only.</p><label>Idea type<select value={draft.kind} onChange={event => change({ kind: event.target.value as "route" | "stay" })}><option value="stay">Stay idea</option><option value="route">Route idea</option></select></label><label>Idea title<input required maxLength={160} value={draft.title} onChange={event => change({ title: event.target.value })} /></label><label>{draft.kind === "stay" ? "City" : "From city"}<select required value={draft.cityId || state.cities[0]?.id || ""} onChange={event => change({ cityId: event.target.value })}>{state.cities.map(city => <option key={city.id} value={city.id}>{city.name}</option>)}</select></label>{draft.kind === "route" && <><label>To city<select required value={draft.toCityId} onChange={event => change({ toCityId: event.target.value })}><option value="">Choose destination</option>{state.cities.map(city => <option key={city.id} value={city.id}>{city.name}</option>)}</select></label><label>Proposed transport mode<select value={draft.mode} onChange={event => change({ mode: event.target.value as typeof draft.mode })}>{["unknown", "flight", "rail", "car", "bus", "ferry", "walk", "other"].map(mode => <option key={mode}>{mode}</option>)}</select></label></>}<label>Planning notes<textarea maxLength={1000} value={draft.notes} onChange={event => change({ notes: event.target.value })} /></label><p>Dates and costs remain unknown. No schedule feasibility, availability or booking status is established.</p><div className="collab-actions"><button type="submit" disabled={!state.cities.length}>Add idea proposal to draft</button>{unfinished && <button type="button" onClick={clear}>Discard idea draft</button>}</div></fieldset></form></DetailDrawer>}</section>;
+}

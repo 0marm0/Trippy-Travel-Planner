@@ -1,13 +1,14 @@
 export type CollaborationRole = "owner" | "editor" | "viewer";
 export type CollaborationCity = { id: string; name: string; lat?: number; lng?: number };
 export type CollaborationActivity = { id: string; cityId: string; title: string; notes: string; lat?: number; lng?: number; durationMinutes?: number; image?: string; sourceUrl?: string };
-export type CollaborationSuggestion = { id: string; status: "pending" | "applied" | "rejected" } & ({ kind: "activity"; activity: CollaborationActivity; day?: string } | { kind: "day"; activityId: string; day: string });
+export type CollaborationPlanningIdea = { id: string; title: string; notes: string } & ({ kind: "route"; fromCityId: string; toCityId: string; mode: "flight" | "rail" | "car" | "bus" | "ferry" | "walk" | "other" | "unknown" } | { kind: "stay"; cityId: string });
+export type CollaborationSuggestion = { id: string; status: "pending" | "applied" | "rejected" } & ({ kind: "activity"; activity: CollaborationActivity; day?: string } | { kind: "day"; activityId: string; day: string } | { kind: "route"; idea: Extract<CollaborationPlanningIdea, { kind: "route" }> } | { kind: "stay"; idea: Extract<CollaborationPlanningIdea, { kind: "stay" }> });
 export type CollaborationActor = { id: string; role: "owner" | "editor" };
 export type CollaborationInteractions = {
   votes: Array<{ suggestionId: string; actor: CollaborationActor; choice: "support" | "concern" | "neutral"; updatedAt: string }>;
   comments: Array<{ id: string; suggestionId: string; actor: CollaborationActor; text: string; createdAt: string }>;
 };
-export type CollaborationState = { title: string; startDate: string; endDate: string; cities: CollaborationCity[]; activities: CollaborationActivity[]; days: Record<string, string[]>; suggestions?: CollaborationSuggestion[]; interactions?: CollaborationInteractions };
+export type CollaborationState = { title: string; startDate: string; endDate: string; cities: CollaborationCity[]; activities: CollaborationActivity[]; days: Record<string, string[]>; planningIdeas?: CollaborationPlanningIdea[]; suggestions?: CollaborationSuggestion[]; interactions?: CollaborationInteractions };
 
 export class CollaborationError extends Error {
   status: number;
@@ -53,8 +54,21 @@ export function safeCollaborationSourceUrl(value: unknown): string | undefined {
     return url.href;
   } catch { return undefined; }
 }
+function planningIdea(input: unknown, cityIds?: Set<string>): CollaborationPlanningIdea {
+  const raw = object(input, ["id", "kind", "title", "notes", "cityId", "fromCityId", "toCityId", "mode"]);
+  const common = { id: id(raw.id), title: text(raw.title, 160), notes: text(raw.notes ?? "", 1000, true, true) };
+  const city = (value: unknown) => { const result = id(value); if (cityIds && !cityIds.has(result)) return bad(); return result; };
+  if (raw.kind === "stay") {
+    if (raw.fromCityId !== undefined || raw.toCityId !== undefined || raw.mode !== undefined) return bad();
+    return { ...common, kind: "stay", cityId: city(raw.cityId) };
+  }
+  if (raw.kind !== "route" || raw.cityId !== undefined || typeof raw.mode !== "string" || !["flight", "rail", "car", "bus", "ferry", "walk", "other", "unknown"].includes(String(raw.mode))) return bad();
+  const fromCityId = city(raw.fromCityId), toCityId = city(raw.toCityId);
+  if (fromCityId === toCityId) return bad();
+  return { ...common, kind: "route", fromCityId, toCityId, mode: raw.mode as Extract<CollaborationPlanningIdea, { kind: "route" }>["mode"] };
+}
 export function validateCollaborationState(input: unknown): CollaborationState {
-  const s = object(input, ["title", "startDate", "endDate", "cities", "activities", "days", "suggestions", "interactions"]);
+  const s = object(input, ["title", "startDate", "endDate", "cities", "activities", "days", "suggestions", "interactions", "planningIdeas"]);
   const startDate = date(s.startDate), endDate = date(s.endDate);
   if (endDate < startDate || Date.parse(endDate) - Date.parse(startDate) > 366 * 86400000) return bad();
   if (!Array.isArray(s.cities) || s.cities.length > 50 || !Array.isArray(s.activities) || s.activities.length > 500) return bad();
@@ -78,14 +92,27 @@ export function validateCollaborationState(input: unknown): CollaborationState {
     if (day < startDate || day > endDate || !Array.isArray(values) || values.length > 50) return bad();
     days[day] = values.map(value => { const activityId = id(value); if (!activityIds.has(activityId) || scheduled.has(activityId)) return bad(); scheduled.add(activityId); return activityId; });
   }
+  let planningIdeas: CollaborationPlanningIdea[] | undefined;
+  if (s.planningIdeas !== undefined) {
+    if (!Array.isArray(s.planningIdeas) || s.planningIdeas.length > 100) return bad();
+    planningIdeas = s.planningIdeas.map(value => planningIdea(value, cityIds));
+    if (new Set(planningIdeas.map(item => item.id)).size !== planningIdeas.length) return bad();
+  }
   let suggestions: CollaborationSuggestion[] | undefined;
   if (s.suggestions !== undefined) {
     if (!Array.isArray(s.suggestions) || s.suggestions.length > 100) return bad();
     suggestions = s.suggestions.map(value => {
-      const raw = object(value, ["id", "status", "kind", "activity", "activityId", "day"]);
+      const raw = object(value, ["id", "status", "kind", "activity", "activityId", "day", "idea"]);
       const suggestionId = id(raw.id);
       if (raw.status !== "pending" && raw.status !== "applied" && raw.status !== "rejected") return bad();
       const status = raw.status;
+      if (raw.kind === "route" || raw.kind === "stay") {
+        if (raw.activity !== undefined || raw.activityId !== undefined || raw.day !== undefined) return bad();
+        const idea = planningIdea(raw.idea, status === "pending" ? cityIds : undefined);
+        if (idea.kind !== raw.kind || (status === "pending" && planningIdeas?.some(item => item.id === idea.id))) return bad();
+        return idea.kind === "route" ? { id: suggestionId, status, kind: "route", idea } : { id: suggestionId, status, kind: "stay", idea };
+      }
+      if (raw.idea !== undefined) return bad();
       const day = raw.day === undefined ? undefined : date(raw.day);
       if (status === "pending" && day && (day < startDate || day > endDate)) return bad();
       if (raw.kind === "activity") {
@@ -104,6 +131,8 @@ export function validateCollaborationState(input: unknown): CollaborationState {
     if (new Set(suggestions.map(item => item.id)).size !== suggestions.length) return bad();
     const proposedIds = suggestions.filter(item => item.status === "pending" && item.kind === "activity").map(item => item.kind === "activity" ? item.activity.id : "");
     if (new Set(proposedIds).size !== proposedIds.length) return bad();
+    const ideaIds = suggestions.flatMap(item => item.status === "pending" && (item.kind === "route" || item.kind === "stay") ? [item.idea.id] : []);
+    if (new Set(ideaIds).size !== ideaIds.length) return bad();
   }
   let interactions: CollaborationInteractions | undefined;
   if (s.interactions !== undefined) {
@@ -117,5 +146,5 @@ export function validateCollaborationState(input: unknown): CollaborationState {
     if (new Set(votes.map(vote => `${vote.suggestionId}:${vote.actor.id}`)).size !== votes.length || new Set(comments.map(comment => comment.id)).size !== comments.length) return bad();
     interactions = { votes, comments };
   }
-  return { title: text(s.title, 160), startDate, endDate, cities, activities, days, ...(suggestions ? { suggestions } : {}), ...(interactions ? { interactions } : {}) };
+  return { title: text(s.title, 160), startDate, endDate, cities, activities, days, ...(planningIdeas ? { planningIdeas } : {}), ...(suggestions ? { suggestions } : {}), ...(interactions ? { interactions } : {}) };
 }

@@ -38,15 +38,16 @@ const compiledEffect = ts.transpileModule(`const effect = ${effectSource}; effec
 function accessHarness() {
   const listeners = new Map(), pending = [], storage = new Map();
   const state = { connected: false, snapshot: null, plan: null, latest: null, connectionError: '' };
+  const refreshRoomRef = { current: null };
   const token = { current: '' }, busyRef = { current: false }, dirtyRef = { current: false }, activityDraftRef = { current: false }, commentDraftRef = { current: '' }, closedRef = { current: false }, revisionRef = { current: 0 };
   let poll;
   const window = { location: { hash: `#token=${'a'.repeat(43)}`, pathname: '/collaborate/synthetic-room', search: '' }, history: { state: null, replaceState() { window.location.hash = ''; } }, sessionStorage: { setItem: (key, value) => storage.set(key, value), getItem: key => storage.get(key) || null }, addEventListener: (name, handler) => listeners.set(name, handler), removeEventListener: name => listeners.delete(name), setInterval: handler => { poll = handler; return 1; }, clearInterval() {} };
   const set = field => value => { state[field] = typeof value === 'function' ? value(state[field]) : value; };
-  const context = { roomId: 'synthetic-room', window, token, busyRef, dirtyRef, activityDraftRef, commentDraftRef, closedRef, revisionRef, parseRoomAccessFragment, sessionKey: id => `synthetic:${id}`, AbortController, AbortSignal,
+  const context = { roomId: 'synthetic-room', window, token, busyRef, dirtyRef, activityDraftRef, commentDraftRef, closedRef, revisionRef, refreshRoomRef, parseRoomAccessFragment, sessionKey: id => `synthetic:${id}`, AbortController, AbortSignal,
     fetch: (url, options) => new Promise((resolve, reject) => pending.push({ url, options, resolve, reject })), responseBody: async response => response,
     setConnected: set('connected'), setAccessToken: set('accessToken'), setInvites: set('invites'), setInviteReview: set('inviteReview'), setReconciliation: set('reconciliation'), setNotice: set('notice'), setConnectionError: set('connectionError'), setLatest: set('latest'), setSnapshot: set('snapshot'), setPlan: set('plan') };
   const cleanup = vm.runInNewContext(compiledEffect, context);
-  return { state, pending, token, busyRef, dirtyRef, cleanup, poll: () => poll(), change: capability => { window.location.hash = `#token=${capability}`; listeners.get('hashchange')(); } };
+  return { state, pending, token, busyRef, dirtyRef, refreshRoomRef, activityDraftRef, commentDraftRef, cleanup, poll: () => poll(), change: capability => { window.location.hash = `#token=${capability}`; listeners.get('hashchange')(); } };
 }
 const settle = () => new Promise(resolve => setImmediate(resolve));
 const snapshot = (role, revision = 1, title = 'Synthetic board') => ({ roomId: 'synthetic-room', role, revision, state: { title }, invites: role === 'owner' ? [{ inviteId: 'synthetic-invite', role: 'editor' }] : undefined });
@@ -91,4 +92,17 @@ test('a failed pre-rotation read cannot disconnect newly rotated room access', a
   harness.poll(); harness.pending[2].resolve(snapshot('owner', 2)); await settle();
   assert.equal(harness.state.accessToken, 'b'.repeat(43)); assert.equal(harness.state.connected, true);
   harness.cleanup();
+});
+
+test('stream-triggered refresh uses the same dirty-form, busy and access-generation guards as polling', async () => {
+  const harness = accessHarness(); harness.pending[0].resolve(snapshot('editor')); await settle();
+  harness.state.plan = {title:'Unsaved board'}; harness.activityDraftRef.current = true;
+  harness.refreshRoomRef.current(); harness.pending[1].resolve(snapshot('editor',2,'Incoming group board')); await settle();
+  assert.equal(harness.state.plan.title,'Unsaved board'); assert.equal(harness.state.latest.revision,2);
+  harness.activityDraftRef.current = false; harness.commentDraftRef.current = 'Unfinished discussion';
+  harness.refreshRoomRef.current(); const oldRead = harness.pending[2]; harness.change('b'.repeat(43));
+  assert.equal(oldRead.options.signal.aborted,true); oldRead.resolve(snapshot('owner',99)); await settle();
+  harness.pending[3].resolve(snapshot('viewer',2)); await settle(); assert.equal(harness.state.plan.title,'Unsaved board'); assert.equal(harness.state.snapshot.role,'viewer');
+  harness.busyRef.current = true; const count = harness.pending.length; harness.refreshRoomRef.current(); assert.equal(harness.pending.length,count);
+  harness.cleanup(); assert.equal(harness.refreshRoomRef.current,null);
 });

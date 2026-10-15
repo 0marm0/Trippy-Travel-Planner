@@ -7,7 +7,7 @@ export function downloadReadingFile(filename: string, content: string | Blob, ty
 }
 export async function downloadReadingPdf(name:string,snapshot:TripExportSnapshot,options:ExportPreviewOptions) {
   if(validateExportPreviewSnapshot(snapshot).length)throw new Error('Validate the full reading copy before exporting.');
-  const response=await fetch('/api/exports/trip-pdf',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({snapshot,...options})});
+  const response=await fetch('/api/exports/trip-pdf',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({snapshot,scope:options.scope,visual:options.visual,theme:options.theme})});
   if(!response.ok)throw new Error('The PDF server could not prepare this reading copy. Try a compact scope.');
   downloadReadingFile(`${name}-${options.scope}-${options.visual?'visual':'compact'}.pdf`,await response.blob());
 }

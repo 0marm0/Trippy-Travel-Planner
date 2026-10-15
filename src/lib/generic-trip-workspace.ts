@@ -1,10 +1,13 @@
+import { validateRouteScenarios, type RouteScenarioData } from './route-scenarios.ts';
 import { validateNormalizedTrip, type NormalizedTrip } from './normalized-trip.ts';
-import { safeCollaborationSourceUrl } from './collaboration/schema.ts';
+import { safeCollaborationImage, safeCollaborationSourceUrl } from './collaboration/schema.ts';
 import { validateResearchLedger, type ResearchLedgerData } from './research-ledger.ts';
 import { validateQuoteComparison, type QuoteComparisonData } from './trip-quote-comparison.ts';
 
 export const bookingStates = ['recommended', 'quoted', 'held', 'confirmed', 'missing', 'conflict'] as const;
-export type WorkspaceActivity = { id: string; placeId: string; title: string; date: string; time: string; durationMinutes: number; notes: string };
+export type ActivityPhoto = { url: string; credit: string; sourceUrl: string; checkedAt: string };
+export type ActivityCoordinates = { lat: number; lng: number; source: string; checkedAt: string };
+export type WorkspaceActivity = { category?: string; priority?: 'must' | 'should' | 'could'; photo?: ActivityPhoto; coordinates?: ActivityCoordinates; id: string; placeId: string; title: string; date: string; time: string; durationMinutes: number; notes: string };
 export type WorkspaceBookingDetail = { bookingId: string; label: string; placeId: string; notes: string };
 export type ItemEvidence = { target: 'activity' | 'booking' | 'destination'; targetId: string; basis: 'manual' | 'fact' | 'estimate' | 'quote'; source: string; sourceUrl: string; checkedAt: string; summary: string; unknowns: string; reviewRequired?: boolean };
 export type RouteAllocation = { routeId: string; stops: Array<{ placeId: string; nights: number }> };
@@ -19,6 +22,7 @@ export type GenericWorkspace = {
   researchEvidence?: ResearchLedgerData;
   quoteEvidence?: QuoteComparisonData;
   budgetQuoteIds?: string[];
+  routeScenarios?: RouteScenarioData;
 };
 export type BrowserStore = Pick<Storage, 'getItem' | 'setItem' | 'removeItem'>;
 
@@ -52,11 +56,38 @@ function safeText(value: unknown, maximum: number): value is string {
   }
   return true;
 }
+function activityKeys(value: unknown): value is WorkspaceActivity {
+  const required = ['id','placeId','title','date','time','durationMinutes','notes'];
+  return Boolean(value && typeof value === 'object' && !Array.isArray(value) && required.every(key => Object.hasOwn(value,key)) && Object.keys(value).every(key => [...required,'category','priority','photo','coordinates'].includes(key)));
+}
+function checkedTime(value: unknown): value is string {
+  return typeof value === 'string' && /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d+)?(?:Z|[+-]\d{2}:\d{2})$/.test(value) && Number.isFinite(Date.parse(value)) && new Date(value.slice(0,10)+'T00:00:00Z').toISOString().slice(0,10) === value.slice(0,10);
+}
+/** Restricted to bundled photos or attribution-friendly public hosts accepted by reading exports. */
+export function safeWorkspaceActivityPhoto(value: string): boolean {
+  if (safeCollaborationImage(value) === value) return /^\/guide-images\/[a-f0-9]{12,64}\.webp$/.test(value) || /^\/media\/[a-z0-9][a-z0-9-]*\.webp$/.test(value);
+  if (safeCollaborationSourceUrl(value) !== value) return false;
+  const url = new URL(value);
+  return !url.port && ['images.unsplash.com','upload.wikimedia.org','commons.wikimedia.org','thumb.wikimedia.org'].includes(url.hostname);
+}
+function validActivityMetadata(item: WorkspaceActivity): boolean {
+  if (Object.hasOwn(item,'category') && (!safeText(item.category,80) || !item.category?.trim())) return false;
+  if (Object.hasOwn(item,'priority') && !['must','should','could'].includes(item.priority as string)) return false;
+  if (Object.hasOwn(item,'coordinates')) {
+    const pin = item.coordinates;
+    if (!exactKeys(pin,['lat','lng','source','checkedAt']) || !Number.isFinite(pin.lat) || !Number.isFinite(pin.lng) || Math.abs(Number(pin.lat)) > 90 || Math.abs(Number(pin.lng)) > 180 || !safeText(pin.source,160) || !pin.source.trim() || !checkedTime(pin.checkedAt)) return false;
+  }
+  if (Object.hasOwn(item,'photo')) {
+    const photo = item.photo;
+    if (!exactKeys(photo,['url','credit','sourceUrl','checkedAt']) || typeof photo.url !== 'string' || !safeWorkspaceActivityPhoto(photo.url) || !safeText(photo.credit,160) || !photo.credit.trim() || typeof photo.sourceUrl !== 'string' || safeCollaborationSourceUrl(photo.sourceUrl) !== photo.sourceUrl || !checkedTime(photo.checkedAt)) return false;
+  }
+  return true;
+}
 export function validateWorkspace(input: unknown): string[] {
   let value = input as Record<string, unknown>;
   const fail = ['Workspace is invalid or contains unsafe fields; no changes saved.'];
   const required = ['version', 'trip', 'selectedRouteId', 'places', 'days', 'activities', 'bookingDetails'];
-  const optional = ['itemEvidence', 'routeAllocations', 'researchEvidence', 'quoteEvidence', 'budgetQuoteIds'];
+  const optional = ['itemEvidence', 'routeAllocations', 'researchEvidence', 'quoteEvidence', 'budgetQuoteIds', 'routeScenarios'];
   if (!value || typeof value !== 'object' || Array.isArray(value) || !required.every(key => Object.hasOwn(value, key)) || Object.keys(value).some(key => ![...required, ...optional].includes(key))) return fail;
   const record = value as Record<string, unknown>;
   if (record.version !== 1 || validateNormalizedTrip(record.trip).length) return fail;
@@ -69,7 +100,8 @@ export function validateWorkspace(input: unknown): string[] {
   const pins = value.places as GenericWorkspace['places'], days = value.days as GenericWorkspace['days'], activities = value.activities as WorkspaceActivity[], details = value.bookingDetails as WorkspaceBookingDetail[];
   if (pins.length > places.size || new Set(pins.map(pin => pin?.placeId)).size !== pins.length || pins.some(pin => !exactKeys(pin, ['placeId', 'lat', 'lng']) || !places.has(pin.placeId) || !Number.isFinite(pin.lat) || !Number.isFinite(pin.lng) || Math.abs(pin.lat) > 90 || Math.abs(pin.lng) > 180)) return fail;
   if (days.length !== dates.size || new Set(days.map(day => day?.date)).size !== days.length || days.some(day => !exactKeys(day, ['date', 'placeId']) || !dates.has(day.date) || (day.placeId !== '' && !places.has(day.placeId)))) return fail;
-  if (activities.length > 2000 || new Set(activities.map(item => item?.id)).size !== activities.length || activities.some(item => !exactKeys(item, ['id', 'placeId', 'title', 'date', 'time', 'durationMinutes', 'notes']) || !/^[a-z0-9-]{1,64}$/.test(item.id) || !places.has(item.placeId) || !safeText(item.title, 120) || !item.title.trim() || !safeText(item.notes, 1000) || !dates.has(item.date) || !/^([01]\d|2[0-3]):[0-5]\d$/.test(item.time) || !Number.isInteger(item.durationMinutes) || item.durationMinutes < 1 || item.durationMinutes > 1440)) return fail;
+  if (activities.length > 2000 || new Set(activities.map(item => item?.id)).size !== activities.length || activities.some(item => !activityKeys(item) || !/^[a-z0-9-]{1,64}$/.test(item.id) || !places.has(item.placeId) || !safeText(item.title, 120) || !item.title.trim() || !safeText(item.notes, 1000) || !dates.has(item.date) || !/^([01]\d|2[0-3]):[0-5]\d$/.test(item.time) || !Number.isInteger(item.durationMinutes) || item.durationMinutes < 1 || item.durationMinutes > 1440)) return fail;
+  if (activities.some(item => !validActivityMetadata(item))) return fail;
   if (details.length > trip.bookings.length || new Set(details.map(detail => detail?.bookingId)).size !== details.length || details.some(detail => !exactKeys(detail, ['bookingId', 'label', 'placeId', 'notes']) || !trip.bookings.some(booking => booking.id === detail.bookingId) || (detail.placeId !== '' && !places.has(detail.placeId)) || !safeText(detail.label, 120) || !safeText(detail.notes, 1000))) return fail;
   if (value.itemEvidence !== undefined) {
     if (!Array.isArray(value.itemEvidence) || value.itemEvidence.length > 2000) return fail;
@@ -96,6 +128,7 @@ export function validateWorkspace(input: unknown): string[] {
   }
   if (value.budgetQuoteIds !== undefined && (!Array.isArray(value.budgetQuoteIds) || value.budgetQuoteIds.length > 300 || value.budgetQuoteIds.some(id => typeof id !== 'string' || !/^[a-z0-9-]{1,64}$/.test(id)) || new Set(value.budgetQuoteIds).size !== value.budgetQuoteIds.length)) return fail;
   try {
+    if (value.routeScenarios !== undefined) validateRouteScenarios(value.routeScenarios,trip);
     if (value.researchEvidence !== undefined) validateResearchLedger(value.researchEvidence,trip);
     if (value.quoteEvidence !== undefined) validateQuoteComparison(value.quoteEvidence,trip);
     if (JSON.stringify(value).length > 2_000_000) return fail;
@@ -120,7 +153,7 @@ export function removeWorkspace(store: BrowserStore, trip: NormalizedTrip): void
 }
 export function exportWorkspace(value: GenericWorkspace): { trip: string; itinerary: string } {
   if (validateWorkspace(value).length) throw new Error('Unsafe or invalid workspace; export blocked');
-  return { trip: JSON.stringify(value.trip, null, 2) + '\n', itinerary: JSON.stringify({ version: value.version, tripId: value.trip.id, selectedRouteId: value.selectedRouteId, places: value.places, days: value.days, activities: value.activities, bookingDetails: value.bookingDetails, ...(value.itemEvidence ? { itemEvidence: value.itemEvidence } : {}), ...(value.routeAllocations ? { routeAllocations: value.routeAllocations } : {}), ...(value.researchEvidence ? { researchEvidence: value.researchEvidence } : {}), ...(value.quoteEvidence ? { quoteEvidence: value.quoteEvidence } : {}), ...(value.budgetQuoteIds ? {budgetQuoteIds:value.budgetQuoteIds} : {}) }, null, 2) + '\n' };
+  return { trip: JSON.stringify(value.trip, null, 2) + '\n', itinerary: JSON.stringify({ version: value.version, tripId: value.trip.id, selectedRouteId: value.selectedRouteId, places: value.places, days: value.days, activities: value.activities, bookingDetails: value.bookingDetails, ...(value.itemEvidence ? { itemEvidence: value.itemEvidence } : {}), ...(value.routeAllocations ? { routeAllocations: value.routeAllocations } : {}), ...(value.researchEvidence ? { researchEvidence: value.researchEvidence } : {}), ...(value.quoteEvidence ? { quoteEvidence: value.quoteEvidence } : {}), ...(value.budgetQuoteIds ? {budgetQuoteIds:value.budgetQuoteIds} : {}), ...(value.routeScenarios ? {routeScenarios:value.routeScenarios} : {}) }, null, 2) + '\n' };
 }
 export function workspaceConflicts(value: GenericWorkspace): string[] {
   const conflicts: string[] = [];

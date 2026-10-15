@@ -119,3 +119,37 @@ test('reviewed public sample remains unchanged and its historical correction pat
   assert.deepEqual(correctedAfter, correctedBefore);
   assert.equal(await readFile(file, 'utf8'), bytes);
 });
+
+test('optional arbitrary-trip metadata survives canonical adaptation and complete editable records', async () => {
+  const { exportWorkspace, parseWorkspaceImport, saveWorkspace, loadWorkspace } = await import('../src/lib/generic-trip-workspace.ts');
+  const workspace = invented();
+  workspace.activities = [{ id:'harbor-walk',placeId:workspace.trip.destinations[0].id,title:'Harbor walk',date:'2030-05-01',time:'10:30',durationMinutes:45,notes:'Check accessible route',category:'Walk',priority:'could',coordinates:{lat:0,lng:0,source:'Manual entry',checkedAt:'2030-04-01T12:00:00Z'},photo:{url:'/media/synthetic-harbor.webp',credit:'Invented artist',sourceUrl:'https://example.com/harbor',checkedAt:'2030-04-01T12:00:00Z'}}];
+  assert.deepEqual(validateWorkspace(workspace),[]);
+  const atlas=buildCanonicalAtlas(workspace);
+  assert.deepEqual(atlas.activities[0].photo,workspace.activities[0].photo);
+  assert.deepEqual(atlas.activities[0].coordinates,workspace.activities[0].coordinates);
+  assert.equal(atlas.activities[0].priority,'could');
+  assert.equal(atlas.activities[0].category,'Walk');
+  assert.equal(atlas.activities[0].status,null);
+  assert.deepEqual(JSON.parse(exportWorkspace(workspace).itinerary).activities,workspace.activities);
+  assert.deepEqual(parseWorkspaceImport(JSON.stringify(workspace)),workspace);
+  const values=new Map();const store={getItem:key=>values.get(key)||null,setItem:(key,value)=>values.set(key,value),removeItem:key=>values.delete(key)};
+  saveWorkspace(store,workspace);assert.deepEqual(loadWorkspace(store,workspace.trip),workspace);
+});
+
+test('metadata rejects unknown fields, private text, incomplete pins and unsafe photos without echoing values', () => {
+  const base=invented();base.activities=[{id:'walk',placeId:base.trip.destinations[0].id,title:'Walk',date:'2030-05-01',time:'09:00',durationMinutes:45,notes:''}];
+  const validPhoto={url:'https://images.unsplash.com/photo-invented',credit:'Invented artist',sourceUrl:'https://example.com/photo',checkedAt:'2030-04-01T12:00:00Z'};
+  const cases=[{priority:'unknown'},{priority:null},{category:''},{category:'person@example.test'},{coordinates:{lat:0,lng:0}},{coordinates:{lat:91,lng:0,source:'Manual entry',checkedAt:'2030-04-01T12:00:00Z'}},{coordinates:{lat:0,lng:0,source:'',checkedAt:'2030-04-01T12:00:00Z'}},{coordinates:{lat:0,lng:0,source:'Manual entry',checkedAt:'2030-02-30T12:00:00Z'}},{photo:{...validPhoto,url:'https://images.unsplash.com/photo?token=hidden'}},{photo:{...validPhoto,url:'https://other.example/photo'}},{photo:{...validPhoto,credit:'person@example.test'}},{photo:{...validPhoto,url:['https://','user:pass','@','images.unsplash.com/photo'].join('')}},{photo:{...validPhoto,sourceUrl:'https://mail.google.com/mail/'}},{photo:{...validPhoto,url:'/media/../private.webp'}},{photo:{...validPhoto,checkedAt:''}},{photo:{...validPhoto,license:'invented'}},{unsupported:'field'}];
+  for(const metadata of cases){const workspace=structuredClone(base);Object.assign(workspace.activities[0],metadata);assert.ok(validateWorkspace(workspace).length,JSON.stringify(Object.keys(metadata)));assert.throws(()=>buildCanonicalAtlas(workspace));}
+  const safe=structuredClone(base);safe.activities[0].photo=validPhoto;assert.deepEqual(validateWorkspace(safe),[]);
+});
+
+test('editing a sourced activity marks its receipt stale and deleting activity plus receipt remains valid', async () => {
+  const {reconcileItemEvidence}=await import('../src/lib/generic-trip-workspace.ts');
+  const workspace=invented();workspace.activities=[{id:'walk',placeId:workspace.trip.destinations[0].id,title:'Walk',date:'2030-05-01',time:'09:00',durationMinutes:45,notes:''}];
+  workspace.itemEvidence=[{target:'activity',targetId:'walk',basis:'manual',source:'Manual notes',sourceUrl:'',checkedAt:'',summary:'Planning choice',unknowns:'Opening hours unknown'}];
+  const next=structuredClone(workspace);next.activities[0].date='2030-05-02';
+  const reviewed=reconcileItemEvidence(workspace,next);assert.equal(reviewed.itemEvidence[0].reviewRequired,true);assert.equal(reviewed.itemEvidence[0].summary,'Planning choice');assert.deepEqual(validateWorkspace(reviewed),[]);
+  const removed={...reviewed,activities:[],itemEvidence:[]};assert.deepEqual(validateWorkspace(removed),[]);assert.equal(workspace.activities.length,1);
+});

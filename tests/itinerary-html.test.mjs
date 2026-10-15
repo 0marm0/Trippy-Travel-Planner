@@ -1,3 +1,4 @@
+import {createRouteScenarios,emptyRouteScenario} from '../src/lib/route-scenarios.ts';
 import { createQuoteComparison, emptyTripQuote } from '../src/lib/trip-quote-comparison.ts';
 import { createResearchLedger } from '../src/lib/research-ledger.ts';
 import test from 'node:test';
@@ -110,8 +111,57 @@ test('generic exports preserve the return date without inventing an extra night'
   value.days = value.days.map((day,index)=>({...day,placeId:value.trip.destinations[index < 2 ? 0 : 1].id}));
   const snapshot = buildGenericTripExportSnapshot(value);
   assert.equal(snapshot.end, '2030-01-04');
-  assert.equal(snapshot.stops[0].checkOut, '2030-01-03');
-  assert.equal(snapshot.stops[1].checkOut, '2030-01-04');
-  assert.equal(snapshot.stops[1].nights, 1);
+  assert.equal(snapshot.stops[0].checkOut, '');
+  assert.equal(snapshot.stops[1].checkOut, '');
+  assert.equal(snapshot.stops[1].nights, 0, 'unknown stay nights use the explicit planning-days basis');
+  assert.deepEqual(snapshot.stops[1].planningDates, ['2030-01-03','2030-01-04']);
   assert.equal(snapshot.days.at(-1).date, '2030-01-04');
+});
+
+test('generic reading copies preserve unknown activity priority and source-recorded coordinates', async()=>{
+  const {validateExportPreviewSnapshot}=await import('../src/lib/export-preview.ts');
+  const value=workspace(),placeId=value.trip.destinations[0].id;
+  value.days[0].placeId=placeId;
+  value.activities=[{id:'recorded-walk',placeId,title:'Recorded waterfront walk',date:'2030-01-01',time:'10:15',durationMinutes:45,notes:'Review access',coordinates:{lat:0,lng:0,source:'Manual entry',checkedAt:'2029-12-01T12:00:00Z'}}];
+  const snapshot=buildGenericTripExportSnapshot(value);
+  assert.equal(snapshot.catalogue[0].priority,'unknown');
+  assert.equal(snapshot.days[0].activities[0].priority,'unknown');
+  assert.match(snapshot.catalogue[0].details,/Recorded activity pin: 0, 0; source Manual entry/);
+  assert.match(snapshot.catalogue[0].details,/checked 2029-12-01 12:00:00 UTC/);
+  assert.match(snapshot.catalogue[0].details,/not independent venue verification/);
+  assert.deepEqual(validateExportPreviewSnapshot(snapshot),[]);
+  const html=renderGenericItineraryHtml(value);
+  assert.match(html,/activity-card unknown/);
+  assert.match(html,/Priority unknown/);
+  assert.match(html,/data-tier="unknown"/);
+  const altered=structuredClone(snapshot);altered.catalogue[0].priority='invented';
+  assert.ok(validateExportPreviewSnapshot(altered).some(error=>error.includes('priority')));
+});
+
+test('noncontiguous planning assignments retain exact days without inferred check-in, checkout or nights',async()=>{
+  const {validateExportPreviewSnapshot}=await import('../src/lib/export-preview.ts');
+  const value=workspace();value.days[0].placeId=value.trip.destinations[0].id;value.days[2].placeId=value.trip.destinations[0].id;
+  const snapshot=buildGenericTripExportSnapshot(value),stop=snapshot.stops[0];
+  assert.equal(stop.dateBasis,'planning-days');assert.deepEqual(stop.planningDates,['2030-01-01','2030-01-03']);
+  assert.equal(stop.checkIn,'');assert.equal(stop.checkOut,'');assert.equal(stop.nights,0);
+  assert.deepEqual(sanitizeTripExportSnapshot(snapshot).stops[0],stop);
+  const html=renderGenericItineraryHtml(value);
+  assert.match(html,/Planning days: Jan 1, Jan 3/);
+  assert.match(html,/Stay dates and nights unknown/);
+  assert.doesNotMatch(html,/\/ 0 nights/);
+  const forged=structuredClone(snapshot);forged.stops[0].checkIn='2030-01-01';forged.stops[0].checkOut='2030-01-04';forged.stops[0].nights=3;
+  assert.ok(validateExportPreviewSnapshot(forged).some(error=>error.includes('planning days')));
+  const duplicate=structuredClone(snapshot);duplicate.stops[0].planningDates.push('2030-01-01');assert.ok(validateExportPreviewSnapshot(duplicate).length);
+});
+
+test('selected-date reading copies preserve trip-wide manual route scenarios without invented costs',()=>{
+  const value=workspace();
+  value.trip.routeCandidates=[{id:'route-a',label:'Coastal alternative',status:'recommended',placeOrder:value.trip.destinations.map(place=>place.id)}];
+  const scenario={...emptyRouteScenario(value.trip,'manual-route','route-a'),label:'Open-jaw plan',ticketing:'separate',scopeNotes:'Stays and transfers unpriced'};
+  value.routeScenarios={...createRouteScenarios(value.trip),scenarios:[scenario]};
+  const html=renderGenericItineraryHtml(value,{dateRange:{start:'2030-01-02',end:'2030-01-02'}});
+  assert.equal((html.match(/class="day-chapter"/g)||[]).length,1);
+  for(const text of ['Trip-wide recorded alternatives','Open-jaw plan','Stays and transfers unpriced','Cash cost unknown','Selected reading dates 2030-01-02'])assert.ok(html.includes(text),text);
+  assert.equal(value.days.length,4);assert.equal(value.trip.bookings.length,0);
+  assert.ok(!renderGenericItineraryHtml(value,{scope:'hotels',visual:false}).includes('Whole-route scenarios'));
 });

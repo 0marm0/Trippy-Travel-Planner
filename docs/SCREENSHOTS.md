@@ -141,7 +141,7 @@ The 2026-10-14 visual pass refreshed the route mode colors, itinerary editor, tr
 
 Side-by-side settings and sandboxed reading preview, captured from the current candidate with reviewed public sample photos. Local preview embeddings are opt-in and bounded; counts do not promise a complete offline download.
 
-![Export studio with an embedded sample hero photograph](../public/screenshots/export-studio.webp)
+![Liquid glass export studio with the sample hero photograph, presentation controls and date selection](../public/screenshots/export-studio.webp)
 
 ## Proposal discussion
 

@@ -21,7 +21,7 @@ type ExportActivity = {
   description: string;
   details: string;
   category: string;
-  priority: TripActivity["priority"];
+  priority: TripActivity["priority"] | "unknown";
   image: string;
 };
 
@@ -49,7 +49,7 @@ export type TripExportSnapshot = {
   subtitle: string;
   start: string;
   end: string;
-  stops: Array<{ name: string; country: string; checkIn: string; checkOut: string; nights: number; stay: string; image?: string }>;
+  stops: Array<{ name: string; country: string; checkIn: string; checkOut: string; nights: number; stay: string; image?: string; dateBasis?: "planning-days"; planningDates?: string[] }>;
   days: ExportDay[];
   catalogue: ExportCatalogueActivity[];
   transport: Array<{ date: string; from: string; to: string; mode: string; name: string; ride: string; door: string; hours: number; low: number; high: number; note: string }>;
@@ -230,11 +230,11 @@ export function sanitizeTripExportSnapshot(value: unknown): TripExportSnapshot {
   const source = value && typeof value === "object" ? value as Record<string, unknown> : {};
   const array = (key: string, max: number) => Array.isArray(source[key]) ? (source[key] as unknown[]).slice(0, max) : [];
   const record = (item: unknown) => item && typeof item === "object" ? item as Record<string, unknown> : {};
-  const priority = (value: unknown): TripActivity["priority"] => value === "must" || value === "should" ? value : "could";
+  const priority = (value: unknown): TripActivity["priority"] | "unknown" => value === "must" || value === "should" || value === "could" ? value : "unknown";
   return {
     schemaVersion: 1,
     title: redactPrivateExportText(source.title).slice(0, 240), subtitle: redactPrivateExportText(source.subtitle).slice(0, 240), start: redactPrivateExportText(source.start).slice(0, 10), end: redactPrivateExportText(source.end).slice(0, 10),
-    stops: array("stops", 40).map(record).map((item) => ({ name: redactPrivateExportText(item.name).slice(0, 160), country: redactPrivateExportText(item.country).slice(0, 100), checkIn: redactPrivateExportText(item.checkIn).slice(0, 10), checkOut: redactPrivateExportText(item.checkOut).slice(0, 10), nights: number(item.nights, 0, 60), stay: redactPrivateExportText(item.stay), image: safeImage(item.image) })),
+    stops: array("stops", 40).map(record).map((item) => ({ name: redactPrivateExportText(item.name).slice(0, 160), country: redactPrivateExportText(item.country).slice(0, 100), checkIn: redactPrivateExportText(item.checkIn).slice(0, 10), checkOut: redactPrivateExportText(item.checkOut).slice(0, 10), nights: number(item.nights, 0, 60), stay: redactPrivateExportText(item.stay), image: safeImage(item.image), ...(item.dateBasis === "planning-days" ? {dateBasis:"planning-days" as const,planningDates:(Array.isArray(item.planningDates) ? item.planningDates : []).slice(0,366).map(value=>redactPrivateExportText(value).slice(0,10))} : {}) })),
     days: array("days", 366).map(record).map((item) => ({
       date: redactPrivateExportText(item.date).slice(0, 10), dayNumber: number(item.dayNumber, 1, 366), city: redactPrivateExportText(item.city).slice(0, 160), country: redactPrivateExportText(item.country).slice(0, 100), theme: redactPrivateExportText(item.theme).slice(0, 240), note: redactPrivateExportText(item.note),
       anchors: (Array.isArray(item.anchors) ? item.anchors : []).slice(0, 20).map(record).map((anchor) => ({ status: redactPrivateExportText(anchor.status).slice(0, 40), label: redactPrivateExportText(anchor.label), detail: redactPrivateExportText(anchor.detail), kind: redactPrivateExportText(anchor.kind).slice(0, 40) })),

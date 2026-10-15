@@ -9,6 +9,8 @@ import type { Point } from "@/lib/planner";
 import { validateCollaborationState } from "@/lib/collaboration/schema";
 import { reconciliationChanges, resolveReconciliation, recoveryKey, parseRecovery, serializeRecovery, type Choice, type RecoverableBoard, type ReconciliationChange } from "@/lib/collaboration/reconciliation";
 import RoomLifecycle from "./room-lifecycle";
+import CollaborationPresence from "./collaboration-presence";
+import AppearanceControls from "./appearance-controls";
 import DetailDrawer from "./detail-drawer";
 import { parseRoomAccessFragment } from "@/lib/collaboration/access-fragment";
 import { reviewCollaborationSuggestion } from "@/lib/collaboration/suggestions";
@@ -90,6 +92,7 @@ export default function CollaborationWorkspace({ roomId }: { roomId?: string }) 
   const busyRef = useRef(false);
   const closedRef = useRef(false);
   const revisionRef = useRef(0);
+  const refreshRoomRef = useRef<(() => void) | null>(null);
   const id = snapshot?.roomId || roomId;
   const hasEditRole = !id || snapshot?.role === "owner" || snapshot?.role === "editor";
   const canEdit = !busy && hasEditRole && (!id || connected);
@@ -207,6 +210,7 @@ export default function CollaborationWorkspace({ roomId }: { roomId?: string }) 
         if (!stopped && generation === accessGeneration && requestedAccess === token.current && !busyRef.current && !closedRef.current && !requestController.signal.aborted) { setConnected(false); setConnectionError(cause instanceof Error ? cause.message : "Could not connect. Your draft is preserved."); }
       } finally { if (generation === accessGeneration) refreshing = false; }
     }
+    refreshRoomRef.current = () => { void refresh(); };
     function consumeFragment(initial = false) {
       const fragment = parseRoomAccessFragment(window.location.hash);
       // Remove capabilities even when malformed; do not leave them in visible browser history.
@@ -227,7 +231,7 @@ export default function CollaborationWorkspace({ roomId }: { roomId?: string }) 
     window.addEventListener("hashchange", onHashChange);
     window.addEventListener("popstate", onHashChange);
     const interval = window.setInterval(() => { void refresh(); }, 4000);
-    return () => { stopped = true; controller?.abort(); window.clearInterval(interval); window.removeEventListener("hashchange", onHashChange); window.removeEventListener("popstate", onHashChange); };
+    return () => { stopped = true; refreshRoomRef.current = null; controller?.abort(); window.clearInterval(interval); window.removeEventListener("hashchange", onHashChange); window.removeEventListener("popstate", onHashChange); };
   }, [roomId]);
 
   useEffect(() => {
@@ -448,7 +452,8 @@ export default function CollaborationWorkspace({ roomId }: { roomId?: string }) 
   const points: Point[] = [...plan.cities.map(city => ({ ...city, category: "city" })), ...plan.activities.map(activity => ({ ...activity, name: activity.title, category: "activity" }))].filter((point): point is typeof point & { lat: number; lng: number } => typeof point.lat === "number" && typeof point.lng === "number").map(point => ({ id: point.id, name: point.name, lat: point.lat, lng: point.lng, category: point.category }));
 
   return <main className={`collab-shell ${boardReady ? "collab-board-ready" : ""}`}>
-    <header className="collab-header"><Link href="/" onClick={confirmNavigation} className="collab-brand"><span className="collab-brand-mark"><BrandMark /></span><span className="collab-brand-copy">Trippy<span>Plan together</span></span></Link><nav aria-label="Planner navigation"><Link href="/plan" onClick={confirmNavigation}>New trip</Link><Link href="/" onClick={confirmNavigation}>Travel atlas</Link></nav></header>
+    <header className="collab-header"><Link href="/" onClick={confirmNavigation} className="collab-brand"><span className="collab-brand-mark"><BrandMark /></span><span className="collab-brand-copy">Trippy<span>Plan together</span></span></Link><nav aria-label="Planner navigation"><AppearanceControls /><Link href="/plan" onClick={confirmNavigation}>New trip</Link><Link href="/" onClick={confirmNavigation}>Travel atlas</Link></nav></header>
+    {roomId && snapshot && <CollaborationPresence key={`${roomId}:${accessToken}`} roomId={roomId} access={accessToken} connected={connected} onRevision={revision => { if (revision > revisionRef.current) refreshRoomRef.current?.(); }} />}
     {!boardReady && <section className="collab-hero"><div className="collab-hero-copy"><p className="collab-eyebrow">A plan you can make together</p><h1>{id || plan.cities.length ? plan.title : "Good trips start with a shared idea."}</h1><p>Add places, shape each day, and invite a friend to edit with you. Shared planning contains dates, cities and activities only.</p><div className="collab-status"><span className={snapshot && connected ? "collab-dot live" : "collab-dot"} />{snapshot ? `${snapshot.role} · Version ${snapshot.revision} · ${connected ? "Updates every 4 seconds" : "Updates paused; draft preserved"}` : id ? "Connecting to shared plan…" : "Private local draft until you approve sharing"}</div><div className="collab-hero-metrics"><span><b>{plan.cities.length}</b> cities</span><span><b>{tripDates.length}</b> days</span><span><b>{plan.activities.length}</b> ideas</span></div></div><div className={`collab-hero-art ${sharedPhotos.length ? "has-photos" : ""}`} aria-hidden="true">{sharedPhotos.length ? sharedPhotos.map(activity => <Image key={activity.id} src={activity.image!} alt="" width={440} height={360} />) : <><span className="collab-orbit" /><span className="collab-orbit second" /><BrandMark /></>}<span className="collab-art-caption">A little room for possibility.</span></div></section>}
     {boardReady && <section className="collab-trip-bar"><div><h1>{plan.title}</h1><p>{plan.startDate} → {plan.endDate} · {plan.cities.length} cities · {plan.activities.length} ideas</p><small>{snapshot ? `${snapshot.role} · Version ${snapshot.revision} · ${connected ? "Connected" : "Updates paused; draft preserved"}` : "Local draft · review before sharing"}</small></div><div className="collab-actions">{snapshot && <button className="collab-primary" onClick={() => void save()} disabled={!canEdit || !dirty || Boolean(latest) || activityDraft}>{busy ? "Working…" : activityDraft ? "Finish activity draft first" : dirty ? "Save changes" : "All changes saved"}</button>}<a href="#collab-settings">Trip & sharing settings ↓</a></div></section>}
 

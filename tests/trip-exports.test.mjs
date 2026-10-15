@@ -161,7 +161,7 @@ test('untrusted export snapshots are bounded and sanitized again at the PDF boun
   const snapshot = sanitizeTripExportSnapshot({ title: 'Trip', start: '2026-01-01', end: '2026-01-02', bookings: [{ title: 'PNR Z9X8Q7', detail: 'person@example.com' }], days: [{ activities: [{ priority: 'admin', image: 'https://tracker.example/private/asset' }, { priority: 'must', image: 'https://images.unsplash.com/photo.jpg?token=secret' }] }], catalogue: [{ city: 'Berlin', title: 'Guide card', priority: 'must', image: 'https://tracker.example/private/asset' }] });
   assert.equal(snapshot.bookings[0].title.includes('Z9X8Q7'), false);
   assert.equal(snapshot.bookings[0].detail.includes('@'), false);
-  assert.equal(snapshot.days[0].activities[0].priority, 'could');
+  assert.equal(snapshot.days[0].activities[0].priority, 'unknown');
   assert.equal(snapshot.days[0].activities[0].image, '');
   assert.equal(snapshot.days[0].activities[1].image, '');
   assert.equal(snapshot.catalogue[0].image, '');

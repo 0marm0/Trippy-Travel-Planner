@@ -1,6 +1,6 @@
 import { filterTripExportSnapshot, sanitizeTripExportSnapshot, isBundledTripImage, type TripExportSnapshot, type TripExportScope, type TripExportTheme } from "./trip-exports.ts";
 
-export type ExportPreviewOptions = { scope: TripExportScope; visual: boolean; theme: TripExportTheme };
+export type ExportPreviewOptions = { scope: TripExportScope; visual: boolean; theme: TripExportTheme; dateRange?: {start:string;end:string} };
 export const EXPORT_PREVIEW_HTML_BUDGET = 1_500_000;
 const limits = { stops: 40, days: 366, catalogue: 500, transport: 40, hotels: 40, bookings: 100 } as const;
 const record = (value: unknown): value is Record<string, unknown> => !!value && typeof value === "object" && !Array.isArray(value);
@@ -18,6 +18,9 @@ export function validateExportPreviewSnapshot(value: unknown): string[] {
       const required = key === "stops" ? ["name"] : key === "days" ? ["date"] : key === "transport" ? ["date", "from", "to", "mode", "name"] : key === "hotels" ? ["city", "name"] : ["title"];
       if (required.some(field => typeof item[field] !== "string" || !item[field].trim())) errors.push(`${key}: a record is incomplete.`);
       if (key === "stops") {
+        if (item.dateBasis !== undefined && item.dateBasis !== "planning-days") errors.push("stops: invalid date basis.");
+        if (item.dateBasis === "planning-days" && (!Array.isArray(item.planningDates) || item.planningDates.length > 366 || new Set(item.planningDates).size !== item.planningDates.length || item.planningDates.some((date: unknown)=>!validDate(date)) || item.checkIn !== "" || item.checkOut !== "" || item.nights !== 0)) errors.push("stops: planning days must retain unknown stay dates and nights.");
+        if (item.planningDates !== undefined && item.dateBasis !== "planning-days") errors.push("stops: planning dates need an explicit date basis.");
         const unknownDates = item.checkIn === "" && item.checkOut === "" && item.nights === 0;
         if (!unknownDates && (!validDate(item.checkIn) || !validDate(item.checkOut) || item.checkOut <= item.checkIn || typeof item.nights !== "number" || !Number.isInteger(item.nights) || item.nights < 0 || item.nights > 60)) errors.push("stops: invalid stay dates or nights.");
       }
@@ -26,6 +29,8 @@ export function validateExportPreviewSnapshot(value: unknown): string[] {
         if (!Array.isArray(item.activities) || item.activities.length > 50 || item.activities.some((activity: unknown) => !record(activity) || typeof activity.title !== "string" || !activity.title.trim())) errors.push("days: invalid activity records or export limit exceeded.");
         if (!Array.isArray(item.anchors) || item.anchors.length > 20 || item.anchors.some((anchor: unknown) => !record(anchor) || typeof anchor.label !== "string" || !anchor.label.trim())) errors.push("days: invalid anchor records or export limit exceeded.");
       }
+      if (key === "catalogue" && item.priority !== undefined && !["must","should","could","unknown"].includes(String(item.priority))) errors.push("catalogue: invalid activity priority.");
+      if (key === "days" && Array.isArray(item.activities) && item.activities.some((activity: unknown)=>record(activity) && activity.priority !== undefined && !["must","should","could","unknown"].includes(String(activity.priority)))) errors.push("days: invalid activity priority.");
       if (key === "bookings" && (!validDate(item.dateIso) || !["recommended", "quoted", "held", "confirmed", "tbc", "missing", "conflict"].includes(String(item.status)))) errors.push("bookings: invalid date or recorded state.");
       for (const field of key === "transport" ? ["hours", "low", "high"] : key === "hotels" ? ["stars", "low", "high"] : []) if (typeof item[field] !== "number" || !Number.isFinite(item[field]) || item[field] < 0) errors.push(`${key}: invalid numeric record.`);
     }

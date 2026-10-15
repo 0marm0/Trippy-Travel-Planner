@@ -1,3 +1,5 @@
+import {embedBundledReadingPhotos,isBundledTripImage} from './bundled-reading-photos.ts';
+export {isBundledTripImage} from './bundled-reading-photos.ts';
 import type { Trip2026Payload, TripActivity } from "./trip-model";
 import { createTripPdfReplica } from "./trip-export-pdf.ts";
 import { renderTripHtmlReplica, renderTripHtmlCompact } from "./trip-export-html.ts";
@@ -100,9 +102,6 @@ export function redactPrivateExportText(value: unknown, maximum = MAX_TEXT): str
   return text.replace(/(?:\s*\[private detail removed\]){2,}/g, ` ${REDACTED}`).trim();
 }
 
-export function isBundledTripImage(value: string): boolean {
-  return /^\/guide-images\/[a-f0-9]{12,64}\.webp$/.test(value) || /^\/media\/[a-z0-9][a-z0-9-]*\.webp$/.test(value);
-}
 
 function safeImage(value: unknown): string {
   if (typeof value === 'string' && exportImageHasPrivateData(value)) return '';
@@ -351,24 +350,7 @@ export async function downloadTripExport(data: Trip2026Payload, state: TripExpor
   if (kind === "html" || kind.startsWith("html-")) {
     const scope: TripExportScope = kind === "html-transit" ? "transit" : kind === "html-hotels" ? "hotels" : kind === "html-travel" ? "travel" : "all";
     let html = renderTripHtml(snapshot, { privacy: effectivePrivacy, visual: kind === "html", scope });
-    const images = kind === "html" ? [...new Set([...snapshot.stops.map((item) => item.image || ""), ...snapshot.catalogue.map((item) => item.image), ...snapshot.days.flatMap((day) => day.activities.map((item) => item.image)), ...snapshot.hotels.map((hotel) => hotel.image),...snapshot.bookings.map(item=>item.image||'')].filter(isBundledTripImage))] : [];
-    // Embed reviewed bundled photos so a downloaded dossier works independently
-    // of localhost or the maintainer's website. Never embed arbitrary URLs.
-    for (let offset = 0; offset < images.length; offset += 8) {
-      const embedded = await Promise.all(images.slice(offset, offset + 8).map(async (image) => {
-        try {
-          const response = await fetch(image, { credentials: "omit", signal: AbortSignal.timeout(10_000) });
-          if (!response.ok || Number(response.headers.get("content-length")) > 8_000_000) return null;
-          const blob = await response.blob();
-          if (blob.size > 8_000_000 || blob.type !== "image/webp") return null;
-          const data = await new Promise<string>((resolve, reject) => {
-            const reader = new FileReader(); reader.onload = () => resolve(String(reader.result)); reader.onerror = reject; reader.readAsDataURL(blob);
-          });
-          return { image, data };
-        } catch { return null; }
-      }));
-      for (const result of embedded) if (result) html = html.replaceAll(result.image, result.data);
-    }
+    html = await embedBundledReadingPhotos(html,window.location.origin,fetch);
     return saveBlob(new Blob([html], { type: "text/html;charset=utf-8" }), privateName);
   }
   const response = await fetch("/api/exports/trip-pdf", {

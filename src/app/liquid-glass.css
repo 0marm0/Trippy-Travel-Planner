@@ -1,15 +1,22 @@
 :root {
-  --liquid-surface: linear-gradient(145deg, rgb(221 239 255 / 10%), rgb(185 212 241 / 3%) 42%, rgb(6 13 23 / 24%)), rgb(15 23 33 / 58%);
-  --liquid-raised: linear-gradient(135deg, rgb(229 243 255 / 14%), rgb(184 214 246 / 4%) 48%, rgb(5 11 20 / 22%)), rgb(16 24 34 / 76%);
-  --liquid-border: rgb(218 235 255 / 16%);
-  --liquid-highlight: inset 0 1px 0 rgb(246 251 255 / 16%), inset 1px 0 0 rgb(240 248 255 / 5%);
-  --liquid-shadow: 0 20px 65px rgb(0 4 12 / 30%);
+  --trippy-page: #03060b;
+  --trippy-panel: #0b121f;
+  --trippy-inset: #060d18;
+  --trippy-ink: #edf3ff;
+  --trippy-soft: #bbcade;
+  --trippy-muted: #8495ae;
+  --trippy-blue: #75b7ff;
+  --liquid-surface: linear-gradient(130deg, #a1ccff0b, transparent 40%, #07102014), rgb(11 18 31 / 78%);
+  --liquid-raised: linear-gradient(130deg, #a1ccff08, transparent 44%), rgb(8 15 28 / 96%);
+  --liquid-border: rgb(147 184 232 / 14%);
+  --liquid-highlight: inset 0 1px 0 #dbecff12, inset 0 -1px 0 #0004;
+  --liquid-shadow: 0 14px 35px #0003;
   --liquid-space: 18px;
-  --liquid-radius: 22px;
+  --liquid-radius: 16px;
 }
 
 html body:has(:is(.premium-shell,.new-trip-page,.collab-shell)) {
-  background: radial-gradient(ellipse at 5% -8%, #30435b66, transparent 42%), radial-gradient(ellipse at 94% 23%, #2d354c40, transparent 38%), radial-gradient(ellipse at 30% 94%, #17423c26, transparent 40%), #070b12;
+  background: radial-gradient(ellipse at 48% -20%, #123b6970, transparent 49%), radial-gradient(ellipse at 95% 35%, #0c244928, transparent 42%), var(--trippy-page);
   background-attachment: fixed;
 }
 
@@ -52,7 +59,7 @@ html dialog.detail-drawer {
   box-shadow:var(--liquid-highlight), -25px 0 100px #0007;
 }
 html dialog.detail-drawer::backdrop { background:rgb(3 7 13 / 54%); backdrop-filter:blur(9px) saturate(.7); -webkit-backdrop-filter:blur(9px) saturate(.7); }
-html dialog.detail-drawer>header { background:rgb(22 31 43 / 74%); backdrop-filter:blur(28px); -webkit-backdrop-filter:blur(28px); border-bottom-color:rgb(226 241 255 / 12%); }
+html dialog.detail-drawer>header { background:rgb(9 15 27 / 96%); backdrop-filter:blur(28px); -webkit-backdrop-filter:blur(28px); border-bottom-color:rgb(226 241 255 / 12%); }
 html dialog.detail-drawer>header h2 { font-size:20px; letter-spacing:-.04em; font-weight:560; }
 html dialog.detail-drawer.detail-drawer-wide { inset:14px; margin:auto; width:min(1420px,calc(100% - 28px)); height:calc(100dvh - 28px); max-height:calc(100dvh - 28px); border-radius:28px; }
 html dialog.detail-drawer.detail-drawer-wide>header { padding:17px 24px; }
@@ -76,7 +83,7 @@ html[data-trippy-density=comfortable] { --liquid-space:26px; }
 html[data-trippy-density=comfortable] .hotel-row { padding:20px; }
 html[data-trippy-density=comfortable] .generic-workspace article { padding:24px; }
 html[data-trippy-density=compact] .collab-panel { --liquid-space:18px; }
-html[data-trippy-surface=solid] { --liquid-surface:#151e2b; --liquid-raised:#172130; }
+html[data-trippy-surface=solid] { --liquid-surface:#0b121f; --liquid-raised:#080f1c; }
 html[data-trippy-surface=solid] :is(.glass,.premium-header,.workspace-tabs,.planning-navigation,.collab-header,.detail-drawer,.detail-drawer>header,.display-preferences,.glass-select-menu) { backdrop-filter:none!important; -webkit-backdrop-filter:none!important; }
 html[data-trippy-motion=reduced] *,html[data-trippy-motion=reduced] *::before,html[data-trippy-motion=reduced] *::after { scroll-behavior:auto!important; animation:none!important; transition:none!important; }
 
@@ -92,13 +99,87 @@ html[data-trippy-motion=reduced] *,html[data-trippy-motion=reduced] *::before,ht
   .premium-shell *,.new-trip-page *,.collab-shell *,.detail-drawer * { animation:none!important; transition:none!important; scroll-behavior:auto!important; }
 }
 @media(prefers-reduced-transparency:reduce) {
-  :root { --liquid-surface:#151e2b; --liquid-raised:#172130; }
+  :root { --liquid-surface:#0b121f; --liquid-raised:#080f1c; }
   :is(.glass,.premium-header,.workspace-tabs,.planning-navigation,.collab-header,.detail-drawer,.detail-drawer>header,.display-preferences,.glass-select-menu) { backdrop-filter:none!important; -webkit-backdrop-filter:none!important; }
 }
 @supports not (backdrop-filter:blur(1px)) {
-  :root { --liquid-surface:#151e2b; --liquid-raised:#172130; }
+  :root { --liquid-surface:#0b121f; --liquid-raised:#080f1c; }
 }
 @media(forced-colors:active) {
   .glass,.new-trip-card,.collab-panel,dialog.detail-drawer,.display-preferences,.glass-select-menu { background:Canvas!important; color:CanvasText!important; border:1px solid CanvasText!important; box-shadow:none!important; backdrop-filter:none!important; }
 }
 @media print { .display-preferences-trigger,.display-preferences { display:none!important; } }
+
+/* Every planning surface uses the atlas palette. Semantic mode/status colors remain distinct. */
+@media screen {
+  html :is(.new-trip-page,.collab-shell) {
+    --planning-line:var(--liquid-border);
+    --planning-muted:var(--trippy-muted);
+    --collab-ink:var(--trippy-ink);
+    --collab-soft:var(--trippy-soft);
+    --collab-muted:var(--trippy-muted);
+    --collab-blue:var(--trippy-blue);
+    --collab-line:var(--liquid-border);
+    --glass:rgb(11 18 31 / 78%);
+    --glass-line:var(--liquid-border);
+    --ink:var(--trippy-ink);
+    --ink-soft:var(--trippy-soft);
+    --ink-muted:var(--trippy-muted);
+    color:var(--trippy-ink);
+    background:transparent;
+  }
+  html :is(.new-trip-page,.collab-shell) :is(.new-trip-card,.collab-panel,.trip-preparation,.collab-history,.workspace-history-tools,.journey-comparison) {
+    background:var(--liquid-surface);
+    border:1px solid var(--liquid-border);
+    border-radius:var(--liquid-radius);
+    box-shadow:var(--liquid-highlight),var(--liquid-shadow);
+    backdrop-filter:blur(26px) saturate(145%);
+    -webkit-backdrop-filter:blur(26px) saturate(145%);
+  }
+  html :is(.new-trip-page,.collab-shell) :is(.new-trip-card,.trip-preparation,.collab-history) h2 {
+    color:var(--trippy-ink); font-size:24px; font-weight:560; letter-spacing:-.04em;
+  }
+  html :is(.new-trip-page,.collab-shell) :is(.trip-primary,.collab-primary) {
+    background:linear-gradient(135deg,#428aff28,#1a438b20);
+    border:1px solid #7eb7ff45;
+    color:#c7e3ff;
+    box-shadow:inset 0 1px #c3dfff15,0 0 18px #3984ff0c;
+  }
+  html :is(.new-trip-page,.collab-shell) :is(.trip-primary,.collab-primary):hover:enabled {
+    background:#70aaff20; color:#edf3ff; border-color:#8fbcff60;
+  }
+  html :is(.new-trip-page,.collab-shell) :is(.workspace-tabs,.workspace-research-tabs) button[aria-pressed=true] {
+    background:linear-gradient(135deg,#58a4ff24,#365eab17);
+    border-color:#85baff32; color:#cce5ff;
+    box-shadow:inset 0 1px #bddeff18,0 0 24px #3585ff10;
+  }
+  html .collab-shell :is(.collab-activity,.collab-day li,.collab-history-body>ol>li),
+  html .new-trip-page :is(.history-review,.workspace-history-tools,.journey-card) {
+    background:var(--trippy-inset); border-color:var(--liquid-border); box-shadow:none;
+  }
+  html .collab-shell .collab-activity { border-color:var(--liquid-border)!important; }
+  html .collab-history-body>ol { gap:0; border-left:1px solid #75b7ff26; padding-left:16px; }
+  html .collab-history-body>ol>li { position:relative; margin-bottom:12px; border-radius:10px; }
+  html .collab-history-body>ol>li::before { content:''; position:absolute; left:-21px; top:20px; width:7px; height:7px; border-radius:50%; background:#75b7ff; box-shadow:0 0 12px #75b7ff30; }
+  html .collab-history>summary { font-size:12px; color:var(--trippy-soft); }
+  html .collab-history-body>button { background:#75b7ff12; border-color:#75b7ff30; font-size:11px; }
+  html .trip-preparation .prep-eyebrow { color:#80abde; font-size:9px; }
+  html .trip-preparation .prep-progress { font-size:10px; padding:6px 10px; border-color:var(--liquid-border); background:#75b7ff08; }
+  html .trip-preparation .prep-columns { gap:24px; margin-top:18px; }
+  html .trip-preparation :is(.prep-hint,.prep-empty) { font-size:11px; }
+  html .trip-preparation .prep-list>li { background:var(--trippy-inset); border:1px solid var(--liquid-border); border-radius:12px; padding:12px; margin-bottom:8px; }
+  html .trip-preparation .prep-list strong { font-size:12px; }
+  html .trip-preparation button { font-size:11px; border-color:#a4c6fb20; background:linear-gradient(145deg,#b5d5ff0a,#ffffff03); }
+  html .export-studio :is(.studio-eyebrow,.studio-photo-status,.studio-download-status) { color:#80abde; }
+  html .export-studio .studio-intro h3 { font-family:inherit; font-size:28px; font-weight:560; letter-spacing:-.04em; }
+  html .export-studio .studio-layout-switch button[aria-pressed=true] { border-color:#85baff45!important; color:#cce5ff!important; background:linear-gradient(135deg,#58a4ff24,#365eab17)!important; box-shadow:inset 0 1px #bddeff18; }
+  html .export-studio .export-studio-actions button:first-child { background:linear-gradient(135deg,#428aff28,#1a438b20)!important; border-color:#7eb7ff45!important; color:#c7e3ff!important; box-shadow:inset 0 1px #c3dfff15; }
+  html .export-studio .studio-preview-label i { background:#75b7ff; box-shadow:0 0 9px #75b7ff50; }
+  html .export-studio input { accent-color:#75b7ff; }
+  html .export-studio :focus-visible { outline-color:#7fbcff; }
+  html[data-trippy-surface=solid] :is(.new-trip-page,.collab-shell) :is(.new-trip-card,.collab-panel,.trip-preparation,.collab-history,.workspace-history-tools,.journey-comparison) { backdrop-filter:none; -webkit-backdrop-filter:none; }
+}
+@media(prefers-reduced-transparency:reduce) {
+  html :is(.trip-preparation,.collab-history,.workspace-history-tools,.journey-comparison,.new-trip-card,.collab-panel) { backdrop-filter:none!important; -webkit-backdrop-filter:none!important; }
+}
+@media screen { html :is(.new-trip-page,.collab-shell) { font-family:Inter,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif; } .prep-photo-pair:empty{display:none} }

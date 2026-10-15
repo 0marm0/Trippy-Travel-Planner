@@ -2228,7 +2228,7 @@
     },
     {
       "path": "public/screenshots/collaboration-editor.webp",
-      "sha256": "914700c54894cd79e3fb47a3e2639f4c62f4fd164aacc97d05f82eb069103764",
+      "sha256": "2162104c1d61891249e0a0344e467d9d092f3f6f7c7c8d746f77e19a63d876d6",
       "credit": "Trippy reviewed sample app screenshot",
       "sourceUrl": "repository:docs/SCREENSHOTS.md",
       "license": "MIT app UI; depicted photographs and map/provider content retain their separate terms",
@@ -4837,8 +4837,8 @@
       "license": "MIT app UI; depicted photographs and map/provider content retain their separate terms",
       "rightsStatus": "approved",
       "privacyStatus": "approved",
-      "sha256": "67e5e12ac0ff62bcd19a1795f59c22946920727a52e4534769c1046fabf48862",
-      "privacyReview": "Pixel-reviewed sanitized sample export studio with glass surfaces and approved local photography; no access values or private identifiers; metadata stripped",
+      "sha256": "1cae92546f9d0955c538c086201aff90364236b68e8ec478decb15fe097c19aa",
+      "privacyReview": "Pixel-reviewed reviewed public sample or invented planning; no access values, credentials or private identifiers; metadata stripped",
       "reviewedAt": "2026-10-14"
     },
     {
@@ -4848,7 +4848,7 @@
       "license": "MIT app UI; depicted photographs and map/provider content retain their separate terms",
       "rightsStatus": "approved",
       "privacyStatus": "approved",
-      "sha256": "ab7881dbf9f190082934cb89f7c82689d55124fe552b94521e1755a97b6d3c58",
+      "sha256": "05b39105eaf5074344b411777c1ed50b16b987faf16a650df32e096f007352c1",
       "privacyReview": "Pixel-reviewed reviewed public sample or invented planning; no access values, credentials or private identifiers; metadata stripped",
       "reviewedAt": "2026-10-14"
     },
@@ -4859,7 +4859,7 @@
       "license": "MIT app UI; depicted photographs and map/provider content retain their separate terms",
       "rightsStatus": "approved",
       "privacyStatus": "approved",
-      "sha256": "54aa69d3370036b64de534134309cb900528abfa11a271f2bf4261a1787d157d",
+      "sha256": "348b3d7b8dff13f55df6f7e26fde884d6b18e253448a7fa279f191535a7ed992",
       "privacyReview": "Pixel-reviewed reviewed public sample or invented planning; no access values, credentials or private identifiers; metadata stripped",
       "reviewedAt": "2026-10-14"
     },
@@ -4893,6 +4893,28 @@
       "rightsStatus": "approved",
       "privacyStatus": "approved",
       "sha256": "4b49d83d581d59ceb5ba194e9370a1e0e28136b11ec196c1898085576e31ccbb",
+      "privacyReview": "Pixel-reviewed reviewed public sample or invented planning; no access values, credentials or private identifiers; metadata stripped",
+      "reviewedAt": "2026-10-14"
+    },
+    {
+      "path": "public/screenshots/travel-day.webp",
+      "credit": "Trippy app screenshot; depicted source credits retained where shown",
+      "sourceUrl": "repository:docs/SCREENSHOTS.md",
+      "license": "MIT app UI; depicted photographs and map/provider content retain their separate terms",
+      "rightsStatus": "approved",
+      "privacyStatus": "approved",
+      "sha256": "11e3d328978a97db5c1e39d494a5b75fc7b161e0722bb73d78491525a2fabd0c",
+      "privacyReview": "Pixel-reviewed reviewed public sample or invented planning; no access values, credentials or private identifiers; metadata stripped",
+      "reviewedAt": "2026-10-14"
+    },
+    {
+      "path": "public/screenshots/day-geography.webp",
+      "credit": "Trippy app screenshot; depicted source credits retained where shown",
+      "sourceUrl": "repository:docs/SCREENSHOTS.md",
+      "license": "MIT app UI; depicted photographs and map/provider content retain their separate terms",
+      "rightsStatus": "approved",
+      "privacyStatus": "approved",
+      "sha256": "f6176c683a53632e6b953e9ad6cb0ee6d886ca7381beae474f538420f429436b",
       "privacyReview": "Pixel-reviewed reviewed public sample or invented planning; no access values, credentials or private identifiers; metadata stripped",
       "reviewedAt": "2026-10-14"
     }

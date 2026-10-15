@@ -15,3 +15,11 @@ test("sharing retains days and activities but excludes booking and account field
   workspace.activities[0].notes = "API key: inventedExampleValue";
   assert.throws(() => genericCollaborationBoard(workspace));
 });
+test('reviewed sharing retains bundled photo sources and zero pins without copying external photos or owner sidecars',()=>{
+ const workspace=createWorkspace(createNormalizedTrip({name:'Invented map day',start:'2030-04-01',end:'2030-04-03',cities:['Harbor'],origins:['AAA'],adults:2,flexDays:0,pace:'balanced',themes:[]}));
+ const placeId=workspace.trip.destinations[0].id,checkedAt='2030-03-01T12:00:00Z';
+ workspace.activities=[{id:'bundled-venue',placeId,title:'Bundled venue',date:'2030-04-01',time:'10:00',durationMinutes:60,notes:'',photo:{url:'/media/invented-venue.webp',credit:'Invented photographer',sourceUrl:'https://example.test/source',checkedAt},coordinates:{lat:0,lng:0,source:'Invented map note',checkedAt}},{id:'external-venue',placeId,title:'External venue',date:'2030-04-02',time:'10:00',durationMinutes:60,notes:'',photo:{url:'https://images.unsplash.com/invented-photo',credit:'Invented photographer',sourceUrl:'https://example.test/source',checkedAt}}];
+ const before=structuredClone(workspace),board=genericCollaborationBoard(workspace);
+ assert.equal(board.activities[0].image,'/media/invented-venue.webp');assert.equal(board.activities[0].sourceUrl,'https://example.test/source');assert.equal(board.activities[0].lat,0);assert.equal(board.activities[0].lng,0);
+ assert.equal('photo' in board.activities[0],false);assert.equal('image' in board.activities[1],false);assert.equal('coordinates' in board.activities[0],false);assert.equal('checkedAt' in board.activities[0],false);assert.deepEqual(workspace,before);
+});
